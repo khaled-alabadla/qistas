@@ -73,19 +73,26 @@ from search + trigram index. `Client` registered with django-auditlog; `AuditLog
 events for create/update/archive/restore. `seed_demo_clients` command.
 
 **Verification:**
-- Tests: **59 client tests; full suite 158 pass / 0 fail / 3 skipped** (`@pytest.mark.postgres`).
-- `ruff` / `ruff format` / `pip-audit` / `makemigrations --check` / `check --deploy` clean.
+- Tests: **59 client tests; full suite 159 pass / 0 fail / 3 skipped** (`@pytest.mark.postgres`).
+- `ruff` / `ruff format` / `pip-audit` / `makemigrations --check` / `check --deploy --fail-level WARNING` clean.
 - Full CRUD + search + role gates + national_id masking verified via `runserver` + SQLite.
 - `/code-review` (high) + security review — Critical/High fixed.
+- **CI fix:** `check --deploy` was failing `security.W009` (workflow set a 13-char
+  `DJANGO_SECRET_KEY`). Fixed — the CI job now generates a fresh 86-char ephemeral
+  key per run; W009 is **not** silenced; `prod.py` still requires the key from env.
 
-**DEFERRED / UNVERIFIED — same environment blocker as Phase 1 (no Docker/PostgreSQL):**
+**DEFERRED / UNVERIFIED — Docker/PostgreSQL environment blocker (same as Phase 1;
+the session machine cannot run Docker or PostgreSQL — low RAM, network stalls):**
 1. Full suite on **PostgreSQL 16** (SQLite only).
 2. `clients/migrations/0002_client_search_indexes` (trigram GIN) — never executed (PG-only, guarded).
 3. The `@pytest.mark.postgres` tests (incl. client-number concurrency).
 4. `docker compose` full-stack smoke.
 5. `make compilemessages` (Docker-only; harmless).
 
-Branch: `phase/2-clients` — one commit `phase(2): complete clients`, pushed, **not merged**.
+Branch: `phase/2-clients` — **two commits**, pushed, **not merged**:
+- `a16cc3e` `phase(2): complete clients` — the feature work
+- `36a3a2d` `fix(ci): provide secure test secret key` — CI `check --deploy` fix
+- (this cleanup adds a third: `fix(ci): align master workflow and phase docs`)
 
 ## Phase 3 — Cases
 Status: NOT STARTED

@@ -5,8 +5,11 @@ QISTAS — PHASE COMPLETION REPORT
 Phase:      2 — Clients
 Status:     COMPLETE (technical) — PostgreSQL / Docker verification DEFERRED (same
             environment blocker as Phase 1; all other DoD items met)
-Branch:     phase/2-clients — one commit `phase(2): complete clients`, pushed.
-            NOT merged to master. Based on master @ 4c320ec.
+Branch:     phase/2-clients — based on master @ 4c320ec, pushed, NOT merged.
+            Commits (2 feature/fix + this cleanup):
+              a16cc3e  phase(2): complete clients            — the feature work
+              36a3a2d  fix(ci): provide secure test secret key — CI check --deploy fix
+              (this doc)  fix(ci): align master workflow and phase docs
 
 ---
 
@@ -84,12 +87,12 @@ Database Changes:
 ---
 
 Tests:
-Total:   161 collected
-Passed:  158
+Total:   162 collected
+Passed:  159
 Failed:  0
 Skipped: 3  — `@pytest.mark.postgres` (client-number concurrency + the 2 Phase 1
              PG tests); run only on a PostgreSQL backend.
-(59 of the 161 are new client tests.)
+(59 of the 162 are new client tests; +1 is a CI-secret-key regression in tests/test_smoke.py.)
 
 New client coverage (59 tests): model (numbering, uniqueness, name/type
 constraint at both layers, display_name, `for_user` scoping, active()),
@@ -103,7 +106,19 @@ transition + idempotency), selectors (always scoped, filters compose).
 Run on **SQLite** — canonical PostgreSQL run **DEFERRED** (see Known Issues).
 
 Also clean: `ruff check` · `ruff format --check` · `pip-audit` ·
-`makemigrations --check` · `manage.py check --deploy` (prod settings).
+`makemigrations --check` · `manage.py check --deploy --fail-level WARNING`
+(config.settings.prod, with a strong ephemeral SECRET_KEY).
+
+CI (commit `36a3a2d`): the `check --deploy --fail-level WARNING` step was failing
+`security.W009` because the workflow hardcoded a 13-char `DJANGO_SECRET_KEY`. Fixed
+— the `test` job now generates a fresh 86-char ephemeral key per run
+(`secrets.token_urlsafe(64)` → `$GITHUB_ENV`). `security.W009` is **not** silenced;
+`--fail-level WARNING` is unchanged; `config/settings/prod.py` still requires the
+key from the real environment with no fallback. `tests/test_smoke.py` now runs the
+deploy check at `--fail-level WARNING` with a strong key and asserts a weak key
+still trips W009. This cleanup commit also fixes the workflow `push` trigger
+(`main` → `master`, matching the renamed default branch); `pull_request` CI is
+unchanged.
 
 ---
 
@@ -184,12 +199,12 @@ Deferred Items (carried forward):
 Technical Debt:
 - `ClientListView` paginates manually (not `ListView.paginate_by`) so the filter form
   can be built once — acceptable; revisit if list views multiply.
-- `_allocate_client_number` (leading underscore) is imported by `seed_demo_clients` —
-  it is effectively package-internal API; fine for now.
+- CI `push` trigger and default branch drifted (`main` vs `master`) — fixed in this
+  cleanup commit.
 
 Assumptions:
-- All staff may see all clients; `national_id` visibility is the only per-field gate
-  in Phase 2 (ADR-0008/0009).
+- All staff may see all clients; `national_id` + `registration_number` visibility is
+  the only per-field gate in Phase 2 (ADR-0008/0009).
 - `client_number` gaps are acceptable (ADR-0021).
 - Palestinian ID / registration formats are free-text in v1 (no validation — ADR-0002).
 
