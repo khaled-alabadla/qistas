@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{% translate "إضافة ملاحظة" %} · {{ case.case_number }}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl">
+  <nav class="mb-4 text-xs text-slate/70">
+    <a href="{% url 'cases:detail' case.pk %}" class="hover:text-navy">{% num case.case_number %}</a>
+    <span aria-hidden="true"> ‹ </span>
+    <span class="font-medium text-ink">{% translate "إضافة ملاحظة" %}</span>
+  </nav>
+
+  <h1 class="mb-4 text-xl font-semibold text-ink">{% translate "إضافة ملاحظة أو مراسلة" %}</h1>
+
+  {% if form.non_field_errors %}
+    <div class="mb-4">{% for e in form.non_field_errors %}{% include "components/alert.html" with tone="error" text=e %}{% endfor %}</div>
+  {% endif %}
+
+  <form method="post" novalidate class="space-y-4 rounded-xl border border-line bg-white p-6">
+    {% csrf_token %}
+    {% include "components/_form_field.html" with field=form.kind %}
+    {% include "components/_form_field.html" with field=form.body %}
+    <div class="flex gap-2">
+      <button type="submit" class="btn btn-primary">{% translate "حفظ" %}</button>
+      <a href="{% url 'cases:detail' case.pk %}" class="btn btn-ghost">{% translate "إلغاء" %}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

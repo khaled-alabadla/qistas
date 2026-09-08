@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{% translate "القضايا" %} · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <h1 class="text-xl font-semibold text-ink">{% translate "القضايا" %}</h1>
+    <p class="text-sm text-slate/70">
+      {% blocktranslate count n=total_count %}قضية واحدة{% plural %}{{ n }} قضايا{% endblocktranslate %}
+    </p>
+  </div>
+  {% if can_manage %}
+    <a href="{% url 'cases:create' %}" class="btn btn-primary">{% translate "إضافة قضية" %}</a>
+  {% endif %}
+</div>
+
+<form method="get" class="mb-4 grid gap-3 rounded-xl border border-line bg-white p-4 sm:grid-cols-4">
+  <div class="sm:col-span-2">{% include "components/_form_field.html" with field=filter_form.q %}</div>
+  <div>{% include "components/_form_field.html" with field=filter_form.status %}</div>
+  <div>{% include "components/_form_field.html" with field=filter_form.priority %}</div>
+  <div>{% include "components/_form_field.html" with field=filter_form.type %}</div>
+  <div>{% include "components/_form_field.html" with field=filter_form.lawyer %}</div>
+  <div class="sm:col-span-4 flex gap-2">
+    <button type="submit" class="btn btn-primary">{% translate "تطبيق" %}</button>
+    <a href="{% url 'cases:list' %}" class="btn btn-ghost">{% translate "مسح" %}</a>
+  </div>
+</form>
+
+{% if cases %}
+<div class="overflow-x-auto rounded-lg border border-line">
+  <table class="w-full text-start text-sm">
+    <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+      <tr>
+        <th class="px-3 py-2 text-start font-medium">{% translate "رقم القضية" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "العنوان" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "الموكل" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "النوع" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "المحامي المسؤول" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "الأولوية" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "الحالة" %}</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-line">
+      {% for c in cases %}
+        <tr class="hover:bg-mist/50">
+          <td class="px-3 py-2"><a class="font-medium text-navy hover:underline" href="{% url 'cases:detail' c.pk %}">{% num c.case_number %}</a></td>
+          <td class="px-3 py-2">{{ c.title }}</td>
+          <td class="px-3 py-2">{{ c.client.display_name }}</td>
+          <td class="px-3 py-2">{{ c.type.name }}</td>
+          <td class="px-3 py-2">{% if c.assigned_lawyer %}{{ c.assigned_lawyer.get_full_name|default:c.assigned_lawyer.email }}{% else %}—{% endif %}</td>
+          <td class="px-3 py-2">
+            {% if c.priority == 'urgent' %}{% badge c.get_priority_display "error" %}
+            {% elif c.priority == 'high' %}{% badge c.get_priority_display "warning" %}
+            {% else %}{% badge c.get_priority_display "neutral" %}{% endif %}
+          </td>
+          <td class="px-3 py-2">
+            {% if c.status == 'closed' or c.status == 'concluded' %}{% badge c.get_status_display "neutral" %}
+            {% elif c.status == 'new' %}{% badge c.get_status_display "bronze" %}
+            {% else %}{% badge c.get_status_display "success" %}{% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "components/pagination.html" with page_obj=page_obj querystring=querystring %}
+{% else %}
+  {% translate "لا توجد قضايا مطابقة" as es_title %}
+  {% translate "جرّب تعديل معايير البحث، أو أضف أول قضية إلى النظام." as es_msg %}
+  {% if can_manage %}
+    {% url 'cases:create' as create_url %}
+    {% translate "إضافة قضية" as create_label %}
+    {% empty_state es_title es_msg action_url=create_url action_label=create_label %}
+  {% else %}
+    {% empty_state es_title es_msg %}
+  {% endif %}
+{% endif %}
+{% endblock %}

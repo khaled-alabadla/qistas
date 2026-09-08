@@ -24,6 +24,9 @@ SENSITIVE_FIELDS: set[str] = {
     # masked / redacted everywhere: audit diffs, logs, search.
     "national_id",
     "registration_number",
+    # Phase 3 — privileged case notes (docs/adr/0008, 0009).
+    "legal_notes",
+    "internal_notes",
 }
 
 # Substrings that mark a value sensitive even without an exact field match.

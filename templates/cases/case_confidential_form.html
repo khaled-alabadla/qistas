@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{% translate "ملاحظات سرية" %} · {{ case.case_number }}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl">
+  <nav class="mb-4 text-xs text-slate/70">
+    <a href="{% url 'cases:list' %}" class="hover:text-navy">{% translate "القضايا" %}</a>
+    <span aria-hidden="true"> ‹ </span>
+    <a href="{% url 'cases:detail' case.pk %}" class="hover:text-navy">{% num case.case_number %}</a>
+    <span aria-hidden="true"> ‹ </span>
+    <span class="font-medium text-ink">{% translate "ملاحظات سرية" %}</span>
+  </nav>
+
+  <h1 class="mb-1 text-xl font-semibold text-ink">{% translate "الملاحظات السرية للقضية" %}</h1>
+  <p class="mb-4 text-sm text-slate/60">{% translate "تُسجَّل التعديلات في سجل التدقيق دون كشف المحتوى في الخط الزمني." %}</p>
+
+  <form method="post" novalidate class="space-y-6 rounded-xl border border-bronze/40 bg-bronze/5 p-6">
+    {% csrf_token %}
+    {% include "components/_form_field.html" with field=form.legal_notes %}
+    {% include "components/_form_field.html" with field=form.internal_notes %}
+    <div class="flex gap-2">
+      <button type="submit" class="btn btn-primary">{% translate "حفظ" %}</button>
+      <a href="{% url 'cases:detail' case.pk %}" class="btn btn-ghost">{% translate "إلغاء" %}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

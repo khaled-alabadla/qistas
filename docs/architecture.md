@@ -52,7 +52,7 @@ qistas/
 
 ### App roadmap (informational — not built until each phase is approved)
 
-`core` `accounts` `audit` (P1 ✓) · `clients` (P2 ✓) · `cases` +parties+notes+timeline (P3) · `courts` `hearings` `agenda` (P4) · `tasks` +deadlines (P5) · `documents` (P6) · `contracts` (P7) · `finance` (P8) · `dashboard` (P9) · `reports` (P10) · `notifications` (P11) · security/audit hardening (P12) · quality/perf/UX hardening (P13) · production readiness (P14).
+`core` `accounts` `audit` (P1 ✓) · `clients` (P2 ✓) · `cases` +parties+notes+timeline + `courts` (minimal) (P3 ✓) · `courts` (full) `hearings` `agenda` (P4) · `tasks` +deadlines (P5) · `documents` (P6) · `contracts` (P7) · `finance` (P8) · `dashboard` (P9) · `reports` (P10) · `notifications` (P11) · security/audit hardening (P12) · quality/perf/UX hardening (P13) · production readiness (P14).
 
 ### Clients (P2) — implemented notes
 
@@ -61,6 +61,16 @@ qistas/
 - **`national_id`** is registered in `core.sensitive.SENSITIVE_FIELDS`; excluded from `SEARCH_FIELDS`, from the trigram index, from the list template; gated out of the form and detail view for users without `clients.view_sensitive`; masked in the django-auditlog diff. `registration_number` is UI-gated only (company registration ≠ personal PII).
 - Layering: `clients/services.py` (transactional create/update/archive/restore, each emitting a readable `AuditLog` event) + `clients/selectors.py` (`client_list`, permission-scoped). django-auditlog's `LogEntry` holds the detailed field diff; the client profile's Activity tab reads `AuditLog`.
 - Search: `icontains` OR over name/number/phone/email/city — portable across SQLite and PostgreSQL. `clients/migrations/0002` adds trigram GIN indexes, guarded to PostgreSQL only.
+
+### Cases (P3) — implemented notes
+
+- **`Case`** — central object. `case_number` = `CS-YYYY-NNNN` via `core.numbering` (ADR-0021, `editable=False`, gaps OK). Separate `internal_reference` (office file no.) and `court_case_number` (docket) — grill P3. FK `type` → configurable `CaseType` table (7 Arabic defaults seeded by a data migration); FK `client` **PROTECT**; `assigned_lawyer` (SET_NULL) + `supporting_lawyers` M2M through `CaseLawyer`; FK `court` (SET_NULL). `status` / `priority` / `stage`; `claim_amount` with a DB `CheckConstraint` (≥ 0). **No `next_hearing`** — that lands with `hearings` in P4 to keep the phase boundary clean. Closing is a `status` change, never a delete (ADR-0022); `CaseNote` is soft-deletable (`deleted_at`).
+- **Visibility:** every authenticated staff member sees every case (ADR-0008). `Case.objects.for_user()` = all rows for an authed user, none for anonymous; a missing pk is **404**. Capabilities: `cases.view` (all 5 groups), `cases.manage` (office_manager, lawyer, paralegal, admin_clerk), `cases.view_confidential` (office_manager, lawyer).
+- **`CaseConfidential`** — 1:1 side model holding `legal_notes` / `internal_notes` (both in `core.sensitive.SENSITIVE_FIELDS`). Never selected by the list selector, search, or timeline; only fetched when `cases.view_confidential`; masked in the django-auditlog diff. Edits go through `services.set_confidential`, which writes an **`AuditLog` event only — no `CaseEvent`** so the staff-visible timeline never hints at privileged content.
+- **`CaseParty`** — relationship model for opponents / counsel / representatives (spec §27), optionally linked to a `Client` or `User`. **`CaseEvent`** — append-only human-readable timeline (spec §26); every `services` mutation records one, and later phases (hearings, tasks, documents) will emit events too.
+- Layering: `cases/services.py` (all transactional writes — create/update/status/party/note/lawyer/confidential, each emitting `CaseEvent` + `AuditLog`; `update_case` diffs against a **freshly-fetched** row — bug-027) + `cases/selectors.py` (`case_list` with filters, `case_parties` aggregator). Detail view is a tabbed workspace; tabs for not-yet-built modules render as disabled placeholders.
+- Search: `icontains` OR over case_number / title / court_case_number / internal_reference / department. `cases/migrations/0003` adds trigram GIN indexes (`TRGM_COLUMNS == SEARCH_FIELDS`), guarded to PostgreSQL.
+- **`courts`** app ships **minimal** in P3 — `Court` (name / type / city / is_active, `(name, city)` unique) is only what a `Case` FK + picker need. Full court management UI + address/phone/notes fields are P4.
 
 ## 5. Authentication — ADR-0004, ADR-0017, ADR-0027
 
@@ -173,9 +183,9 @@ One phase at a time. **Security, authorization, audit, testing, accessibility, a
 | Gap-free legal invoice numbering | Only if law/accounting later requires it | ADR-0011 |
 | Credit-note / payment-reversal workflow | Phase 8 (Finance) | ADR-0012 |
 | `FeeAgreement` structure | Phase 8 (Finance) | ADR-0013 |
-| Office-wide Party directory | Phase 3 | grill X9 |
+| Office-wide Party directory (standalone) | Phase 4+ — P3 ships per-case `CaseParty` | grill X9 |
 | Payment/case optimistic-locking UI | Phases 3 / 8 | grill F5 |
 | Real-time / digest notification design | Phase 11 | grill (notifications) |
 | Global search backend (`pg_trgm`) | Phase 2+ | grill C5 |
 | X-Accel-Redirect download path | Phase 6 (if perf requires) | grill D5 |
-| Case identity fields (`file_number` vs `court_case_number`) | Phase 3 | grill P3 |
+| Case identity fields (`internal_reference` vs `court_case_number`) | ✓ Phase 3 | grill P3 |

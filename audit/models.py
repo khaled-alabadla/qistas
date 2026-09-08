@@ -33,6 +33,14 @@ class AuditAction(models.TextChoices):
     CLIENT_UPDATED = "client.updated", _("تعديل بيانات عميل")
     CLIENT_ARCHIVED = "client.archived", _("أرشفة عميل")
     CLIENT_RESTORED = "client.restored", _("استعادة عميل")
+    # Cases (Phase 3)
+    CASE_CREATED = "case.created", _("إنشاء قضية")
+    CASE_UPDATED = "case.updated", _("تعديل بيانات قضية")
+    CASE_STATUS_CHANGED = "case.status_changed", _("تغيير حالة قضية")
+    CASE_LAWYER_CHANGED = "case.lawyer_changed", _("تعديل محامي القضية")
+    CASE_PARTY_CHANGED = "case.party_changed", _("تعديل أطراف القضية")
+    CASE_NOTE_ADDED = "case.note_added", _("إضافة ملاحظة للقضية")
+    CASE_CONFIDENTIAL_UPDATED = "case.confidential_updated", _("تعديل الملاحظات السرية للقضية")
     OTHER = "other", _("أخرى")
 
 

@@ -29,6 +29,20 @@ _CLIENT_MANAGE = {
     "clients.view_sensitive_client",
 }
 
+_CASE_VIEW = {"cases.view_case", "cases.view_casetype", "courts.view_court"}
+_CASE_MANAGE = {
+    *_CASE_VIEW,
+    "cases.add_case",
+    "cases.change_case",
+    "cases.add_caseparty",
+    "cases.change_caseparty",
+    "cases.delete_caseparty",
+    "cases.add_casenote",
+    "cases.add_caselawyer",
+    "cases.delete_caselawyer",
+}
+_CASE_CONFIDENTIAL = {"cases.view_confidential_case"}
+
 ROLE_PERMISSIONS: dict[str, set[str]] = {
     GroupChoice.OFFICE_MANAGER: {
         "accounts.view_user",
@@ -39,11 +53,17 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
         "auth.change_group",
         "audit.view_auditlog",
         *_CLIENT_MANAGE,
+        *_CASE_MANAGE,
+        *_CASE_CONFIDENTIAL,
+        "cases.add_casetype",
+        "cases.change_casetype",
+        "courts.add_court",
+        "courts.change_court",
     },
-    GroupChoice.LAWYER: set(_CLIENT_MANAGE),
-    GroupChoice.PARALEGAL: set(_CLIENT_VIEW),
-    GroupChoice.ADMIN_CLERK: set(_CLIENT_MANAGE),
-    GroupChoice.FINANCE_CLERK: set(_CLIENT_VIEW),
+    GroupChoice.LAWYER: _CLIENT_MANAGE | _CASE_MANAGE | _CASE_CONFIDENTIAL,
+    GroupChoice.PARALEGAL: _CLIENT_VIEW | _CASE_MANAGE,
+    GroupChoice.ADMIN_CLERK: _CLIENT_MANAGE | _CASE_MANAGE,
+    GroupChoice.FINANCE_CLERK: _CLIENT_VIEW | _CASE_VIEW,
 }
 
 
