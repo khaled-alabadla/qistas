@@ -52,7 +52,15 @@ qistas/
 
 ### App roadmap (informational — not built until each phase is approved)
 
-`core` `accounts` `audit` (P1) · `clients` (P2) · `cases` +parties+notes+timeline (P3) · `courts` `hearings` `agenda` (P4) · `tasks` +deadlines (P5) · `documents` (P6) · `contracts` (P7) · `finance` (P8) · `dashboard` (P9) · `reports` (P10) · `notifications` (P11) · security/audit hardening (P12) · quality/perf/UX hardening (P13) · production readiness (P14).
+`core` `accounts` `audit` (P1 ✓) · `clients` (P2 ✓) · `cases` +parties+notes+timeline (P3) · `courts` `hearings` `agenda` (P4) · `tasks` +deadlines (P5) · `documents` (P6) · `contracts` (P7) · `finance` (P8) · `dashboard` (P9) · `reports` (P10) · `notifications` (P11) · security/audit hardening (P12) · quality/perf/UX hardening (P13) · production readiness (P14).
+
+### Clients (P2) — implemented notes
+
+- `Client` (individual/company) — `type`-conditional name enforced by a DB `CheckConstraint` **and** `Model.clean()`. `client_number` = `CL-YYYY-NNNN` via `core.numbering` (ADR-0021). `status` includes `archived`; **archive is a status change, never a delete** (ADR-0022) — no `deleted_at` on `Client`.
+- **Visibility:** every authenticated staff member sees every client (ADR-0008). `Client.objects.for_user()` returns all rows for an authed user, none for anonymous; a missing pk is **404** (there is no per-row siloing to hide). Capabilities: `clients.view` (all 5 groups), `clients.manage` (office_manager, lawyer, admin_clerk), `clients.view_sensitive` (same as manage).
+- **`national_id`** is registered in `core.sensitive.SENSITIVE_FIELDS`; excluded from `SEARCH_FIELDS`, from the trigram index, from the list template; gated out of the form and detail view for users without `clients.view_sensitive`; masked in the django-auditlog diff. `registration_number` is UI-gated only (company registration ≠ personal PII).
+- Layering: `clients/services.py` (transactional create/update/archive/restore, each emitting a readable `AuditLog` event) + `clients/selectors.py` (`client_list`, permission-scoped). django-auditlog's `LogEntry` holds the detailed field diff; the client profile's Activity tab reads `AuditLog`.
+- Search: `icontains` OR over name/number/phone/email/city — portable across SQLite and PostgreSQL. `clients/migrations/0002` adds trigram GIN indexes, guarded to PostgreSQL only.
 
 ## 5. Authentication — ADR-0004, ADR-0017, ADR-0027
 

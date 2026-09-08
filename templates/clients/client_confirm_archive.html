@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{% translate "أرشفة العميل" %} · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-lg">
+  <h1 class="mb-2 text-xl font-semibold text-ink">{% translate "أرشفة العميل" %}</h1>
+  <p class="mb-4 text-sm text-slate/70">
+    {% blocktranslate with name=client.display_name number=client.client_number %}
+      سيتم نقل العميل «{{ name }}» ({{ number }}) إلى الأرشيف. لن يظهر في القوائم الافتراضية،
+      وتبقى بياناته وسجلّه محفوظة ويمكن استعادته لاحقًا.
+    {% endblocktranslate %}
+  </p>
+  <div class="rounded-xl border border-line bg-white p-6">
+    <form method="post" action="{% url 'clients:archive' client.pk %}" class="flex gap-2">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">{% translate "تأكيد الأرشفة" %}</button>
+      <a href="{% url 'clients:detail' client.pk %}" class="btn btn-ghost">{% translate "إلغاء" %}</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
 
 concurrency:
@@ -25,7 +25,6 @@ jobs:
           --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       DJANGO_SETTINGS_MODULE: config.settings.test
-      DJANGO_SECRET_KEY: ci-not-secret
       DATABASE_URL: postgres://qistas:qistas@localhost:5432/qistas
     steps:
       - uses: actions/checkout@v4
@@ -34,6 +33,15 @@ jobs:
         with:
           python-version: "3.13"
           cache: pip
+
+      # Qistas has no persistent secret for tests. Generate a strong random,
+      # per-run, ephemeral SECRET_KEY (>= 50 chars, high entropy) so that
+      # `check --deploy` (config.settings.prod) passes security.W009 without a
+      # secret ever living in the repo. Production still requires it from the
+      # real environment (config/settings/prod.py).
+      - name: Generate ephemeral SECRET_KEY
+        run: |
+          echo "DJANGO_SECRET_KEY=$(python -c 'import secrets; print(secrets.token_urlsafe(64))')" >> "$GITHUB_ENV"
 
       - name: Install
         run: |

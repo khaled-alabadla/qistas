@@ -35,11 +35,22 @@ class Capability(TextChoices):
     SETTINGS_VIEW = "settings.view", _("عرض الإعدادات")
     AUDIT_VIEW = "audit.view", _("عرض سجل التدقيق")
     USERS_MANAGE = "users.manage", _("إدارة المستخدمين")
+    # Phase 2 — Clients
+    CLIENTS_VIEW = "clients.view", _("عرض العملاء")
+    CLIENTS_MANAGE = "clients.manage", _("إضافة وتعديل العملاء")
+    CLIENTS_VIEW_SENSITIVE = "clients.view_sensitive", _("عرض بيانات العملاء الحساسة")
 
 
 # group -> capabilities it grants. Fixed in code for v1 (docs/adr/0007);
 # only group *membership* is admin-editable.
-_ALL_STAFF = {Capability.DASHBOARD_VIEW, Capability.NOTIFICATIONS_VIEW}
+# Every staff member can see the dashboard, notifications, and the client directory.
+_ALL_STAFF = {
+    Capability.DASHBOARD_VIEW,
+    Capability.NOTIFICATIONS_VIEW,
+    Capability.CLIENTS_VIEW,
+}
+# Roles that intake / represent clients and legitimately need the national ID.
+_CLIENT_HANDLERS = {Capability.CLIENTS_MANAGE, Capability.CLIENTS_VIEW_SENSITIVE}
 
 GROUP_CAPABILITIES: dict[str, set[str]] = {
     Group.OFFICE_MANAGER: {
@@ -48,10 +59,13 @@ GROUP_CAPABILITIES: dict[str, set[str]] = {
         Capability.SETTINGS_VIEW,
         Capability.AUDIT_VIEW,
         Capability.USERS_MANAGE,
+        Capability.CLIENTS_VIEW,
+        Capability.CLIENTS_MANAGE,
+        Capability.CLIENTS_VIEW_SENSITIVE,
     },
-    Group.LAWYER: set(_ALL_STAFF),
+    Group.LAWYER: _ALL_STAFF | _CLIENT_HANDLERS,
     Group.PARALEGAL: set(_ALL_STAFF),
-    Group.ADMIN_CLERK: set(_ALL_STAFF),
+    Group.ADMIN_CLERK: _ALL_STAFF | _CLIENT_HANDLERS,
     Group.FINANCE_CLERK: set(_ALL_STAFF),
 }
 # normalise to plain str

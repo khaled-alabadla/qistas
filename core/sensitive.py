@@ -19,7 +19,12 @@ import re
 from collections.abc import Mapping
 from typing import Any
 
-SENSITIVE_FIELDS: set[str] = set()
+SENSITIVE_FIELDS: set[str] = {
+    # Phase 2 — Client identity numbers (docs/adr/0009). Gated in the UI and
+    # masked / redacted everywhere: audit diffs, logs, search.
+    "national_id",
+    "registration_number",
+}
 
 # Substrings that mark a value sensitive even without an exact field match.
 _SENSITIVE_HINTS = ("password", "secret", "token", "national_id", "authorization")

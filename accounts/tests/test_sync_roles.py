@@ -37,7 +37,9 @@ def test_check_detects_drift():
 
 def test_removes_unexpected_permissions_on_sync():
     call_command("sync_roles", verbosity=0)
-    lawyer = Group.objects.get(name="lawyer")
-    lawyer.permissions.add(Permission.objects.get(codename="view_auditlog"))
+    paralegal = Group.objects.get(name="paralegal")
+    baseline = set(paralegal.permissions.values_list("codename", flat=True))
+    paralegal.permissions.add(Permission.objects.get(codename="view_auditlog"))
     call_command("sync_roles", verbosity=0)
-    assert not lawyer.permissions.exists()
+    assert set(paralegal.permissions.values_list("codename", flat=True)) == baseline
+    assert "view_auditlog" not in baseline

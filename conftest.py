@@ -59,6 +59,46 @@ def lawyer(db, groups):
 
 
 @pytest.fixture
+def paralegal(db, groups):
+    from core.tests.factories import UserFactory
+
+    u = UserFactory()
+    u.groups.add(groups["paralegal"])
+    return u
+
+
+@pytest.fixture
+def admin_clerk(db, groups):
+    from core.tests.factories import UserFactory
+
+    u = UserFactory()
+    u.groups.add(groups["admin_clerk"])
+    return u
+
+
+@pytest.fixture
+def finance_clerk(db, groups):
+    from core.tests.factories import UserFactory
+
+    u = UserFactory()
+    u.groups.add(groups["finance_clerk"])
+    return u
+
+
+@pytest.fixture
+def role_user(db, groups):
+    """Factory: role_user('lawyer') -> a user in that group."""
+    from core.tests.factories import UserFactory
+
+    def make(role: str):
+        u = UserFactory()
+        u.groups.add(groups[role])
+        return u
+
+    return make
+
+
+@pytest.fixture
 def logged_in_client(client, user):
     client.force_login(user)
     return client

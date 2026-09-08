@@ -35,6 +35,23 @@ NAV: tuple[NavItem, ...] = (
         icon="home",
     ),
     NavItem(
+        label=_("العملاء"),
+        capability=Capability.CLIENTS_VIEW,
+        icon="users",
+        children=(
+            NavItem(
+                label=_("جميع العملاء"),
+                url_name="clients:list",
+                capability=Capability.CLIENTS_VIEW,
+            ),
+            NavItem(
+                label=_("إضافة عميل"),
+                url_name="clients:create",
+                capability=Capability.CLIENTS_MANAGE,
+            ),
+        ),
+    ),
+    NavItem(
         label=_("الإشعارات"),
         url_name=None,
         capability=Capability.NOTIFICATIONS_VIEW,

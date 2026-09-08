@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{% translate "العملاء" %} · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <h1 class="text-xl font-semibold text-ink">{% translate "العملاء" %}</h1>
+    <p class="text-sm text-slate/70">
+      {% blocktranslate count n=total_count %}عميل واحد{% plural %}{{ n }} عملاء{% endblocktranslate %}
+    </p>
+  </div>
+  {% if can_manage %}
+    <a href="{% url 'clients:create' %}" class="btn btn-primary">{% translate "إضافة عميل" %}</a>
+  {% endif %}
+</div>
+
+<form method="get" class="mb-4 grid gap-3 rounded-xl border border-line bg-white p-4 sm:grid-cols-4">
+  <div class="sm:col-span-2">{% include "components/_form_field.html" with field=filter_form.q %}</div>
+  <div>{% include "components/_form_field.html" with field=filter_form.type %}</div>
+  <div>{% include "components/_form_field.html" with field=filter_form.status %}</div>
+  <div class="sm:col-span-4 flex gap-2">
+    <button type="submit" class="btn btn-primary">{% translate "تطبيق" %}</button>
+    <a href="{% url 'clients:list' %}" class="btn btn-ghost">{% translate "مسح" %}</a>
+  </div>
+</form>
+
+{% if clients %}
+<div class="overflow-x-auto rounded-lg border border-line">
+  <table class="w-full text-start text-sm">
+    <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+      <tr>
+        <th class="px-3 py-2 text-start font-medium">{% translate "رقم العميل" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "الاسم" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "النوع" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "الهاتف" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "المدينة" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "الحالة" %}</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-line">
+      {% for c in clients %}
+        <tr class="hover:bg-mist/50">
+          <td class="px-3 py-2"><a class="font-medium text-navy hover:underline" href="{% url 'clients:detail' c.pk %}">{% num c.client_number %}</a></td>
+          <td class="px-3 py-2">{{ c.display_name }}</td>
+          <td class="px-3 py-2">{{ c.get_type_display }}</td>
+          <td class="px-3 py-2">{% num c.phone %}</td>
+          <td class="px-3 py-2">{{ c.city|default:"—" }}</td>
+          <td class="px-3 py-2">
+            {% if c.status == 'active' %}{% badge c.get_status_display "success" %}
+            {% elif c.status == 'archived' %}{% badge c.get_status_display "neutral" %}
+            {% elif c.status == 'prospect' %}{% badge c.get_status_display "bronze" %}
+            {% else %}{% badge c.get_status_display "warning" %}{% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "components/pagination.html" with page_obj=page_obj querystring=querystring %}
+{% else %}
+  {% translate "لا يوجد عملاء مطابقون" as es_title %}
+  {% translate "جرّب تعديل معايير البحث، أو أضف أول عميل إلى النظام." as es_msg %}
+  {% if can_manage %}
+    {% url 'clients:create' as create_url %}
+    {% translate "إضافة عميل" as create_label %}
+    {% empty_state es_title es_msg action_url=create_url action_label=create_label %}
+  {% else %}
+    {% empty_state es_title es_msg %}
+  {% endif %}
+{% endif %}
+{% endblock %}

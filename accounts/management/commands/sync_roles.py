@@ -19,8 +19,16 @@ from core.permissions.capabilities import GROUPS
 from core.permissions.capabilities import Group as GroupChoice
 
 # group name -> exact set of "app_label.codename" it should hold.
-# Phase 1: only the office manager needs model permissions (admin-side user +
-# group + audit-log management). Everything else is capability-driven.
+# The capability layer drives in-app access; these keep Django model permissions
+# aligned for the admin site and `has_perm` checks.
+_CLIENT_VIEW = {"clients.view_client"}
+_CLIENT_MANAGE = {
+    "clients.view_client",
+    "clients.add_client",
+    "clients.change_client",
+    "clients.view_sensitive_client",
+}
+
 ROLE_PERMISSIONS: dict[str, set[str]] = {
     GroupChoice.OFFICE_MANAGER: {
         "accounts.view_user",
@@ -30,11 +38,12 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
         "auth.view_group",
         "auth.change_group",
         "audit.view_auditlog",
+        *_CLIENT_MANAGE,
     },
-    GroupChoice.LAWYER: set(),
-    GroupChoice.PARALEGAL: set(),
-    GroupChoice.ADMIN_CLERK: set(),
-    GroupChoice.FINANCE_CLERK: set(),
+    GroupChoice.LAWYER: set(_CLIENT_MANAGE),
+    GroupChoice.PARALEGAL: set(_CLIENT_VIEW),
+    GroupChoice.ADMIN_CLERK: set(_CLIENT_MANAGE),
+    GroupChoice.FINANCE_CLERK: set(_CLIENT_VIEW),
 }
 
 
