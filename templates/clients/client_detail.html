@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{{ client.display_name }} · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<nav class="mb-4 text-xs text-slate/70">
+  <a href="{% url 'clients:list' %}" class="hover:text-navy">{% translate "العملاء" %}</a>
+  <span aria-hidden="true"> ‹ </span>
+  <span class="font-medium text-ink">{{ client.display_name }}</span>
+</nav>
+
+<div class="mb-6 flex flex-wrap items-start justify-between gap-3">
+  <div>
+    <div class="flex flex-wrap items-center gap-2">
+      <h1 class="text-xl font-semibold text-ink">{{ client.display_name }}</h1>
+      {% if client.type == 'company' %}{% badge client.get_type_display "navy" %}{% else %}{% badge client.get_type_display "neutral" %}{% endif %}
+      {% if client.status == 'active' %}{% badge client.get_status_display "success" %}
+      {% elif client.status == 'archived' %}{% badge client.get_status_display "neutral" %}
+      {% elif client.status == 'prospect' %}{% badge client.get_status_display "bronze" %}
+      {% else %}{% badge client.get_status_display "warning" %}{% endif %}
+    </div>
+    <p class="mt-1 text-sm text-slate/70">{% translate "رقم العميل" %} {% num client.client_number %}</p>
+  </div>
+  {% if can_manage %}
+  <div class="flex flex-wrap gap-2">
+    <a href="{% url 'clients:update' client.pk %}" class="btn btn-secondary">{% translate "تعديل" %}</a>
+    {% if client.is_archived %}
+      <form method="post" action="{% url 'clients:restore' client.pk %}">{% csrf_token %}
+        <button class="btn btn-secondary">{% translate "استعادة" %}</button>
+      </form>
+    {% else %}
+      <a href="{% url 'clients:archive_confirm' client.pk %}" class="btn btn-ghost">{% translate "أرشفة" %}</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+{# Profile tabs — only the sections that exist in Phase 2 are active. #}
+<div class="border-b border-line">
+  <nav class="-mb-px flex flex-wrap gap-4 text-sm" aria-label="{% translate 'تبويبات العميل' %}">
+    <span class="border-b-2 border-bronze px-1 py-2 font-medium text-navy" aria-current="page">{% translate "نظرة عامة" %}</span>
+    {% for label in disabled_tabs %}
+      <span class="border-b-2 border-transparent px-1 py-2 text-slate/40" title="{% translate 'قريبًا' %}">{{ label }}</span>
+    {% endfor %}
+  </nav>
+</div>
+
+<div class="mt-6 grid gap-6 lg:grid-cols-3">
+  <section class="lg:col-span-2 space-y-6">
+    <div class="rounded-xl border border-line bg-white p-5">
+      <h3 class="mb-3 text-base font-semibold text-ink">{% translate "المعلومات" %}</h3>
+      <dl class="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+        <div><dt class="text-slate/60">{% translate "النوع" %}</dt><dd class="text-ink">{{ client.get_type_display }}</dd></div>
+        <div><dt class="text-slate/60">{% translate "الحالة" %}</dt><dd class="text-ink">{{ client.get_status_display }}</dd></div>
+        <div><dt class="text-slate/60">{% translate "الهاتف" %}</dt><dd class="text-ink">{% num client.phone %}</dd></div>
+        {% if client.secondary_phone %}<div><dt class="text-slate/60">{% translate "هاتف إضافي" %}</dt><dd>{% num client.secondary_phone %}</dd></div>{% endif %}
+        {% if client.email %}<div><dt class="text-slate/60">{% translate "البريد" %}</dt><dd><bdi dir="ltr">{{ client.email }}</bdi></dd></div>{% endif %}
+        {% if client.city %}<div><dt class="text-slate/60">{% translate "المدينة" %}</dt><dd>{{ client.city }}</dd></div>{% endif %}
+        {% if client.address %}<div class="sm:col-span-2"><dt class="text-slate/60">{% translate "العنوان" %}</dt><dd class="whitespace-pre-line">{{ client.address }}</dd></div>{% endif %}
+        {% if can_view_sensitive %}
+          <div><dt class="text-slate/60">{% translate "رقم الهوية" %}</dt><dd>{% if client.national_id %}{% num client.national_id %}{% else %}—{% endif %}</dd></div>
+          {% if client.registration_number %}<div><dt class="text-slate/60">{% translate "رقم التسجيل التجاري" %}</dt><dd>{% num client.registration_number %}</dd></div>{% endif %}
+        {% else %}
+          <div><dt class="text-slate/60">{% translate "رقم الهوية" %}</dt><dd class="text-slate/40">{% translate "محجوب" %}</dd></div>
+        {% endif %}
+      </dl>
+    </div>
+
+    <div class="rounded-xl border border-line bg-white p-5">
+      <h3 class="mb-2 text-base font-semibold text-ink">{% translate "الملاحظات" %}</h3>
+      {% if client.notes %}
+        <p class="whitespace-pre-line text-sm text-ink">{{ client.notes }}</p>
+      {% else %}
+        <p class="text-sm text-slate/50">{% translate "لا توجد ملاحظات." %}</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <aside class="space-y-6">
+    <div class="rounded-xl border border-line bg-white p-5">
+      <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "ملخص مالي" %}</h3>
+      <dl class="space-y-2 text-sm">
+        <div class="flex justify-between"><dt class="text-slate/60">{% translate "إجمالي الفواتير" %}</dt><dd>{% num finance_summary.invoiced 2 %}</dd></div>
+        <div class="flex justify-between"><dt class="text-slate/60">{% translate "المدفوع" %}</dt><dd>{% num finance_summary.paid 2 %}</dd></div>
+        <div class="flex justify-between"><dt class="text-slate/60">{% translate "المتبقي" %}</dt><dd>{% num finance_summary.outstanding 2 %}</dd></div>
+      </dl>
+      <p class="mt-2 text-xs text-slate/40">{% translate "تتوفر الأرقام المالية بعد إضافة وحدة المالية." %}</p>
+    </div>
+
+    <div class="rounded-xl border border-line bg-white p-5">
+      <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "النشاط" %}</h3>
+      {% translate "النظام" as sys_actor %}
+      {% if activity %}
+        <ul class="space-y-3 text-sm">
+          {% for a in activity %}
+            <li class="border-s-2 border-line ps-3">
+              <p class="text-ink">{{ a.action_label }}</p>
+              <p class="text-xs text-slate/50">
+                {{ a.actor.get_full_name|default:a.actor.email|default:sys_actor }} ·
+                {% datestr a.created_at "SHORT_DATETIME_FORMAT" %}
+              </p>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-sm text-slate/50">{% translate "لا يوجد نشاط مسجّل." %}</p>
+      {% endif %}
+    </div>
+  </aside>
+</div>
+{% endblock %}

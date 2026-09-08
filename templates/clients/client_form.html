@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% if is_create %}{% translate "إضافة عميل" %}{% else %}{% translate "تعديل العميل" %}{% endif %} · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl">
+  <nav class="mb-4 text-xs text-slate/70">
+    <a href="{% url 'clients:list' %}" class="hover:text-navy">{% translate "العملاء" %}</a>
+    <span aria-hidden="true"> ‹ </span>
+    <span class="font-medium text-ink">{% if is_create %}{% translate "عميل جديد" %}{% else %}{{ client.display_name }}{% endif %}</span>
+  </nav>
+
+  <h1 class="mb-4 text-xl font-semibold text-ink">
+    {% if is_create %}{% translate "إضافة عميل" %}{% else %}{% translate "تعديل العميل" %}{% endif %}
+  </h1>
+
+  {% if form.non_field_errors %}
+    <div class="mb-4">{% for e in form.non_field_errors %}{% include "components/alert.html" with tone="error" text=e %}{% endfor %}</div>
+  {% endif %}
+
+  <form method="post" novalidate x-data="{ ctype: '{{ form.type.value|default:'individual' }}' }"
+        class="space-y-6 rounded-xl border border-line bg-white p-6">
+    {% csrf_token %}
+
+    <fieldset>
+      <legend class="mb-2 text-sm font-semibold text-slate/70">{% translate "الهوية" %}</legend>
+      <div x-init="ctype = $refs.type.value" class="mb-4">
+        <label for="{{ form.type.id_for_label }}" class="mb-1 block text-sm font-medium">{{ form.type.label }}</label>
+        <select name="{{ form.type.html_name }}" id="{{ form.type.id_for_label }}" x-ref="type" x-model="ctype">
+          {% for value, label in form.type.field.choices %}
+            <option value="{{ value }}" {% if form.type.value == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div x-show="ctype === 'individual'">{% include "components/_form_field.html" with field=form.full_name %}</div>
+      <div x-show="ctype === 'company'">{% include "components/_form_field.html" with field=form.company_name %}</div>
+      {% if form.national_id %}{% include "components/_form_field.html" with field=form.national_id %}{% endif %}
+      {% if form.registration_number %}{% include "components/_form_field.html" with field=form.registration_number %}{% endif %}
+    </fieldset>
+
+    <fieldset>
+      <legend class="mb-2 text-sm font-semibold text-slate/70">{% translate "التواصل" %}</legend>
+      {% include "components/_form_field.html" with field=form.phone %}
+      {% include "components/_form_field.html" with field=form.secondary_phone %}
+      {% include "components/_form_field.html" with field=form.email %}
+      {% include "components/_form_field.html" with field=form.city %}
+      {% include "components/_form_field.html" with field=form.address %}
+    </fieldset>
+
+    <fieldset>
+      <legend class="mb-2 text-sm font-semibold text-slate/70">{% translate "الحالة والملاحظات" %}</legend>
+      {% include "components/_form_field.html" with field=form.status %}
+      {% include "components/_form_field.html" with field=form.notes %}
+    </fieldset>
+
+    <div class="flex gap-2">
+      <button type="submit" class="btn btn-primary">{% translate "حفظ" %}</button>
+      <a href="{% if client %}{% url 'clients:detail' client.pk %}{% else %}{% url 'clients:list' %}{% endif %}" class="btn btn-ghost">{% translate "إلغاء" %}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

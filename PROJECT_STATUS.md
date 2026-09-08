@@ -4,7 +4,7 @@
 > `COMPLETED ≠ APPROVED` — a phase starts only after the user says
 > **APPROVE PHASE N** / **ابدأ المرحلة N**.
 
-Current Phase: **1 — Foundation**
+Current Phase: **2 — Clients** (Phase 1 approved + merged to master)
 
 Planning artifacts: `QISTAS_PHASE_0_ANALYSIS.md` · `QISTAS_GRILL_REVIEW.md` ·
 `docs/architecture.md` · `docs/adr/0001`–`0027` · `docs/PHASE_1_PLAN.md`
@@ -54,11 +54,38 @@ docker compose run --rm -e DJANGO_SETTINGS_MODULE=config.settings.prod \
 docker compose up -d && curl -si localhost:8000/                # -> 302 /accounts/login/
 ```
 
-Branch: `phase/1-foundation` — one commit `phase(1): complete foundation`, pushed, **not merged**.
+Branch: `phase/1-foundation` — merged to `master` (commit `4c320ec`). `master` is the GitHub default branch.
 
 ## Phase 2 — Clients
-Status: NOT STARTED
-Approval: N/A
+Status: **COMPLETE (technical)** — see `docs/PHASE_2_REPORT.md`
+Approval: **PENDING**
+
+`clients` app: `Client` model (individual/company, `type`-conditional name via DB
+CheckConstraint + `clean()`), `client_number` `CL-YYYY-NNNN` (transaction-safe,
+ADR-0021), status incl. `archived` (archive = status, never delete — ADR-0022).
+CRUD (list/detail/create/update/archive/restore), client profile (overview +
+notes + activity; other tabs placeheld), search (`icontains` over
+name/number/phone/email/city — **never** national_id), type/status filters,
+pagination. Capability gates: `clients.view` (all staff) / `clients.manage`
+(office_manager, lawyer, admin_clerk) / `clients.view_sensitive` (same). `national_id`
+added to `SENSITIVE_FIELDS`, gated in form + detail, masked in auditlog, excluded
+from search + trigram index. `Client` registered with django-auditlog; `AuditLog`
+events for create/update/archive/restore. `seed_demo_clients` command.
+
+**Verification:**
+- Tests: **59 client tests; full suite 158 pass / 0 fail / 3 skipped** (`@pytest.mark.postgres`).
+- `ruff` / `ruff format` / `pip-audit` / `makemigrations --check` / `check --deploy` clean.
+- Full CRUD + search + role gates + national_id masking verified via `runserver` + SQLite.
+- `/code-review` (high) + security review — Critical/High fixed.
+
+**DEFERRED / UNVERIFIED — same environment blocker as Phase 1 (no Docker/PostgreSQL):**
+1. Full suite on **PostgreSQL 16** (SQLite only).
+2. `clients/migrations/0002_client_search_indexes` (trigram GIN) — never executed (PG-only, guarded).
+3. The `@pytest.mark.postgres` tests (incl. client-number concurrency).
+4. `docker compose` full-stack smoke.
+5. `make compilemessages` (Docker-only; harmless).
+
+Branch: `phase/2-clients` — one commit `phase(2): complete clients`, pushed, **not merged**.
 
 ## Phase 3 — Cases
 Status: NOT STARTED

@@ -28,6 +28,11 @@ class AuditAction(models.TextChoices):
     USER_CREATED = "user.created", _("إنشاء مستخدم")
     USER_TEMP_PASSWORD = "user.temp_password_issued", _("إصدار كلمة مرور مؤقتة")
     GROUPS_CHANGED = "user.groups_changed", _("تعديل مجموعات المستخدم")
+    # Clients (Phase 2)
+    CLIENT_CREATED = "client.created", _("إنشاء عميل")
+    CLIENT_UPDATED = "client.updated", _("تعديل بيانات عميل")
+    CLIENT_ARCHIVED = "client.archived", _("أرشفة عميل")
+    CLIENT_RESTORED = "client.restored", _("استعادة عميل")
     OTHER = "other", _("أخرى")
 
 
@@ -78,6 +83,13 @@ class AuditLog(models.Model):
     def __str__(self) -> str:
         who = self.actor or _("مجهول")
         return f"{self.action} · {who} · {self.created_at:%Y-%m-%d %H:%M}"
+
+    @property
+    def action_label(self) -> str:
+        try:
+            return AuditAction(self.action).label
+        except ValueError:
+            return self.action
 
     def delete(self, *args, **kwargs):  # pragma: no cover - defensive
         raise PermissionError("AuditLog rows are append-only (docs/adr/0020).")
