@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% if is_create %}{% translate "إضافة قضية" %}{% else %}{% translate "تعديل القضية" %}{% endif %} · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl">
+  <nav class="mb-4 text-xs text-slate/70">
+    <a href="{% url 'cases:list' %}" class="hover:text-navy">{% translate "القضايا" %}</a>
+    <span aria-hidden="true"> ‹ </span>
+    <span class="font-medium text-ink">{% if is_create %}{% translate "قضية جديدة" %}{% else %}{{ case.case_number }}{% endif %}</span>
+  </nav>
+
+  <h1 class="mb-4 text-xl font-semibold text-ink">
+    {% if is_create %}{% translate "إضافة قضية" %}{% else %}{% translate "تعديل القضية" %}{% endif %}
+  </h1>
+
+  {% if form.non_field_errors %}
+    <div class="mb-4">{% for e in form.non_field_errors %}{% include "components/alert.html" with tone="error" text=e %}{% endfor %}</div>
+  {% endif %}
+
+  <form method="post" novalidate class="space-y-6 rounded-xl border border-line bg-white p-6">
+    {% csrf_token %}
+
+    <fieldset>
+      <legend class="mb-2 text-sm font-semibold text-slate/70">{% translate "الأساسيات" %}</legend>
+      {% include "components/_form_field.html" with field=form.title %}
+      {% include "components/_form_field.html" with field=form.type %}
+      {% include "components/_form_field.html" with field=form.client %}
+      {% include "components/_form_field.html" with field=form.priority %}
+    </fieldset>
+
+    <fieldset>
+      <legend class="mb-2 text-sm font-semibold text-slate/70">{% translate "المحكمة والإسناد" %}</legend>
+      {% include "components/_form_field.html" with field=form.assigned_lawyer %}
+      {% include "components/_form_field.html" with field=form.court %}
+      {% include "components/_form_field.html" with field=form.department %}
+      {% include "components/_form_field.html" with field=form.stage %}
+      {% include "components/_form_field.html" with field=form.court_case_number %}
+      {% include "components/_form_field.html" with field=form.internal_reference %}
+    </fieldset>
+
+    <fieldset>
+      <legend class="mb-2 text-sm font-semibold text-slate/70">{% translate "تفاصيل" %}</legend>
+      {% include "components/_form_field.html" with field=form.filing_date %}
+      {% include "components/_form_field.html" with field=form.claim_amount %}
+      {% include "components/_form_field.html" with field=form.description %}
+    </fieldset>
+
+    <div class="flex gap-2">
+      <button type="submit" class="btn btn-primary">{% translate "حفظ" %}</button>
+      <a href="{% if case %}{% url 'cases:detail' case.pk %}{% else %}{% url 'cases:list' %}{% endif %}" class="btn btn-ghost">{% translate "إلغاء" %}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

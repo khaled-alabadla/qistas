@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{{ case.case_number }} · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<nav class="mb-4 text-xs text-slate/70">
+  <a href="{% url 'cases:list' %}" class="hover:text-navy">{% translate "القضايا" %}</a>
+  <span aria-hidden="true"> ‹ </span>
+  <span class="font-medium text-ink">{% num case.case_number %}</span>
+</nav>
+
+<div class="mb-6 flex flex-wrap items-start justify-between gap-3">
+  <div>
+    <div class="flex flex-wrap items-center gap-2">
+      <h1 class="text-xl font-semibold text-ink">{{ case.title }}</h1>
+      {% if case.priority == 'urgent' %}{% badge case.get_priority_display "error" %}
+      {% elif case.priority == 'high' %}{% badge case.get_priority_display "warning" %}
+      {% else %}{% badge case.get_priority_display "neutral" %}{% endif %}
+      {% if case.status == 'closed' or case.status == 'concluded' %}{% badge case.get_status_display "neutral" %}
+      {% elif case.status == 'new' %}{% badge case.get_status_display "bronze" %}
+      {% else %}{% badge case.get_status_display "success" %}{% endif %}
+    </div>
+    <p class="mt-1 text-sm text-slate/70">
+      {% translate "رقم القضية" %} {% num case.case_number %} · {{ case.type.name }} · {{ case.client.display_name }}
+    </p>
+  </div>
+  {% if can_manage %}
+  <div class="flex flex-wrap gap-2">
+    <a href="{% url 'cases:update' case.pk %}" class="btn btn-secondary">{% translate "تعديل" %}</a>
+    <a href="{% url 'cases:note_add' case.pk %}" class="btn btn-ghost">{% translate "إضافة ملاحظة" %}</a>
+  </div>
+  {% endif %}
+</div>
+
+{% translate "النظام" as sys_actor %}
+<div class="border-b border-line">
+  <nav class="-mb-px flex flex-wrap gap-4 text-sm" aria-label="{% translate 'تبويبات القضية' %}">
+    {% for key, label in tab_links %}
+      <a href="?tab={{ key }}"
+         class="border-b-2 px-1 py-2 {% if tab == key %}border-bronze font-medium text-navy{% else %}border-transparent text-slate/70 hover:text-navy{% endif %}"
+         {% if tab == key %}aria-current="page"{% endif %}>{{ label }}</a>
+    {% endfor %}
+    {% for label in disabled_tabs %}
+      <span class="border-b-2 border-transparent px-1 py-2 text-slate/40" title="{% translate 'قريبًا' %}">{{ label }}</span>
+    {% endfor %}
+  </nav>
+</div>
+
+<div class="mt-6">
+{% if tab == 'overview' %}
+  <div class="grid gap-6 lg:grid-cols-3">
+    <section class="lg:col-span-2 space-y-6">
+      <div class="rounded-xl border border-line bg-white p-5">
+        <h3 class="mb-3 text-base font-semibold text-ink">{% translate "المعلومات" %}</h3>
+        <dl class="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+          <div><dt class="text-slate/60">{% translate "النوع" %}</dt><dd class="text-ink">{{ case.type.name }}</dd></div>
+          <div><dt class="text-slate/60">{% translate "الحالة" %}</dt><dd class="text-ink">{{ case.get_status_display }}</dd></div>
+          <div><dt class="text-slate/60">{% translate "الأولوية" %}</dt><dd class="text-ink">{{ case.get_priority_display }}</dd></div>
+          <div><dt class="text-slate/60">{% translate "المحكمة" %}</dt><dd class="text-ink">{{ case.court.name|default:"—" }}</dd></div>
+          {% if case.department %}<div><dt class="text-slate/60">{% translate "الدائرة" %}</dt><dd>{{ case.department }}</dd></div>{% endif %}
+          {% if case.stage %}<div><dt class="text-slate/60">{% translate "المرحلة" %}</dt><dd>{{ case.stage }}</dd></div>{% endif %}
+          {% if case.court_case_number %}<div><dt class="text-slate/60">{% translate "رقم القضية لدى المحكمة" %}</dt><dd>{% num case.court_case_number %}</dd></div>{% endif %}
+          {% if case.internal_reference %}<div><dt class="text-slate/60">{% translate "مرجع داخلي" %}</dt><dd>{% num case.internal_reference %}</dd></div>{% endif %}
+          {% if case.filing_date %}<div><dt class="text-slate/60">{% translate "تاريخ التقديم" %}</dt><dd>{% datestr case.filing_date %}</dd></div>{% endif %}
+          {% if case.claim_amount is not None %}<div><dt class="text-slate/60">{% translate "قيمة المطالبة" %}</dt><dd>{% num case.claim_amount 2 %}</dd></div>{% endif %}
+        </dl>
+        {% if case.description %}
+          <div class="mt-4">
+            <dt class="text-slate/60 text-sm">{% translate "الوصف" %}</dt>
+            <dd class="mt-1 whitespace-pre-line text-sm text-ink">{{ case.description }}</dd>
+          </div>
+        {% endif %}
+      </div>
+
+      {% if can_view_confidential %}
+      <div class="rounded-xl border border-bronze/40 bg-bronze/5 p-5">
+        <div class="mb-2 flex items-center justify-between">
+          <h3 class="text-base font-semibold text-ink">{% translate "ملاحظات سرية" %}</h3>
+          <a href="{% url 'cases:confidential' case.pk %}" class="text-xs text-navy hover:underline">{% translate "تعديل" %}</a>
+        </div>
+        {% if not confidential or confidential.is_empty %}
+          <p class="text-sm text-slate/50">{% translate "لا توجد ملاحظات سرية." %}</p>
+        {% else %}
+          {% if confidential.legal_notes %}<div class="mb-3"><dt class="text-xs text-slate/60">{% translate "ملاحظات قانونية" %}</dt><dd class="whitespace-pre-line text-sm text-ink">{{ confidential.legal_notes }}</dd></div>{% endif %}
+          {% if confidential.internal_notes %}<div><dt class="text-xs text-slate/60">{% translate "ملاحظات داخلية" %}</dt><dd class="whitespace-pre-line text-sm text-ink">{{ confidential.internal_notes }}</dd></div>{% endif %}
+        {% endif %}
+        <p class="mt-2 text-xs text-slate/40">{% translate "هذه الملاحظات مرئية فقط لأصحاب صلاحية الاطلاع." %}</p>
+      </div>
+      {% endif %}
+    </section>
+
+    <aside class="space-y-6">
+      {% if can_manage %}
+      <div class="rounded-xl border border-line bg-white p-5">
+        <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "تغيير الحالة" %}</h3>
+        <form method="post" action="{% url 'cases:status' case.pk %}" class="space-y-2">
+          {% csrf_token %}
+          {% include "components/_form_field.html" with field=status_form.status %}
+          <button class="btn btn-primary w-full">{% translate "تحديث" %}</button>
+        </form>
+      </div>
+      {% endif %}
+
+      <div class="rounded-xl border border-line bg-white p-5">
+        <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "النشاط" %}</h3>
+        {% if activity %}
+          <ul class="space-y-3 text-sm">
+            {% for a in activity %}
+              <li class="border-s-2 border-line ps-3">
+                <p class="text-ink">{{ a.action_label }}</p>
+                <p class="text-xs text-slate/50">
+                  {% if a.actor %}{{ a.actor.get_full_name|default:a.actor.email }}{% else %}{{ sys_actor }}{% endif %} ·
+                  {% datestr a.created_at "SHORT_DATETIME_FORMAT" %}
+                </p>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-sm text-slate/50">{% translate "لا يوجد نشاط مسجّل." %}</p>
+        {% endif %}
+      </div>
+    </aside>
+  </div>
+
+{% elif tab == 'parties' %}
+  <div class="space-y-6">
+    {% if can_manage %}
+    <div class="flex flex-wrap gap-2">
+      <a href="{% url 'cases:party_add' case.pk %}" class="btn btn-secondary">{% translate "إضافة طرف" %}</a>
+    </div>
+    {% endif %}
+
+    <div class="overflow-x-auto rounded-lg border border-line">
+      <table class="w-full text-start text-sm">
+        <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+          <tr>
+            <th class="px-3 py-2 text-start font-medium">{% translate "الصفة" %}</th>
+            <th class="px-3 py-2 text-start font-medium">{% translate "الاسم" %}</th>
+            <th class="px-3 py-2 text-start font-medium">{% translate "الهاتف" %}</th>
+            <th class="px-3 py-2 text-start font-medium">{% translate "ملاحظات" %}</th>
+            <th class="px-3 py-2"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-line">
+          {% for p in parties %}
+            <tr>
+              <td class="px-3 py-2">{{ p.role }}</td>
+              <td class="px-3 py-2">
+                {% if p.url %}<a class="text-navy hover:underline" href="{% url p.url.0 p.url.1 %}">{{ p.name }}</a>{% else %}{{ p.name }}{% endif %}
+              </td>
+              <td class="px-3 py-2">{% if p.phone %}{% num p.phone %}{% else %}—{% endif %}</td>
+              <td class="px-3 py-2">{{ p.notes|default:"—" }}</td>
+              <td class="px-3 py-2 text-end">
+                {% if can_manage and p.kind == 'party' %}
+                  <form method="post" action="{% url 'cases:party_remove' case.pk p.party_id %}">
+                    {% csrf_token %}
+                    <button class="text-xs text-danger hover:underline">{% translate "إزالة" %}</button>
+                  </form>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if can_manage %}
+    <div class="rounded-xl border border-line bg-white p-5">
+      <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "إضافة محامٍ مساند" %}</h3>
+      <form method="post" action="{% url 'cases:lawyer_add' case.pk %}" class="flex flex-wrap items-end gap-2">
+        {% csrf_token %}
+        <div class="min-w-[16rem] flex-1">{% include "components/_form_field.html" with field=lawyer_form.lawyer %}</div>
+        <button class="btn btn-secondary">{% translate "إضافة" %}</button>
+      </form>
+      {% if lawyer_links %}
+        <ul class="mt-3 space-y-1 text-sm">
+          {% for link in lawyer_links %}
+            <li class="flex items-center justify-between border-b border-line py-1">
+              <span>{{ link.lawyer.get_full_name|default:link.lawyer.email }}</span>
+              <form method="post" action="{% url 'cases:lawyer_remove' case.pk link.lawyer_id %}">
+                {% csrf_token %}
+                <button class="text-xs text-danger hover:underline">{% translate "إزالة" %}</button>
+              </form>
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+{% elif tab == 'notes' or tab == 'correspondence' %}
+  {% if tab == 'notes' %}{% with items=notes kind='general' %}{% include "cases/_notes.html" %}{% endwith %}
+  {% else %}{% with items=correspondence kind='correspondence' %}{% include "cases/_notes.html" %}{% endwith %}{% endif %}
+
+{% elif tab == 'timeline' %}
+  {% if timeline %}
+    <ol class="space-y-4">
+      {% for e in timeline %}
+        <li class="flex gap-3">
+          <span class="mt-1 h-2 w-2 shrink-0 rounded-full bg-bronze"></span>
+          <div>
+            <p class="text-sm text-ink">{{ e.summary }}</p>
+            <p class="text-xs text-slate/50">
+              {{ e.get_event_type_display }} ·
+              {% if e.actor %}{{ e.actor.get_full_name|default:e.actor.email }}{% else %}{{ sys_actor }}{% endif %} ·
+              {% datestr e.occurred_at "SHORT_DATETIME_FORMAT" %}
+            </p>
+          </div>
+        </li>
+      {% endfor %}
+    </ol>
+  {% else %}
+    <p class="text-sm text-slate/50">{% translate "لا توجد أحداث بعد." %}</p>
+  {% endif %}
+{% endif %}
+</div>
+{% endblock %}

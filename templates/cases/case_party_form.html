@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{% translate "إضافة طرف" %} · {{ case.case_number }}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl">
+  <nav class="mb-4 text-xs text-slate/70">
+    <a href="{% url 'cases:detail' case.pk %}?tab=parties" class="hover:text-navy">{% num case.case_number %}</a>
+    <span aria-hidden="true"> ‹ </span>
+    <span class="font-medium text-ink">{% translate "إضافة طرف" %}</span>
+  </nav>
+
+  <h1 class="mb-4 text-xl font-semibold text-ink">{% translate "إضافة طرف إلى القضية" %}</h1>
+
+  {% if form.non_field_errors %}
+    <div class="mb-4">{% for e in form.non_field_errors %}{% include "components/alert.html" with tone="error" text=e %}{% endfor %}</div>
+  {% endif %}
+
+  <form method="post" novalidate class="space-y-4 rounded-xl border border-line bg-white p-6">
+    {% csrf_token %}
+    {% include "components/_form_field.html" with field=form.party_role %}
+    {% include "components/_form_field.html" with field=form.name %}
+    {% include "components/_form_field.html" with field=form.phone %}
+    {% include "components/_form_field.html" with field=form.email %}
+    {% include "components/_form_field.html" with field=form.linked_client %}
+    {% include "components/_form_field.html" with field=form.notes %}
+    <div class="flex gap-2">
+      <button type="submit" class="btn btn-primary">{% translate "إضافة" %}</button>
+      <a href="{% url 'cases:detail' case.pk %}?tab=parties" class="btn btn-ghost">{% translate "إلغاء" %}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

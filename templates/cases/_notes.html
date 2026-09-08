@@ -1,0 +1,27 @@
+{% load i18n qistas %}
+{# params: items (list of CaseNote), kind ('general'|'correspondence'); case + can_manage from context #}
+<div class="space-y-4">
+  {% if can_manage %}
+    <a href="{% url 'cases:note_add' case.pk %}?kind={{ kind }}" class="btn btn-secondary">
+      {% if kind == 'correspondence' %}{% translate "إضافة مراسلة" %}{% else %}{% translate "إضافة ملاحظة" %}{% endif %}
+    </a>
+  {% endif %}
+
+  {% if items %}
+    <ul class="space-y-3">
+      {% for n in items %}
+        <li class="rounded-xl border border-line bg-white p-4">
+          <p class="whitespace-pre-line text-sm text-ink">{{ n.body }}</p>
+          <p class="mt-2 text-xs text-slate/50">
+            {% if n.author %}{{ n.author.get_full_name|default:n.author.email }}{% else %}{{ sys_actor }}{% endif %} ·
+            {% datestr n.created_at "SHORT_DATETIME_FORMAT" %}
+          </p>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="text-sm text-slate/50">
+      {% if kind == 'correspondence' %}{% translate "لا توجد مراسلات." %}{% else %}{% translate "لا توجد ملاحظات." %}{% endif %}
+    </p>
+  {% endif %}
+</div>

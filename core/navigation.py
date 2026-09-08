@@ -52,6 +52,29 @@ NAV: tuple[NavItem, ...] = (
         ),
     ),
     NavItem(
+        label=_("القضايا"),
+        capability=Capability.CASES_VIEW,
+        icon="folder",
+        children=(
+            NavItem(
+                label=_("جميع القضايا"),
+                url_name="cases:list",
+                capability=Capability.CASES_VIEW,
+            ),
+            NavItem(
+                label=_("إضافة قضية"),
+                url_name="cases:create",
+                capability=Capability.CASES_MANAGE,
+            ),
+            NavItem(
+                label=_("الجلسات"),
+                url_name=None,
+                capability=Capability.CASES_VIEW,
+                disabled=True,
+            ),
+        ),
+    ),
+    NavItem(
         label=_("الإشعارات"),
         url_name=None,
         capability=Capability.NOTIFICATIONS_VIEW,

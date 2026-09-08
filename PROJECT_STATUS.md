@@ -4,7 +4,7 @@
 > `COMPLETED ≠ APPROVED` — a phase starts only after the user says
 > **APPROVE PHASE N** / **ابدأ المرحلة N**.
 
-Current Phase: **2 — Clients** (Phase 1 approved + merged to master)
+Current Phase: **3 — Cases** (Phases 1 & 2 approved + merged to master)
 
 Planning artifacts: `QISTAS_PHASE_0_ANALYSIS.md` · `QISTAS_GRILL_REVIEW.md` ·
 `docs/architecture.md` · `docs/adr/0001`–`0027` · `docs/PHASE_1_PLAN.md`
@@ -95,8 +95,63 @@ Branch: `phase/2-clients` — **two commits**, pushed, **not merged**:
 - (this cleanup adds a third: `fix(ci): align master workflow and phase docs`)
 
 ## Phase 3 — Cases
-Status: NOT STARTED
-Approval: N/A
+Status: **COMPLETE (technical)** — see `docs/PHASE_3_REPORT.md`
+Approval: **PENDING**
+
+`courts` app (minimal): `Court` model (name/type/city/is_active, `(name, city)`
+unique) + admin + `seed_demo_courts` — full court CRUD is Phase 4.
+
+`cases` app: `Case` model — `case_number` `CS-YYYY-NNNN` (transaction-safe,
+ADR-0021), `internal_reference` + `court_case_number` (separate file-number vs
+docket, grill P3), FK `type` (configurable `CaseType` table, 7 defaults seeded),
+FK `client` (PROTECT), `assigned_lawyer` + `supporting_lawyers` M2M (through
+`CaseLawyer`), FK `court` (SET_NULL), status/priority/stage, `claim_amount`
+(DB CheckConstraint ≥ 0). **No `next_hearing`** — deferred to Phase 4 for clean
+phase isolation.
+
+`CaseConfidential` (1:1, `legal_notes` / `internal_notes`) — isolated row behind
+`cases.view_confidential`; never selected by list/search/timeline; masked in
+auditlog; edits are audit-only (no timeline entry). `CaseParty` (relationship
+model — spec §27), `CaseNote` (general / correspondence, soft-deletable),
+`CaseEvent` (append-only human timeline — spec §26).
+
+Workspace detail view with real tabs (نظرة عامة / الأطراف / الملاحظات /
+المراسلات / الخط الزمني) + disabled placeholders (الجلسات / المهام / المستندات /
+الفواتير / المدفوعات). CRUD + status action + lawyer assignment + party add/remove
++ note add + confidential edit. List: search (`icontains` over
+number/title/docket/reference/department), status/priority/type/lawyer filters,
+open-only by default, pagination.
+
+Capabilities: `cases.view` (all staff) · `cases.manage` (office_manager, lawyer,
+paralegal, admin_clerk) · `cases.view_confidential` (office_manager, lawyer).
+`sync_roles` extended with case + court model perms. All writes go through
+`cases.services` (CaseEvent + AuditLog); `update_case` uses the freshly-fetched
+diff pattern (bug-027). 7 `CASE_*` `AuditAction` members added.
+
+**Verification:**
+- Tests: **69 case/court tests; full suite 224 pass / 0 fail / 3 skipped**
+  (`@pytest.mark.postgres`).
+- `ruff` / `ruff format` / `pip-audit` / `makemigrations --check` /
+  `check --deploy --fail-level WARNING` (prod settings) — all clean.
+- HTTP smoke via `runserver` + SQLite: login → `/cases/` list → workspace tabs →
+  create / edit / confidential / party / note forms all 200; seeds
+  (`seed_demo_courts`, `seed_demo_cases`) run; `sync_roles --check` clean after sync.
+- `/code-review` (high) — **6 findings, all fixed** with regression tests
+  (edit-form drops a deactivated FK; confidential-edit audit event leaked to the
+  all-staff activity panel; `get_confidential()` wrote a row + audit event on GET;
+  removal actions reported success on a no-op; two minor N+1s). Self security
+  review (confidential isolation, object-level authz, CSRF, mass-assignment, SQLi)
+  — pass.
+
+**DEFERRED / UNVERIFIED — same Docker/PostgreSQL environment blocker as Phases 1–2:**
+1. Full suite on **PostgreSQL 16** (SQLite only).
+2. `cases/migrations/0003_case_search_indexes` (trigram GIN, `TRGM_COLUMNS ==
+   SEARCH_FIELDS`) — never executed (PG-only, guarded).
+3. The `@pytest.mark.postgres` tests.
+4. `docker compose` full-stack smoke.
+5. `compilemessages` (Docker-only; harmless).
+
+Branch: `phase/3-cases` — one commit `phase(3): complete cases`, pushed, **not merged**.
 
 ## Phase 4 — Hearings + Courts + Calendar
 Status: NOT STARTED

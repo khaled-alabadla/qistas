@@ -39,6 +39,10 @@ class Capability(TextChoices):
     CLIENTS_VIEW = "clients.view", _("عرض العملاء")
     CLIENTS_MANAGE = "clients.manage", _("إضافة وتعديل العملاء")
     CLIENTS_VIEW_SENSITIVE = "clients.view_sensitive", _("عرض بيانات العملاء الحساسة")
+    # Phase 3 — Cases
+    CASES_VIEW = "cases.view", _("عرض القضايا")
+    CASES_MANAGE = "cases.manage", _("إضافة وتعديل القضايا")
+    CASES_VIEW_CONFIDENTIAL = "cases.view_confidential", _("عرض الملاحظات السرية للقضايا")
 
 
 # group -> capabilities it grants. Fixed in code for v1 (docs/adr/0007);
@@ -48,9 +52,14 @@ _ALL_STAFF = {
     Capability.DASHBOARD_VIEW,
     Capability.NOTIFICATIONS_VIEW,
     Capability.CLIENTS_VIEW,
+    Capability.CASES_VIEW,
 }
 # Roles that intake / represent clients and legitimately need the national ID.
 _CLIENT_HANDLERS = {Capability.CLIENTS_MANAGE, Capability.CLIENTS_VIEW_SENSITIVE}
+# Roles that run case files day to day (create, edit, assign, add parties/notes).
+_CASE_HANDLERS = {Capability.CASES_MANAGE}
+# Roles trusted with privileged legal / internal case notes (docs/adr/0008, 0009).
+_CASE_CONFIDENTIAL = {Capability.CASES_VIEW_CONFIDENTIAL}
 
 GROUP_CAPABILITIES: dict[str, set[str]] = {
     Group.OFFICE_MANAGER: {
@@ -62,10 +71,13 @@ GROUP_CAPABILITIES: dict[str, set[str]] = {
         Capability.CLIENTS_VIEW,
         Capability.CLIENTS_MANAGE,
         Capability.CLIENTS_VIEW_SENSITIVE,
+        Capability.CASES_VIEW,
+        Capability.CASES_MANAGE,
+        Capability.CASES_VIEW_CONFIDENTIAL,
     },
-    Group.LAWYER: _ALL_STAFF | _CLIENT_HANDLERS,
-    Group.PARALEGAL: set(_ALL_STAFF),
-    Group.ADMIN_CLERK: _ALL_STAFF | _CLIENT_HANDLERS,
+    Group.LAWYER: _ALL_STAFF | _CLIENT_HANDLERS | _CASE_HANDLERS | _CASE_CONFIDENTIAL,
+    Group.PARALEGAL: _ALL_STAFF | _CASE_HANDLERS,
+    Group.ADMIN_CLERK: _ALL_STAFF | _CLIENT_HANDLERS | _CASE_HANDLERS,
     Group.FINANCE_CLERK: set(_ALL_STAFF),
 }
 # normalise to plain str
