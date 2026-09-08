@@ -29,12 +29,15 @@ def test_postgres_extensions_present():
 
 
 def test_deploy_check_is_clean(settings):
-    """`check --deploy` must not raise on prod-like settings."""
+    """`check --deploy --fail-level WARNING` must be clean on prod-like settings —
+    the exact gate CI runs. Catches e.g. security.W009 (weak SECRET_KEY)."""
+    import secrets
     from io import StringIO
 
     from django.core.management import call_command
 
     settings.DEBUG = False
+    settings.SECRET_KEY = secrets.token_urlsafe(64)  # strong, ephemeral
     settings.SECURE_HSTS_SECONDS = 31536000
     settings.SECURE_SSL_REDIRECT = True
     settings.SESSION_COOKIE_SECURE = True
@@ -42,4 +45,23 @@ def test_deploy_check_is_clean(settings):
     settings.SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     settings.SECURE_HSTS_PRELOAD = True
     out = StringIO()
-    call_command("check", "--deploy", "--fail-level", "ERROR", stdout=out, stderr=out)
+    call_command("check", "--deploy", "--fail-level", "WARNING", stdout=out, stderr=out)
+
+
+def test_short_secret_key_fails_deploy_check(settings):
+    """Regression: a weak SECRET_KEY must still trip security.W009."""
+    from io import StringIO
+
+    from django.core.management import CommandError, call_command
+
+    settings.DEBUG = False
+    settings.SECRET_KEY = "too-short"
+    with pytest.raises((CommandError, SystemExit)):
+        call_command(
+            "check",
+            "--deploy",
+            "--fail-level",
+            "WARNING",
+            stdout=StringIO(),
+            stderr=StringIO(),
+        )
