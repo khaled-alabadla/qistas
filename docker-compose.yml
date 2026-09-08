@@ -1,0 +1,44 @@
+# Qistas — development stack (docs/adr/0023).
+# The app runs in Docker; the host is only the editor.
+#   docker compose up
+#   docker compose exec web python manage.py <cmd>
+#   docker compose run --rm web pytest
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: qistas
+      POSTGRES_USER: qistas
+      POSTGRES_PASSWORD: qistas
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U qistas -d qistas"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.dev
+      DJANGO_SECRET_KEY: dev-only-not-secret
+      DJANGO_DEBUG: "true"
+      DJANGO_ALLOWED_HOSTS: "*"
+      DATABASE_URL: postgres://qistas:qistas@db:5432/qistas
+    volumes:
+      - .:/app
+      - media:/app/media
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  media:

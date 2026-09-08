@@ -1,0 +1,8 @@
+{% comment %}params: field (bound form field) or name{% endcomment %}
+{% load i18n %}
+<label class="flex cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-line bg-mist/40 px-4 py-8 text-center text-sm text-slate/70 hover:bg-mist">
+  <span aria-hidden="true" class="mb-1 text-xl">⤒</span>
+  <span>{% translate "اختر ملفًا أو أفلته هنا" %}</span>
+  {% if field %}{{ field }}{% else %}<input type="file" name="{{ name|default:'file' }}" class="sr-only">{% endif %}
+</label>
+{% if field %}{% for e in field.errors %}<p class="mt-1 text-xs text-danger">{{ e }}</p>{% endfor %}{% endif %}

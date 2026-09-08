@@ -1,0 +1,17 @@
+{% comment %}params: page_obj, querystring (optional, without page=){% endcomment %}
+{% load i18n qistas %}
+{% if page_obj.paginator.num_pages > 1 %}
+<nav class="mt-4 flex items-center justify-between text-sm" aria-label="{% translate 'ترقيم الصفحات' %}">
+  <span class="text-slate/70">
+    {% blocktranslate with n=page_obj.number total=page_obj.paginator.num_pages %}صفحة {{ n }} من {{ total }}{% endblocktranslate %}
+  </span>
+  <div class="flex gap-1">
+    {% if page_obj.has_previous %}
+      <a class="btn btn-secondary" href="?{{ querystring }}page={{ page_obj.previous_page_number }}">{% translate "السابق" %}</a>
+    {% endif %}
+    {% if page_obj.has_next %}
+      <a class="btn btn-secondary" href="?{{ querystring }}page={{ page_obj.next_page_number }}">{% translate "التالي" %}</a>
+    {% endif %}
+  </div>
+</nav>
+{% endif %}

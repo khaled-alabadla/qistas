@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{% translate "الرئيسية" %} · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+  <div class="mb-6">
+    <h1 class="text-xl font-semibold text-ink">{% translate "الرئيسية" %}</h1>
+    <p class="text-sm text-slate/70">{% translate "ما الذي يحتاج إلى انتباهك اليوم؟" %}</p>
+  </div>
+
+  {% translate "لوحة التشغيل قيد الإنشاء" as es_title %}
+  {% translate "ستعرض هذه الصفحة جلسات اليوم والمهام المتأخرة والفواتير المستحقة والنشاط الأخير بمجرد إضافة الوحدات في المراحل القادمة." as es_msg %}
+  {% empty_state es_title es_msg %}
+
+  <p class="mt-6 text-xs text-slate/60">
+    {% blocktranslate %}المرحلة الحالية: الأساس.{% endblocktranslate %}
+    <bdi dir="ltr">{{ user.email }}</bdi>
+  </p>
+{% endblock %}

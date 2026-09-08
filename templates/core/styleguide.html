@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{% translate "دليل المكوّنات" %}{% endblock %}
+
+{% block content %}
+<div class="space-y-10">
+  <header>
+    <h1 class="text-xl font-semibold text-ink">{% translate "دليل المكوّنات" %}</h1>
+    <p class="text-sm text-slate/70">{% translate "صفحة تطوير فقط — متاحة عندما DEBUG=True." %}</p>
+  </header>
+
+  <section>
+    <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "الأزرار" %}</h2>
+    <div class="flex flex-wrap gap-2">
+      {% include "components/button.html" with label="أساسي" href="#" %}
+      {% include "components/button.html" with label="ثانوي" href="#" variant="secondary" %}
+      {% include "components/button.html" with label="شفاف" href="#" variant="ghost" %}
+      {% include "components/button.html" with label="خطر" href="#" variant="danger" %}
+    </div>
+  </section>
+
+  <section>
+    <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "الشارات" %}</h2>
+    <div class="flex flex-wrap gap-2">
+      {% badge "جديدة" "navy" %}{% badge "عاجلة" "danger" %}{% badge "مكتملة" "success" %}
+      {% badge "معلّقة" "warning" %}{% badge "محايدة" %}
+    </div>
+  </section>
+
+  <section>
+    <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "التنبيهات" %}</h2>
+    <div class="space-y-2">
+      {% include "components/alert.html" with tone="success" text="تم الحفظ بنجاح." %}
+      {% include "components/alert.html" with tone="warning" text="هناك حقول تحتاج إلى مراجعة." %}
+      {% include "components/alert.html" with tone="error" text="تعذّر تنفيذ العملية." %}
+      {% include "components/alert.html" with tone="info" text="معلومة مفيدة." %}
+    </div>
+  </section>
+
+  <section>
+    <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "الأرقام (LTR داخل نص RTL)" %}</h2>
+    <p class="text-sm">
+      رقم القضية {% num "C-2026-0087" %} — المبلغ المستحق {% num 12450.5 2 %} ₪ —
+      الهاتف {% num "+970-59-000-0000" %}
+    </p>
+  </section>
+
+  <section>
+    <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "الجدول والحالة الفارغة" %}</h2>
+    {% include "components/table.html" with headers=demo_headers rows=demo_rows %}
+    <div class="mt-4">{% include "components/table.html" with headers=demo_headers rows=empty_rows empty_title="لا توجد قضايا حتى الآن" empty_message="ابدأ بإضافة أول قضية." %}</div>
+  </section>
+
+  <section>
+    <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "حالة التحميل" %}</h2>
+    {% include "components/loading_state.html" %}
+  </section>
+</div>
+{% endblock %}

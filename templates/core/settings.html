@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "الإعدادات" %} · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+  <h1 class="mb-4 text-xl font-semibold text-ink">{% translate "الإعدادات" %}</h1>
+  <div class="grid gap-4 sm:grid-cols-2">
+    <a href="{% url 'admin:accounts_user_changelist' %}" class="rounded-xl border border-line bg-white p-5 hover:border-navy">
+      <h2 class="font-semibold text-ink">{% translate "المستخدمون والصلاحيات" %}</h2>
+      <p class="mt-1 text-sm text-slate/70">{% translate "إدارة حسابات الموظفين ومجموعاتهم." %}</p>
+    </a>
+    <a href="{% url 'admin:audit_auditlog_changelist' %}" class="rounded-xl border border-line bg-white p-5 hover:border-navy">
+      <h2 class="font-semibold text-ink">{% translate "سجل التدقيق" %}</h2>
+      <p class="mt-1 text-sm text-slate/70">{% translate "من فعل ماذا ومتى." %}</p>
+    </a>
+  </div>
+{% endblock %}

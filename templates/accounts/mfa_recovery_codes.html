@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "رموز الاسترداد" %}{% endblock %}
+{% block content %}
+  <div class="mx-auto max-w-lg">
+    <h1 class="mb-2 text-xl font-semibold text-ink">{% translate "رموز الاسترداد" %}</h1>
+    {% translate "احفظ هذه الرموز في مكان آمن. كل رمز يُستخدم مرة واحدة عند تعذّر الوصول إلى تطبيق المصادقة." as m %}
+    {% include "components/alert.html" with tone="warning" text=m %}
+    <ul class="mt-4 grid grid-cols-2 gap-2 rounded-xl border border-line bg-white p-4 font-mono text-sm">
+      {% for code in codes %}<li><bdi dir="ltr">{{ code }}</bdi></li>{% endfor %}
+    </ul>
+    <a href="{% url 'accounts:mfa_manage' %}" class="btn btn-primary mt-4">{% translate "تم، حفظت الرموز" %}</a>
+  </div>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% comment %}params: label, items = list of {label, url}{% endcomment %}
+<div x-data="{ open: false }" class="relative inline-block">
+  <button type="button" @click="open = !open" :aria-expanded="open.toString()"
+          class="btn btn-secondary">{{ label }} <span aria-hidden="true">▾</span></button>
+  <div x-show="open" x-transition @click.outside="open = false" style="display:none"
+       class="absolute end-0 z-20 mt-1 w-48 rounded-md border border-line bg-white py-1 text-sm shadow-lg" role="menu">
+    {% for item in items %}
+      <a href="{{ item.url|default:'#' }}" role="menuitem" class="block px-3 py-2 hover:bg-mist">{{ item.label }}</a>
+    {% endfor %}
+  </div>
+</div>

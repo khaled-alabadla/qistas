@@ -1,0 +1,6 @@
+{% load i18n %}
+{% translate "جارٍ التحميل…" as default_label %}
+<div class="flex items-center justify-center gap-2 py-8 text-sm text-slate/70" role="status">
+  <span class="h-4 w-4 animate-spin rounded-full border-2 border-line border-t-navy" aria-hidden="true"></span>
+  {{ label|default:default_label }}
+</div>

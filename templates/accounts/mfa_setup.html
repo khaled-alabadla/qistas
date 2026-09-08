@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{% translate "التحقق بخطوتين" %}{% endblock %}
+{% block content %}
+  <div class="mx-auto max-w-lg">
+    <h1 class="mb-2 text-xl font-semibold text-ink">{% translate "تفعيل التحقق بخطوتين" %}</h1>
+    <p class="mb-5 text-sm text-slate/70">{% translate "امسح رمز QR بتطبيق مصادقة (مثل Google Authenticator)، ثم أدخل الرمز لتأكيد التفعيل." %}</p>
+
+    <div class="rounded-xl border border-line bg-white p-6">
+      <div class="mx-auto mb-4 w-48">{{ qr_svg|safe }}</div>
+      <p class="mb-4 text-center text-xs text-slate/70">
+        {% translate "أو أدخل المفتاح يدويًا:" %} <bdi dir="ltr" class="font-mono">{{ secret }}</bdi>
+      </p>
+      <form method="post" action="{% url 'accounts:mfa_activate' %}" novalidate>
+        {% csrf_token %}
+        {% include "components/_form_field.html" with field=form.token %}
+        <button type="submit" class="btn btn-primary w-full">{% translate "تأكيد التفعيل" %}</button>
+      </form>
+    </div>
+  </div>
+{% endblock %}

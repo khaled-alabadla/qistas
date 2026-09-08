@@ -1,0 +1,11 @@
+{% comment %}params: tone (success|info|warning|error|debug), text{% endcomment %}
+<div role="alert" class="flex items-start gap-2 rounded-md border px-3 py-2 text-sm
+  {% if tone == 'success' %}border-emerald-200 bg-emerald-50 text-emerald-800
+  {% elif tone == 'warning' %}border-amber-200 bg-amber-50 text-amber-800
+  {% elif tone == 'error' %}border-red-200 bg-red-50 text-red-800
+  {% else %}border-slate-200 bg-slate-50 text-slate-800{% endif %}">
+  <span aria-hidden="true" class="font-bold">
+    {% if tone == 'success' %}✓{% elif tone == 'error' %}!{% elif tone == 'warning' %}▲{% else %}i{% endif %}
+  </span>
+  <span>{{ text }}</span>
+</div>

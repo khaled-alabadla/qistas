@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres:16
+        env:
+          POSTGRES_DB: qistas
+          POSTGRES_USER: qistas
+          POSTGRES_PASSWORD: qistas
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U qistas -d qistas"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.test
+      DJANGO_SECRET_KEY: ci-not-secret
+      DATABASE_URL: postgres://qistas:qistas@localhost:5432/qistas
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Lint (ruff)
+        run: |
+          ruff check .
+          ruff format --check .
+
+      - name: Missing migrations?
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Tests
+        run: pytest --cov --cov-report=term-missing --cov-report=xml
+
+      - name: Deploy checklist
+        env:
+          DJANGO_SETTINGS_MODULE: config.settings.prod
+          DJANGO_ALLOWED_HOSTS: example.ps
+          DJANGO_CSRF_TRUSTED_ORIGINS: https://example.ps
+          DJANGO_SECURE_HSTS_SECONDS: "31536000"
+        run: python manage.py check --deploy --fail-level WARNING
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.xml
+
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Dependency vulnerabilities
+        run: |
+          python -m pip install --upgrade pip pip-audit
+          pip-audit --strict --progress-spinner off
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

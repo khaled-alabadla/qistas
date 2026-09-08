@@ -1,0 +1,16 @@
+{% comment %}params: label, href, type (default "submit"), variant (primary|secondary|ghost|danger){% endcomment %}
+{% spaceless %}
+{% if variant == 'secondary' %}
+  {% if href %}<a href="{{ href }}" class="btn btn-secondary">{{ label }}</a>
+  {% else %}<button type="{{ type|default:'submit' }}" class="btn btn-secondary">{{ label }}</button>{% endif %}
+{% elif variant == 'ghost' %}
+  {% if href %}<a href="{{ href }}" class="btn btn-ghost">{{ label }}</a>
+  {% else %}<button type="{{ type|default:'submit' }}" class="btn btn-ghost">{{ label }}</button>{% endif %}
+{% elif variant == 'danger' %}
+  {% if href %}<a href="{{ href }}" class="btn btn-danger">{{ label }}</a>
+  {% else %}<button type="{{ type|default:'submit' }}" class="btn btn-danger">{{ label }}</button>{% endif %}
+{% else %}
+  {% if href %}<a href="{{ href }}" class="btn btn-primary">{{ label }}</a>
+  {% else %}<button type="{{ type|default:'submit' }}" class="btn btn-primary">{{ label }}</button>{% endif %}
+{% endif %}
+{% endspaceless %}

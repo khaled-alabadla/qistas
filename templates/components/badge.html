@@ -1,0 +1,11 @@
+{% comment %}params: label, tone (neutral|navy|bronze|success|warning|danger), icon{% endcomment %}
+<span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium
+  {% if tone == 'navy' %}bg-navy/10 text-navy
+  {% elif tone == 'bronze' %}bg-bronze/15 text-bronze-700
+  {% elif tone == 'success' %}bg-emerald-100 text-emerald-800
+  {% elif tone == 'warning' %}bg-amber-100 text-amber-800
+  {% elif tone == 'danger' %}bg-red-100 text-red-800
+  {% else %}bg-slate-100 text-slate-700{% endif %}">
+  {% if icon %}<span aria-hidden="true">{{ icon }}</span>{% endif %}
+  {{ label }}
+</span>

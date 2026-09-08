@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "التحقق بخطوتين" %}{% endblock %}
+{% block content %}
+  <div class="mx-auto max-w-lg">
+    <h1 class="mb-4 text-xl font-semibold text-ink">{% translate "التحقق بخطوتين" %}</h1>
+    <div class="rounded-xl border border-line bg-white p-6">
+      {% if device %}
+        {% translate "التحقق بخطوتين مُفعّل على حسابك." as m %}
+        {% include "components/alert.html" with tone="success" text=m %}
+        <div class="mt-4 flex flex-wrap gap-2">
+          <form method="post" action="{% url 'accounts:mfa_regenerate_codes' %}">{% csrf_token %}
+            <button class="btn btn-secondary">{% translate "إنشاء رموز استرداد جديدة" %}</button>
+          </form>
+          <a href="{% url 'accounts:mfa_disable' %}" class="btn btn-danger">{% translate "إيقاف التحقق بخطوتين" %}</a>
+        </div>
+      {% else %}
+        <p class="mb-4 text-sm text-slate/70">{% translate "التحقق بخطوتين غير مُفعّل. تفعيله يضيف طبقة حماية لحسابك." %}</p>
+        <a href="{% url 'accounts:mfa_setup' %}" class="btn btn-primary">{% translate "تفعيل الآن" %}</a>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

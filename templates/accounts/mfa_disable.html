@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% translate "إيقاف التحقق بخطوتين" %}{% endblock %}
+{% block content %}
+  <div class="mx-auto max-w-lg">
+    <h1 class="mb-4 text-xl font-semibold text-danger">{% translate "إيقاف التحقق بخطوتين" %}</h1>
+    <form method="post" class="rounded-xl border border-line bg-white p-6">
+      {% csrf_token %}
+      {% for field in form %}{% include "components/_form_field.html" with field=field %}{% endfor %}
+      <button type="submit" class="btn btn-danger">{% translate "إيقاف" %}</button>
+      <a href="{% url 'accounts:mfa_manage' %}" class="btn btn-ghost">{% translate "إلغاء" %}</a>
+    </form>
+  </div>
+{% endblock %}

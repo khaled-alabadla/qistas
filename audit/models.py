@@ -1,0 +1,83 @@
+"""
+Explicit security/domain event log (spec §46, docs/adr/0020).
+
+This is the store for **events** (login, logout, permission change, temp-password
+issue, document download …). Automatic model-change diffs use django-auditlog's
+own ``LogEntry`` and are wired per model from Phase 2.
+
+`AuditLog` rows are append-only: no ORM/admin delete, `actor` is `SET_NULL`, and
+a DB-level immutability trigger is added in Phase 12.
+"""
+
+from __future__ import annotations
+
+from django.conf import settings
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+
+
+class AuditAction(models.TextChoices):
+    LOGIN = "auth.login", _("تسجيل دخول")
+    LOGIN_FAILED = "auth.login_failed", _("محاولة دخول فاشلة")
+    LOGOUT = "auth.logout", _("تسجيل خروج")
+    LOCKOUT = "auth.lockout", _("قفل الحساب")
+    PASSWORD_CHANGED = "auth.password_changed", _("تغيير كلمة المرور")
+    PASSWORD_RESET = "auth.password_reset", _("إعادة تعيين كلمة المرور")
+    MFA_ENABLED = "auth.mfa_enabled", _("تفعيل التحقق بخطوتين")
+    MFA_DISABLED = "auth.mfa_disabled", _("إيقاف التحقق بخطوتين")
+    USER_CREATED = "user.created", _("إنشاء مستخدم")
+    USER_TEMP_PASSWORD = "user.temp_password_issued", _("إصدار كلمة مرور مؤقتة")
+    GROUPS_CHANGED = "user.groups_changed", _("تعديل مجموعات المستخدم")
+    OTHER = "other", _("أخرى")
+
+
+class _AppendOnlyQuerySet(models.QuerySet):
+    def delete(self):
+        raise PermissionError("AuditLog rows are append-only (docs/adr/0020).")
+
+    def update(self, **kwargs):
+        raise PermissionError("AuditLog rows are immutable (docs/adr/0020).")
+
+    def _raw_delete(self, using):  # pragma: no cover - defensive
+        raise PermissionError("AuditLog rows are append-only (docs/adr/0020).")
+
+
+class AuditLog(models.Model):
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="audit_events",
+        verbose_name=_("الفاعل"),
+    )
+    action = models.CharField(_("الإجراء"), max_length=64)
+    entity_type = models.CharField(_("نوع الكيان"), max_length=100, blank=True)
+    entity_id = models.CharField(_("معرّف الكيان"), max_length=64, blank=True)
+    object_repr = models.CharField(_("وصف الكيان"), max_length=200, blank=True)
+    changes = models.JSONField(_("التغييرات"), default=dict, blank=True)
+    ip_address = models.GenericIPAddressField(_("عنوان IP"), null=True, blank=True)
+    user_agent = models.CharField(_("وكيل المستخدم"), max_length=300, blank=True)
+    created_at = models.DateTimeField(_("حدث في"), auto_now_add=True)
+
+    objects = _AppendOnlyQuerySet.as_manager()
+
+    class Meta:
+        verbose_name = _("حدث تدقيق")
+        verbose_name_plural = _("أحداث التدقيق")
+        ordering = ("-created_at",)
+        # No default `delete` permission — audit rows are append-only.
+        default_permissions = ("add", "change", "view")
+        indexes = [
+            models.Index(fields=["-created_at"]),
+            models.Index(fields=["entity_type", "entity_id"]),
+            models.Index(fields=["actor"]),
+            models.Index(fields=["action"]),
+        ]
+
+    def __str__(self) -> str:
+        who = self.actor or _("مجهول")
+        return f"{self.action} · {who} · {self.created_at:%Y-%m-%d %H:%M}"
+
+    def delete(self, *args, **kwargs):  # pragma: no cover - defensive
+        raise PermissionError("AuditLog rows are append-only (docs/adr/0020).")

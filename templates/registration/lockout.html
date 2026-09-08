@@ -1,0 +1,7 @@
+{% extends "auth_base.html" %}
+{% load i18n %}
+{% block title %}{% translate "الحساب مقفل مؤقتًا" %}{% endblock %}
+{% block card %}
+  <h2 class="mb-2 text-lg font-semibold text-danger">{% translate "الحساب مقفل مؤقتًا" %}</h2>
+  <p class="text-sm text-slate/70">{% translate "تم إيقاف تسجيل الدخول مؤقتًا بعد عدة محاولات فاشلة. حاول مرة أخرى بعد قليل، أو تواصل مع مدير المكتب." %}</p>
+{% endblock %}

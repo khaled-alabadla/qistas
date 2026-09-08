@@ -1,0 +1,15 @@
+{% comment %}params: items = list of {label, url}{% endcomment %}
+<nav aria-label="{{ 'مسار التنقل' }}" class="text-xs text-slate/70">
+  <ol class="flex flex-wrap items-center gap-1">
+    {% for item in items %}
+      <li class="flex items-center gap-1">
+        {% if item.url and not forloop.last %}
+          <a href="{{ item.url }}" class="hover:text-navy">{{ item.label }}</a>
+          <span aria-hidden="true">‹</span>
+        {% else %}
+          <span aria-current="page" class="font-medium text-ink">{{ item.label }}</span>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ol>
+</nav>

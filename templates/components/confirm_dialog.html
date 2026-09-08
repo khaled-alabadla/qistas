@@ -1,0 +1,10 @@
+{% comment %}params: action (url), method, message, confirm_label, extra_fields{% endcomment %}
+{% load i18n %}
+{% translate "هل أنت متأكد؟" as default_msg %}
+{% translate "تأكيد" as default_label %}
+<form method="{{ method|default:'post' }}" action="{{ action }}"
+      x-data @submit="return confirm('{{ message|default:default_msg }}')">
+  {% csrf_token %}
+  {{ extra_fields }}
+  <button type="submit" class="btn btn-danger">{{ confirm_label|default:default_label }}</button>
+</form>

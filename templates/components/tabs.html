@@ -1,0 +1,10 @@
+{% comment %}params: tabs = list of {label, url, active}{% endcomment %}
+<div class="border-b border-line">
+  <nav class="-mb-px flex gap-4 text-sm" aria-label="{{ 'تبويبات' }}">
+    {% for tab in tabs %}
+      <a href="{{ tab.url|default:'#' }}"
+         class="border-b-2 px-1 py-2 {% if tab.active %}border-bronze font-medium text-navy{% else %}border-transparent text-slate/70 hover:text-navy{% endif %}"
+         {% if tab.active %}aria-current="page"{% endif %}>{{ tab.label }}</a>
+    {% endfor %}
+  </nav>
+</div>

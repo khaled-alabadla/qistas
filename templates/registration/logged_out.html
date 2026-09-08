@@ -1,0 +1,8 @@
+{% extends "auth_base.html" %}
+{% load i18n %}
+{% block title %}{% translate "تم تسجيل الخروج" %} · {{ APP_NAME }}{% endblock %}
+{% block card %}
+  <h2 class="mb-2 text-lg font-semibold text-ink">{% translate "تم تسجيل الخروج" %}</h2>
+  <p class="mb-5 text-sm text-slate/70">{% translate "انتهت جلستك بأمان." %}</p>
+  <a href="{% url 'accounts:login' %}" class="btn btn-primary w-full">{% translate "تسجيل الدخول من جديد" %}</a>
+{% endblock %}

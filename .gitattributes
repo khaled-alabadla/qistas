@@ -1,0 +1,8 @@
+# Normalise line endings — repo is LF, checked out LF everywhere.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.woff2 binary
+*.ico binary
+bin/** binary

@@ -1,0 +1,110 @@
+# ─────────────────────────────────────────────────────────────
+# Qistas — root .gitignore
+#
+# Tracked on purpose: application source, docs/, docs/adr/,
+# QISTAS_PROJECT_SPEC.md, and intentional project-level Claude
+# configuration (.claude/settings.json, .claude/commands/,
+# .claude/rules/, .claude/skills/).
+#
+# See docs/adr/0026-ci-and-vcs-workflow.md
+# ─────────────────────────────────────────────────────────────
+
+# ── Local AI / tooling state & generated metadata ────────────
+.wolf/
+.cursor/
+.opencode/
+.agents/
+
+# ── Claude: ignore ONLY local/user-specific state ───────────
+#    (project CLAUDE.md lives at repo root and stays tracked;
+#     .claude/settings.json, commands/, rules/, skills/ stay tracked)
+.claude/settings.local.json
+.claude/*.local.json
+.claude/**/*.local.json
+
+# ── Python ──────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+build/
+dist/
+*.egg-info/
+.eggs/
+.Python
+
+# ── Virtual environments ────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+.python-version
+
+# ── Environment files (keep the example) ────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Django: runtime artifacts ───────────────────────────────
+*.log
+logs/
+*.sqlite3
+*.sqlite3-journal
+db.sqlite3
+test-db.sqlite3
+/media/
+/mediafiles/
+/staticfiles/
+/static_root/
+/static/css/app.css
+/static/css/app.css.map
+local_settings.py
+
+# ── Vendored build tool (fetched by scripts/fetch-tailwind.sh) ──
+/bin/
+
+# ── Ruff ────────────────────────────────────────────────────
+.ruff_cache/
+
+# ── Testing / coverage caches ───────────────────────────────
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+.cache/
+nosetests.xml
+
+# ── Node / front-end build ──────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+package-lock.json.bak
+
+# ── IDE / editor ────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# ── OS ──────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ── Misc local ──────────────────────────────────────────────
+*.bak
+*.orig
+*.tmp
+.scratch/

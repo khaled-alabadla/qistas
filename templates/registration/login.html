@@ -1,0 +1,30 @@
+{% extends "auth_base.html" %}
+{% load i18n %}
+{% block title %}{% translate "تسجيل الدخول" %} · {{ APP_NAME }}{% endblock %}
+
+{% block card %}
+  <h2 class="mb-1 text-lg font-semibold text-ink">{% translate "تسجيل الدخول" %}</h2>
+  <p class="mb-5 text-sm text-slate/70">{% translate "أدخل بريدك الإلكتروني الوظيفي وكلمة المرور." %}</p>
+
+  {% if form.non_field_errors %}
+    <div class="mb-4">
+      {% for error in form.non_field_errors %}
+        {% include "components/alert.html" with tone="error" text=error %}
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% include "components/_form_field.html" with field=form.username %}
+    {% include "components/_form_field.html" with field=form.password %}
+    <input type="hidden" name="next" value="{{ next }}">
+    <button type="submit" class="btn btn-primary w-full">{% translate "دخول" %}</button>
+  </form>
+
+  <div class="mt-4 text-center text-sm">
+    <a href="{% url 'accounts:password_reset' %}" class="text-navy hover:underline">
+      {% translate "نسيت كلمة المرور؟" %}
+    </a>
+  </div>
+{% endblock %}

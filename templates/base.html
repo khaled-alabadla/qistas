@@ -1,0 +1,49 @@
+{% load i18n static qistas %}<!doctype html>
+<html lang="{{ LANGUAGE_CODE|default:'ar' }}" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{% block title %}{{ APP_NAME }}{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230f1f3d'/%3E%3Ctext x='16' y='22' font-size='16' text-anchor='middle' fill='%23c9a24a' font-family='sans-serif'%3E%D9%82%3C/text%3E%3C/svg%3E">
+</head>
+<body class="min-h-screen bg-sand text-ink antialiased"
+      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+      x-data="{ sidebarOpen: false }">
+
+  <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:rounded focus:bg-navy focus:px-3 focus:py-2 focus:text-white">
+    {% translate "تخطَّ إلى المحتوى" %}
+  </a>
+
+  {% block layout %}
+  <div class="flex min-h-screen">
+    {% include "partials/sidebar.html" %}
+
+    <div class="flex min-w-0 flex-1 flex-col">
+      {% include "partials/topbar.html" %}
+
+      <main id="main" class="flex-1 px-4 py-6 sm:px-8">
+        {% if messages %}
+          <div class="mb-4 space-y-2" role="status" aria-live="polite">
+            {% for message in messages %}
+              {% include "components/alert.html" with tone=message.tags text=message %}
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+      </main>
+
+      {% include "partials/footer.html" %}
+    </div>
+  </div>
+  {% endblock %}
+
+  <div id="toast-region" class="fixed bottom-4 start-4 z-50 space-y-2" aria-live="polite"></div>
+
+  <script src="{% static 'vendor/htmx.min.js' %}" defer></script>
+  <script src="{% static 'vendor/alpine.min.js' %}" defer></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

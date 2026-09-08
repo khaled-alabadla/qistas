@@ -1,0 +1,103 @@
+"""
+Single source of truth for group -> Django-permission assignment (docs/adr/0007).
+
+* Idempotent. Run on every deploy and in CI.
+* ``--check`` exits non-zero if the live state has drifted from the desired
+  mapping (used by a test + CI).
+
+The capability layer (`core.permissions.capabilities`) is separate: it maps
+groups -> named capabilities in code. This command keeps Django's own
+model-permission grants aligned for the admin site and `has_perm` checks.
+"""
+
+from __future__ import annotations
+
+from django.contrib.auth.models import Group, Permission
+from django.core.management.base import BaseCommand, CommandError
+
+from core.permissions.capabilities import GROUPS
+from core.permissions.capabilities import Group as GroupChoice
+
+# group name -> exact set of "app_label.codename" it should hold.
+# Phase 1: only the office manager needs model permissions (admin-side user +
+# group + audit-log management). Everything else is capability-driven.
+ROLE_PERMISSIONS: dict[str, set[str]] = {
+    GroupChoice.OFFICE_MANAGER: {
+        "accounts.view_user",
+        "accounts.add_user",
+        "accounts.change_user",
+        "accounts.issue_temp_password",
+        "auth.view_group",
+        "auth.change_group",
+        "audit.view_auditlog",
+    },
+    GroupChoice.LAWYER: set(),
+    GroupChoice.PARALEGAL: set(),
+    GroupChoice.ADMIN_CLERK: set(),
+    GroupChoice.FINANCE_CLERK: set(),
+}
+
+
+def _permission(label: str) -> Permission | None:
+    app_label, codename = label.split(".", 1)
+    return Permission.objects.filter(content_type__app_label=app_label, codename=codename).first()
+
+
+class Command(BaseCommand):
+    help = "Ensure the role groups exist and hold exactly their mapped permissions."
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--check",
+            action="store_true",
+            help="Report drift and exit non-zero without changing anything.",
+        )
+
+    def handle(self, *args, **options):
+        check = options["check"]
+        drift: list[str] = []
+        missing_perms: list[str] = []
+
+        for name in GROUPS:
+            group, created = Group.objects.get_or_create(name=name)
+            if created:
+                drift.append(f"created group '{name}'")
+
+            desired_labels = ROLE_PERMISSIONS.get(name, set())
+            desired_perms = set()
+            for label in desired_labels:
+                perm = _permission(label)
+                if perm is None:
+                    missing_perms.append(f"{name}: permission '{label}' not found")
+                    continue
+                desired_perms.add(perm)
+
+            current = set(group.permissions.all())
+            to_add = desired_perms - current
+            to_remove = current - desired_perms
+
+            for perm in sorted(to_add, key=str):
+                drift.append(f"+ {name}: {perm.content_type.app_label}.{perm.codename}")
+            for perm in sorted(to_remove, key=str):
+                drift.append(f"- {name}: {perm.content_type.app_label}.{perm.codename}")
+
+            if not check and (to_add or to_remove):
+                group.permissions.set(desired_perms)
+
+        if missing_perms:
+            for line in missing_perms:
+                self.stderr.write(self.style.WARNING(line))
+            if check:
+                raise CommandError("sync_roles --check: unresolved permissions (run migrate).")
+
+        if check and drift:
+            for line in drift:
+                self.stdout.write(line)
+            raise CommandError("sync_roles --check: role permissions have drifted.")
+
+        if drift:
+            for line in drift:
+                self.stdout.write(self.style.SUCCESS(line))
+            self.stdout.write(self.style.SUCCESS("roles synced."))
+        else:
+            self.stdout.write("roles already in sync.")
