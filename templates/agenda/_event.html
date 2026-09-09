@@ -1,7 +1,13 @@
 {% load i18n qistas %}{% comment %}param: e (an event dict){% endcomment %}
 <a href="{{ e.url }}"
-   class="block truncate rounded px-1.5 py-0.5 text-xs {% if e.status == 'cancelled' %}bg-mist text-slate/50 line-through{% elif e.done %}bg-emerald-50 text-emerald-800{% else %}bg-bronze/15 text-navy{% endif %} hover:brightness-95"
-   title="{{ e.title }} — {{ e.meta.case_title }}{% if e.meta.court %} · {{ e.meta.court }}{% endif %}">
-  <span dir="ltr" class="tabular-nums">{% datestr e.start "TIME_FORMAT" %}</span>
-  {{ e.title }}
+   class="block truncate rounded px-1.5 py-0.5 text-xs hover:brightness-95
+   {% if e.status == 'cancelled' %}bg-mist text-slate/50 line-through
+   {% elif e.meta.overdue %}bg-danger/15 text-danger
+   {% elif e.done %}bg-emerald-50 text-emerald-800
+   {% elif e.kind == 'deadline' %}bg-amber-100 text-amber-900
+   {% elif e.kind == 'task' %}bg-sky-100 text-sky-900
+   {% else %}bg-bronze/15 text-navy{% endif %}"
+   title="{{ e.title }}{% if e.meta.case_title %} — {{ e.meta.case_title }}{% endif %}{% if e.meta.court %} · {{ e.meta.court }}{% endif %}">
+  {% if not e.all_day %}<span dir="ltr" class="tabular-nums">{% datestr e.start "TIME_FORMAT" %}</span>{% endif %}
+  {% if e.kind == 'deadline' %}⚑ {% elif e.kind == 'task' %}✓ {% endif %}{{ e.title }}
 </a>

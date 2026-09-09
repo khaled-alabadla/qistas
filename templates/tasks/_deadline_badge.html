@@ -1,0 +1,6 @@
+{% load i18n qistas %}{% comment %}param: d (a Deadline){% endcomment %}
+{% if d.status == 'met' %}{% badge d.get_status_display "success" %}
+{% elif d.status == 'missed' %}{% badge d.get_status_display "danger" %}
+{% elif d.status == 'cancelled' %}{% badge d.get_status_display "neutral" %}
+{% elif d.is_overdue %}{% translate "متأخر" as lbl_overdue %}{% badge lbl_overdue "danger" %}
+{% else %}{% badge d.get_status_display "warning" %}{% endif %}

@@ -1,0 +1,8 @@
+{% load i18n qistas %}{% comment %}param: t (a Task){% endcomment %}
+{% if t.priority == 'urgent' %}{% badge t.get_priority_display "danger" %}
+{% elif t.priority == 'high' %}{% badge t.get_priority_display "warning" %}
+{% else %}{% badge t.get_priority_display "neutral" %}{% endif %}
+{% if t.status == 'done' %}{% badge t.get_status_display "success" %}
+{% elif t.status == 'cancelled' %}{% badge t.get_status_display "neutral" %}
+{% elif t.is_overdue %}{% translate "متأخرة" as lbl_overdue %}{% badge lbl_overdue "danger" %}
+{% else %}{% badge t.get_status_display "bronze" %}{% endif %}

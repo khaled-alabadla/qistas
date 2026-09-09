@@ -8,12 +8,77 @@
     <p class="text-sm text-slate/70">{% translate "ما الذي يحتاج إلى انتباهك اليوم؟" %}</p>
   </div>
 
+  {% if has_widgets %}
+  <div class="grid gap-6 lg:grid-cols-3">
+    {# مهامي #}
+    <section class="rounded-xl border border-line bg-white p-5">
+      <div class="mb-3 flex items-center justify-between">
+        <h2 class="text-base font-semibold text-ink">{% translate "مهامي المفتوحة" %}</h2>
+        <a href="{% url 'tasks:list' %}?mine=on" class="text-xs text-navy hover:underline">{% translate "الكل" %}</a>
+      </div>
+      {% if my_tasks %}
+        <ul class="space-y-2 text-sm">
+          {% for t in my_tasks %}
+            <li class="flex items-center justify-between gap-2 border-b border-line pb-2 last:border-0">
+              <a class="truncate text-navy hover:underline" href="{% url 'tasks:detail' t.pk %}">{{ t.title }}</a>
+              <span class="shrink-0 text-xs {% if t.is_overdue %}text-danger font-medium{% else %}text-slate/60{% endif %}">
+                {% if t.due_date %}{% datestr t.due_date "SHORT_DATE_FORMAT" %}{% else %}—{% endif %}
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-sm text-slate/50">{% translate "لا مهام مفتوحة مُسندة إليك." %}</p>
+      {% endif %}
+    </section>
+
+    {# مهام متأخرة #}
+    <section class="rounded-xl border border-danger/30 bg-danger/5 p-5">
+      <div class="mb-3 flex items-center justify-between">
+        <h2 class="text-base font-semibold text-ink">{% translate "مهام متأخرة" %} <span class="text-danger">({% num overdue_count %})</span></h2>
+        <a href="{% url 'tasks:list' %}?overdue=on" class="text-xs text-navy hover:underline">{% translate "الكل" %}</a>
+      </div>
+      {% if overdue_tasks %}
+        <ul class="space-y-2 text-sm">
+          {% for t in overdue_tasks %}
+            <li class="flex items-center justify-between gap-2 border-b border-danger/20 pb-2 last:border-0">
+              <a class="truncate text-navy hover:underline" href="{% url 'tasks:detail' t.pk %}">{{ t.title }}</a>
+              <span class="shrink-0 text-xs text-danger">{% datestr t.due_date "SHORT_DATE_FORMAT" %}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-sm text-slate/50">{% translate "لا مهام متأخرة. أحسنت." %}</p>
+      {% endif %}
+    </section>
+
+    {# مواعيد قادمة #}
+    <section class="rounded-xl border border-line bg-white p-5">
+      <div class="mb-3 flex items-center justify-between">
+        <h2 class="text-base font-semibold text-ink">{% translate "مواعيد نهائية قادمة" %}</h2>
+        <a href="{% url 'tasks:deadlines' %}" class="text-xs text-navy hover:underline">{% translate "الكل" %}</a>
+      </div>
+      {% if upcoming_deadlines %}
+        <ul class="space-y-2 text-sm">
+          {% for d in upcoming_deadlines %}
+            <li class="flex items-center justify-between gap-2 border-b border-line pb-2 last:border-0">
+              <a class="truncate text-navy hover:underline" href="{% url 'tasks:deadline_detail' d.pk %}">{{ d.title }}</a>
+              <span class="shrink-0 text-xs {% if d.is_overdue %}text-danger font-medium{% else %}text-slate/60{% endif %}">{% datestr d.due_date "SHORT_DATE_FORMAT" %}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-sm text-slate/50">{% translate "لا مواعيد نهائية خلال 30 يومًا." %}</p>
+      {% endif %}
+    </section>
+  </div>
+
+  <p class="mt-6 text-xs text-slate/50">
+    {% translate "لوحة تشغيل موسّعة (جلسات اليوم، تحليلات القضايا، الملخص المالي) ضمن مرحلة لاحقة." %}
+  </p>
+  {% else %}
   {% translate "لوحة التشغيل قيد الإنشاء" as es_title %}
   {% translate "ستعرض هذه الصفحة جلسات اليوم والمهام المتأخرة والفواتير المستحقة والنشاط الأخير بمجرد إضافة الوحدات في المراحل القادمة." as es_msg %}
   {% empty_state es_title es_msg %}
-
-  <p class="mt-6 text-xs text-slate/60">
-    {% blocktranslate %}المرحلة الحالية: الأساس.{% endblocktranslate %}
-    <bdi dir="ltr">{{ user.email }}</bdi>
-  </p>
+  {% endif %}
 {% endblock %}

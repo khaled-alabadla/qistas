@@ -34,3 +34,5 @@ All ADRs below were **Accepted 2026-09-08** (owner: Khaled; architect: Claude) a
 | [0025](0025-testing-strategy-tiered.md) | Tiered testing strategy | Yes |
 | [0026](0026-ci-and-vcs-workflow.md) | CI pipeline and VCS workflow | Yes |
 | [0027](0027-password-reset-mechanism.md) | Password reset: email flow + admin temporary password | Yes |
+| [0028](0028-hearings-calendar-and-derived-next-hearing.md) | Hearings, calendar, derived `Case.next_hearing` | Yes (Phase 4) |
+| [0029](0029-tasks-and-deadlines.md) | Tasks + deadlines: two models, computed overdue, calendar | Yes (Phase 5) |

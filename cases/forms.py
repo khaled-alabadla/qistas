@@ -16,6 +16,7 @@ from cases.models import (
     NoteKind,
 )
 from clients.models import Client, ClientStatus
+from core.forms import with_current_choice
 from courts.models import Court
 
 User = get_user_model()
@@ -29,13 +30,9 @@ def _lawyer_queryset():
 
 def _with_current(queryset, instance, attr):
     """Widen ``queryset`` to also include the pk ``instance`` currently references
-    on ``attr`` (so an edit form never hides the case's own existing value)."""
-    if instance is None:
-        return queryset
-    current = getattr(instance, attr, None)
-    if current is None:
-        return queryset
-    return (queryset.model.objects.filter(pk=current) | queryset).distinct()
+    on ``attr`` (so an edit form never hides the case's own existing value —
+    buglog bug-041). Delegates to the shared, distinct-safe helper."""
+    return with_current_choice(queryset, getattr(instance, attr, None) if instance else None)
 
 
 class CaseForm(forms.ModelForm):

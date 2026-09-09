@@ -49,6 +49,17 @@ _COURT_MANAGE = {*_COURT_VIEW, "courts.add_court", "courts.change_court"}
 _HEARING_VIEW = {"hearings.view_hearing"}
 _HEARING_MANAGE = {*_HEARING_VIEW, "hearings.add_hearing", "hearings.change_hearing"}
 
+# Phase 5 — tasks + deadlines (one capability pair, two models).
+_TASK_VIEW = {"tasks.view_task", "tasks.view_deadline"}
+_TASK_MANAGE = {
+    *_TASK_VIEW,
+    "tasks.add_task",
+    "tasks.change_task",
+    "tasks.delete_task",
+    "tasks.add_deadline",
+    "tasks.change_deadline",
+}
+
 ROLE_PERMISSIONS: dict[str, set[str]] = {
     GroupChoice.OFFICE_MANAGER: {
         "accounts.view_user",
@@ -65,13 +76,23 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
         "cases.change_casetype",
         *_COURT_MANAGE,
         *_HEARING_MANAGE,
+        *_TASK_MANAGE,
     },
     GroupChoice.LAWYER: (
-        _CLIENT_MANAGE | _CASE_MANAGE | _CASE_CONFIDENTIAL | _COURT_VIEW | _HEARING_MANAGE
+        _CLIENT_MANAGE
+        | _CASE_MANAGE
+        | _CASE_CONFIDENTIAL
+        | _COURT_VIEW
+        | _HEARING_MANAGE
+        | _TASK_MANAGE
     ),
-    GroupChoice.PARALEGAL: _CLIENT_VIEW | _CASE_MANAGE | _COURT_VIEW | _HEARING_MANAGE,
-    GroupChoice.ADMIN_CLERK: _CLIENT_MANAGE | _CASE_MANAGE | _COURT_VIEW | _HEARING_MANAGE,
-    GroupChoice.FINANCE_CLERK: _CLIENT_VIEW | _CASE_VIEW | _HEARING_VIEW,
+    GroupChoice.PARALEGAL: (
+        _CLIENT_VIEW | _CASE_MANAGE | _COURT_VIEW | _HEARING_MANAGE | _TASK_MANAGE
+    ),
+    GroupChoice.ADMIN_CLERK: (
+        _CLIENT_MANAGE | _CASE_MANAGE | _COURT_VIEW | _HEARING_MANAGE | _TASK_MANAGE
+    ),
+    GroupChoice.FINANCE_CLERK: _CLIENT_VIEW | _CASE_VIEW | _HEARING_VIEW | _TASK_VIEW,
 }
 
 
