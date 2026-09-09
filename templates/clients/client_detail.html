@@ -74,6 +74,30 @@
         <p class="text-sm text-slate/50">{% translate "لا توجد ملاحظات." %}</p>
       {% endif %}
     </div>
+
+    {% if can_documents %}
+    <div class="rounded-xl border border-line bg-white p-5">
+      <div class="mb-3 flex items-center justify-between">
+        <h3 class="text-base font-semibold text-ink">{% translate "المستندات" %}</h3>
+        <span class="flex items-center gap-3 text-xs">
+          {% if can_documents_manage %}<a href="{% url 'documents:upload' %}?client={{ client.pk }}" class="text-navy hover:underline">{% translate "رفع مستند" %}</a>{% endif %}
+          <a href="{% url 'documents:list' %}?client={{ client.pk }}" class="text-navy hover:underline">{% translate "عرض الكل" %}</a>
+        </span>
+      </div>
+      {% if client_documents %}
+        <ul class="divide-y divide-line text-sm">
+          {% for d in client_documents %}
+            <li class="flex items-center justify-between gap-2 py-2">
+              <a class="truncate text-navy hover:underline" href="{% url 'documents:detail' d.pk %}">{{ d.name }}</a>
+              <span class="shrink-0 text-xs text-slate/60">{{ d.get_document_type_display }} · <bdi dir="ltr">{{ d.size|filesizeformat }}</bdi></span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-sm text-slate/50">{% translate "لا توجد مستندات لهذا الموكل." %}</p>
+      {% endif %}
+    </div>
+    {% endif %}
   </section>
 
   <aside class="space-y-6">

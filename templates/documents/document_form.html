@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% if is_create %}{% translate "رفع مستند" %}{% else %}{% translate "تعديل بيانات المستند" %}{% endif %} · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl">
+  <nav class="mb-4 text-xs text-slate/70">
+    <a href="{% url 'documents:list' %}" class="hover:text-navy">{% translate "المستندات" %}</a>
+    <span aria-hidden="true"> ‹ </span>
+    <span class="font-medium text-ink">{% if is_create %}{% translate "مستند جديد" %}{% else %}{{ document.name }}{% endif %}</span>
+  </nav>
+
+  <h1 class="mb-4 text-xl font-semibold text-ink">{% if is_create %}{% translate "رفع مستند" %}{% else %}{% translate "تعديل بيانات المستند" %}{% endif %}</h1>
+
+  {% if form.non_field_errors %}
+    <div class="mb-4">{% for e in form.non_field_errors %}{% include "components/alert.html" with tone="error" text=e %}{% endfor %}</div>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data" novalidate class="space-y-4 rounded-xl border border-line bg-white p-6">
+    {% csrf_token %}
+    {% if is_create %}
+      {% include "components/_form_field.html" with field=form.file %}
+      <p class="-mt-2 text-xs text-slate/60">{% translate "الصيغ المدعومة: PDF، Word، Excel، صور، نصوص. الحد الأقصى 25 ميغابايت." %}</p>
+    {% else %}
+      <p class="rounded-md bg-mist px-3 py-2 text-xs text-slate/70">{% translate "لا يمكن استبدال الملف بعد الرفع — للاستبدال ارفع مستندًا جديدًا." %}</p>
+    {% endif %}
+    {% include "components/_form_field.html" with field=form.name %}
+    {% include "components/_form_field.html" with field=form.document_type %}
+    {% include "components/_form_field.html" with field=form.description %}
+    <div class="grid gap-4 sm:grid-cols-2">
+      {% include "components/_form_field.html" with field=form.case %}
+      {% include "components/_form_field.html" with field=form.client %}
+    </div>
+    <div class="flex gap-2">
+      <button type="submit" class="btn btn-primary">{% if is_create %}{% translate "رفع" %}{% else %}{% translate "حفظ" %}{% endif %}</button>
+      <a href="{% if document %}{% url 'documents:detail' document.pk %}{% else %}{% url 'documents:list' %}{% endif %}" class="btn btn-ghost">{% translate "إلغاء" %}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

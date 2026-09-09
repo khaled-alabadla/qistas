@@ -35,6 +35,7 @@ from core.permissions.capabilities import Capability, can
 from core.permissions.decorators import require_capability
 from core.permissions.mixins import CapabilityRequiredMixin
 from core.querysets import assert_scoped
+from documents.selectors import case_documents
 from hearings.selectors import case_hearings
 from tasks.selectors import case_deadlines, case_tasks
 
@@ -47,13 +48,13 @@ TAB_LINKS = (
     ("parties", _("الأطراف")),
     ("hearings", _("الجلسات")),
     ("tasks", _("المهام")),
+    ("documents", _("المستندات")),
     ("notes", _("الملاحظات")),
     ("correspondence", _("المراسلات")),
     ("timeline", _("الخط الزمني")),
 )
 REAL_TABS = tuple(key for key, _label in TAB_LINKS)
 DISABLED_TABS = (
-    _("المستندات"),
     _("الفواتير"),
     _("المدفوعات"),
 )
@@ -140,6 +141,8 @@ class CaseDetailView(CapabilityRequiredMixin, LoginRequiredMixin, DetailView):
                 "tab_links": TAB_LINKS,
                 "can_manage": can(user, Capability.CASES_MANAGE),
                 "can_view_confidential": can_confidential,
+                "can_documents": can(user, Capability.DOCUMENTS_VIEW),
+                "can_documents_manage": can(user, Capability.DOCUMENTS_MANAGE),
                 "parties": case_parties(case, lawyer_links=lawyer_links),
                 "lawyer_links": lawyer_links,
                 "notes": [n for n in notes if n.kind == NoteKind.GENERAL],
@@ -148,6 +151,7 @@ class CaseDetailView(CapabilityRequiredMixin, LoginRequiredMixin, DetailView):
                 "hearings": case_hearings(case),
                 "case_tasks": case_tasks(case).order_by("-created_at"),
                 "case_deadlines": case_deadlines(case),
+                "case_documents": case_documents(case),
                 "next_hearing": case.next_hearing,
                 "status_form": CaseStatusForm(initial={"status": case.status}),
                 "lawyer_form": SupportingLawyerForm(),

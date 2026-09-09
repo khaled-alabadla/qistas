@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{{ document.name }} · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+{% translate "النظام" as sys_actor %}
+<nav class="mb-4 text-xs text-slate/70">
+  <a href="{% url 'documents:list' %}" class="hover:text-navy">{% translate "المستندات" %}</a>
+  <span aria-hidden="true"> ‹ </span>
+  <span class="font-medium text-ink">{{ document.name }}</span>
+</nav>
+
+<div class="mb-6 flex flex-wrap items-start justify-between gap-3">
+  <div>
+    <div class="flex flex-wrap items-center gap-2">
+      <h1 class="text-xl font-semibold text-ink">{{ document.name }}</h1>
+      {% if document.is_retired %}{% translate "مسحوب" as lbl_retired %}{% badge lbl_retired "neutral" %}{% endif %}
+    </div>
+    <p class="mt-1 text-sm text-slate/70">{{ document.get_document_type_display }} · <bdi dir="ltr">{{ document.size|filesizeformat }}</bdi></p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <a href="{% url 'documents:download' document.pk %}" class="btn btn-primary">{% translate "تنزيل" %}</a>
+    {% if can_manage %}
+      <a href="{% url 'documents:update' document.pk %}" class="btn btn-secondary">{% translate "تعديل البيانات" %}</a>
+      <form method="post" action="{% url 'documents:retire' document.pk %}" onsubmit="return confirm('{% translate "سحب هذا المستند؟" %}');">
+        {% csrf_token %}<button class="btn btn-danger">{% translate "سحب" %}</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="grid gap-6 lg:grid-cols-3">
+  <section class="lg:col-span-2 rounded-xl border border-line bg-white p-5">
+    <dl class="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+      <div><dt class="text-slate/60">{% translate "النوع" %}</dt><dd class="text-ink">{{ document.get_document_type_display }}</dd></div>
+      <div><dt class="text-slate/60">{% translate "الحجم" %}</dt><dd class="text-ink"><bdi dir="ltr">{{ document.size|filesizeformat }}</bdi></dd></div>
+      <div><dt class="text-slate/60">{% translate "نوع المحتوى" %}</dt><dd class="text-ink"><bdi dir="ltr">{{ document.content_type }}</bdi></dd></div>
+      <div><dt class="text-slate/60">{% translate "اسم الملف الأصلي" %}</dt><dd class="text-ink"><bdi dir="ltr">{{ document.original_filename|default:"—" }}</bdi></dd></div>
+      <div class="sm:col-span-2"><dt class="text-slate/60">{% translate "بصمة SHA-256" %}</dt><dd class="break-all text-xs text-slate/70"><bdi dir="ltr">{{ document.sha256 }}</bdi></dd></div>
+      <div><dt class="text-slate/60">{% translate "القضية" %}</dt><dd>{% if document.case %}<a class="text-navy hover:underline" href="{% url 'cases:detail' document.case_id %}">{% num document.case.case_number %} — {{ document.case.title }}</a>{% else %}—{% endif %}</dd></div>
+      <div><dt class="text-slate/60">{% translate "الموكل" %}</dt><dd>{% if document.client %}<a class="text-navy hover:underline" href="{% url 'clients:detail' document.client_id %}">{{ document.client.display_name }}</a>{% else %}—{% endif %}</dd></div>
+    </dl>
+    {% if document.description %}
+      <div class="mt-4"><dt class="text-slate/60 text-sm">{% translate "الوصف" %}</dt><dd class="mt-1 whitespace-pre-line text-sm text-ink">{{ document.description }}</dd></div>
+    {% endif %}
+  </section>
+
+  <aside class="space-y-3 text-sm text-slate/60">
+    <p>{% translate "رفعه" %}: {% if document.uploaded_by %}{{ document.uploaded_by.get_full_name|default:document.uploaded_by.email }}{% else %}{{ sys_actor }}{% endif %}</p>
+    <p>{% datestr document.created_at "SHORT_DATETIME_FORMAT" %}</p>
+    <p class="text-xs text-slate/40">{% translate "المستند سجل قانوني — يُسحب فقط، ولا يُحذف. الملف نفسه غير قابل للتعديل." %}</p>
+  </aside>
+</div>
+{% endblock %}

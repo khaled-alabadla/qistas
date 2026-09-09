@@ -40,4 +40,5 @@ CSRF_COOKIE_SECURE = False
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
     "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    "documents": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
 }

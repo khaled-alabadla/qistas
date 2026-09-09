@@ -1,0 +1,6 @@
+{% load i18n qistas %}{% comment %}param: d (a Document){% endcomment %}
+<span class="text-xs text-slate/60">
+  {{ d.get_document_type_display }}
+  · <bdi dir="ltr">{{ d.size|filesizeformat }}</bdi>
+  {% if d.is_retired %}· <span class="text-danger">{% translate "مسحوب" %}</span>{% endif %}
+</span>

@@ -4,10 +4,10 @@
 > `COMPLETED ≠ APPROVED` — a phase starts only after the user says
 > **APPROVE PHASE N** / **ابدأ المرحلة N**.
 
-Current Phase: **5 — Tasks + Deadlines** (Phases 1–4 approved + merged to master)
+Current Phase: **6 — Documents** (Phases 1–5 approved + merged to master)
 
 Planning artifacts: `QISTAS_PHASE_0_ANALYSIS.md` · `QISTAS_GRILL_REVIEW.md` ·
-`docs/architecture.md` · `docs/adr/0001`–`0029` · `docs/PHASE_1_PLAN.md`
+`docs/architecture.md` · `docs/adr/0001`–`0030` · `docs/PHASE_1_PLAN.md`
 
 ---
 
@@ -197,8 +197,8 @@ Branch: `phase/4-courts-hearings` — one commit `phase(4): complete courts and 
 pushed, **not merged**.
 
 ## Phase 5 — Tasks + Deadlines
-Status: **COMPLETE (technical)** — see `docs/PHASE_5_REPORT.md`
-Approval: **PENDING**
+Status: **APPROVED + merged to `master`** (PR #4, merge commit `c52c95a`) — see `docs/PHASE_5_REPORT.md`
+Approval: **APPROVED 2026-09-09** ("APPROVE PHASE 5")
 Design: `docs/adr/0029-tasks-and-deadlines.md`
 
 `tasks` app, two models: **`Task`** (title/description, `assigned_to`, optional
@@ -243,8 +243,61 @@ Branch: `phase/5-tasks-deadlines` — one commit `phase(5): complete tasks and d
 pushed, **not merged**.
 
 ## Phase 6 — Documents
-Status: NOT STARTED
-Approval: N/A
+Status: **COMPLETE (technical)** — see `docs/PHASE_6_REPORT.md`
+Approval: **PENDING**
+Design: `docs/adr/0030-documents-storage-and-access.md`
+
+`documents` app: **`Document`** (name / `document_type` `DocumentCategory` /
+description / `file` / `original_filename` / detected `content_type` / `size` /
+`sha256`; FK `case` + `client` SET_NULL; `uploaded_by`). **Private storage** —
+`documents.storage.PrivateFileSystemStorage` (`.url()` raises), a separate
+`STORAGES["documents"]` entry, `upload_to` = `<yyyy>/<mm>/<uuid4><ext>` (no
+user-controlled path segment), **never web-served** (no MEDIA route). The only
+path to the bytes is `documents:download` — `@require_GET` + `@require_capability`
++ `for_user()` scope (404 outside scope / retired) + audited, `FileResponse`
+`as_attachment` + `nosniff`. **Upload validation** (`documents.validators`) — size
+≤ 25 MB, curated **magic-byte** allowlist (PDF/PNG/JPEG/GIF/TIFF/ZIP-office/OLE/
+RTF/text), extension-must-agree, sha256 streamed; client `Content-Type` ignored;
+no libmagic (hand-rolled, cross-platform). Metadata-only edit (the file is
+immutable — versioning designed-for, not built, §36). **Retire** = soft-delete
+(`deleted_at`), never hard-deleted (admin delete off, no `delete` codename).
+`documents.services` (transactional, `AuditLog` every mutation with **metadata
+only** — no file bytes; `CaseEvent` `DOCUMENT_ADDED`/`REMOVED` when case-linked).
+Selectors (list / search / filter / pagination, `case_documents`,
+`client_documents`). Capabilities `documents.view` (all staff incl. finance_clerk
+— download only) / `documents.manage` (office_manager, lawyer, paralegal,
+admin_clerk). `sync_roles` extended. 4 `DOCUMENT_*` `AuditAction`; 2 `DOCUMENT_*`
+`CaseEventType` (`cases/0006`). Case workspace **المستندات** tab is now real;
+client profile gets a documents card. Nav: **المستندات والعقود → المستندات**
+(+ العقود placeholder). `documents/0002` trigram GIN. `seed_demo_documents`.
+
+**Verification:**
+- Tests: **388 pass / 0 fail / 3 skipped** (`@pytest.mark.postgres`) on SQLite —
+  `documents` 51 (validators / models / services / views / permissions / smoke),
+  incl. IDOR / anon / unauthorized / URL-tampering / mass-assignment / CSRF /
+  method / private-file / path-traversal / disguised-executable / download-auth /
+  audit / CaseEvent / retire.
+- `ruff` / `ruff format --check` / `pip-audit` / `makemigrations --check` /
+  `manage.py check` / `check --deploy --fail-level WARNING` (prod) — all clean.
+- Seed chain + `sync_roles --check` clean.
+- `/code-review` (self): 1 finding fixed with a regression test (download 500 → 404
+  when the blob is missing, phantom download not audited). Self **security review —
+  PASS**; self **performance review — PASS**.
+
+**DEFERRED / UNVERIFIED — same Docker/PostgreSQL environment blocker as Phases 1–5:**
+1. Full suite on **PostgreSQL 16** (SQLite only).
+2. `documents/migrations/0002_document_search_indexes` (trigram GIN,
+   `TRGM_COLUMNS == SEARCH_FIELDS`) — never executed (PG-only, guarded).
+3. The `@pytest.mark.postgres` tests.
+4. `docker compose` full-stack smoke (equivalent verified via the Django test
+   client, incl. streamed download).
+5. `compilemessages` (Docker-only; harmless).
+6. Real filesystem behaviour of `PrivateFileSystemStorage` under Linux prod
+   (tests use `InMemoryStorage`); `FILE_UPLOAD_PERMISSIONS=0o640` unverified on a
+   real FS.
+
+Branch: `phase/6-documents` — one commit `phase(6): complete documents`,
+pushed, **not merged**.
 
 ## Phase 7 — Contracts
 Status: NOT STARTED

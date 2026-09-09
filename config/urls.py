@@ -20,6 +20,7 @@ urlpatterns = [
     path("hearings/", include("hearings.urls")),
     path("agenda/", include("agenda.urls")),
     path("tasks/", include("tasks.urls")),
+    path("documents/", include("documents.urls")),
     path("", include("core.urls")),
 ]
 
