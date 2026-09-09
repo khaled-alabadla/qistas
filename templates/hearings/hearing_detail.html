@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{% translate "جلسة" %} · {{ hearing.case.case_number }}{% endblock %}
+
+{% block content %}
+{% translate "النظام" as sys_actor %}
+<nav class="mb-4 text-xs text-slate/70">
+  <a href="{% url 'hearings:list' %}" class="hover:text-navy">{% translate "الجلسات" %}</a>
+  <span aria-hidden="true"> ‹ </span>
+  <a href="{% url 'cases:detail' hearing.case_id %}?tab=hearings" class="hover:text-navy">{% num hearing.case.case_number %}</a>
+  <span aria-hidden="true"> ‹ </span>
+  <span class="font-medium text-ink">{% datestr hearing.scheduled_at "SHORT_DATE_FORMAT" %}</span>
+</nav>
+
+<div class="mb-6 flex flex-wrap items-start justify-between gap-3">
+  <div>
+    <div class="flex flex-wrap items-center gap-2">
+      <h1 class="text-xl font-semibold text-ink">{{ hearing.get_hearing_type_display }}</h1>
+      {% include "hearings/_status_badge.html" with h=hearing %}
+    </div>
+    <p class="mt-1 text-sm text-slate/70">
+      {% datestr hearing.scheduled_at "DATETIME_FORMAT" %}
+      {% if hearing.court %} · {{ hearing.court.name }}{% endif %}
+      {% if hearing.room %} · {% translate "قاعة" %} {{ hearing.room }}{% endif %}
+    </p>
+  </div>
+  {% if can_manage and hearing.is_open %}
+  <div class="flex flex-wrap gap-2">
+    <a href="{% url 'hearings:complete' hearing.pk %}" class="btn btn-primary">{% translate "تسجيل النتيجة" %}</a>
+    <a href="{% url 'hearings:postpone' hearing.pk %}" class="btn btn-secondary">{% translate "تأجيل" %}</a>
+    <a href="{% url 'hearings:update' hearing.pk %}" class="btn btn-ghost">{% translate "تعديل / إعادة جدولة" %}</a>
+  </div>
+  {% endif %}
+</div>
+
+{% if can_manage and hearing.is_open %}
+<details class="mb-6 rounded-lg border border-danger/30 bg-danger/5 p-4">
+  <summary class="cursor-pointer text-sm font-medium text-danger">{% translate "إلغاء الجلسة" %}</summary>
+  <form method="post" action="{% url 'hearings:cancel' hearing.pk %}" class="mt-3 space-y-2">
+    {% csrf_token %}
+    {% include "components/_form_field.html" with field=cancel_form.reason %}
+    <button class="btn btn-danger" onclick="return confirm('{% translate "تأكيد إلغاء الجلسة؟" %}');">{% translate "تأكيد الإلغاء" %}</button>
+  </form>
+</details>
+{% endif %}
+
+<div class="grid gap-6 lg:grid-cols-3">
+  <section class="lg:col-span-2 space-y-6">
+    <div class="rounded-xl border border-line bg-white p-5">
+      <h3 class="mb-3 text-base font-semibold text-ink">{% translate "المعلومات" %}</h3>
+      <dl class="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+        <div><dt class="text-slate/60">{% translate "القضية" %}</dt><dd><a class="text-navy hover:underline" href="{% url 'cases:detail' hearing.case_id %}">{% num hearing.case.case_number %} — {{ hearing.case.title }}</a></dd></div>
+        <div><dt class="text-slate/60">{% translate "الموكل" %}</dt><dd>{{ hearing.case.client.display_name }}</dd></div>
+        <div><dt class="text-slate/60">{% translate "النوع" %}</dt><dd>{{ hearing.get_hearing_type_display }}</dd></div>
+        <div><dt class="text-slate/60">{% translate "المحكمة" %}</dt><dd>{% if hearing.court %}{{ hearing.court.name }}{% else %}—{% endif %}</dd></div>
+        <div><dt class="text-slate/60">{% translate "المحامي الحاضر" %}</dt><dd>{% if hearing.lawyer %}{{ hearing.lawyer.get_full_name|default:hearing.lawyer.email }}{% else %}—{% endif %}</dd></div>
+        <div><dt class="text-slate/60">{% translate "القاعة" %}</dt><dd>{{ hearing.room|default:"—" }}</dd></div>
+      </dl>
+      {% if hearing.notes %}
+        <div class="mt-4"><dt class="text-slate/60 text-sm">{% translate "ملاحظات" %}</dt><dd class="mt-1 whitespace-pre-line text-sm text-ink">{{ hearing.notes }}</dd></div>
+      {% endif %}
+    </div>
+
+    {% if hearing.status == 'held' or hearing.status == 'postponed' %}
+    <div class="rounded-xl border border-line bg-white p-5">
+      <h3 class="mb-3 text-base font-semibold text-ink">{% translate "النتيجة" %}</h3>
+      <dl class="space-y-3 text-sm">
+        {% if hearing.result %}<div><dt class="text-slate/60">{% translate "النتيجة" %}</dt><dd class="whitespace-pre-line text-ink">{{ hearing.result }}</dd></div>{% endif %}
+        {% if hearing.next_action %}<div><dt class="text-slate/60">{% translate "الإجراء التالي" %}</dt><dd class="text-ink">{{ hearing.next_action }}</dd></div>{% endif %}
+        {% if hearing.next_hearing_date %}<div><dt class="text-slate/60">{% translate "تاريخ الجلسة القادمة" %}</dt><dd>{% datestr hearing.next_hearing_date %}</dd></div>{% endif %}
+      </dl>
+    </div>
+    {% endif %}
+
+    {% if hearing.previous_hearing %}
+      <p class="text-sm text-slate/60">
+        {% translate "جلسة تابعة لـ" %}
+        <a class="text-navy hover:underline" href="{% url 'hearings:detail' hearing.previous_hearing.pk %}">{% datestr hearing.previous_hearing.scheduled_at "SHORT_DATE_FORMAT" %}</a>
+      </p>
+    {% endif %}
+    {% if follow_ups %}
+      <div class="rounded-xl border border-line bg-white p-5">
+        <h3 class="mb-2 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "الجلسات اللاحقة" %}</h3>
+        <ul class="space-y-1 text-sm">
+          {% for f in follow_ups %}
+            <li><a class="text-navy hover:underline" href="{% url 'hearings:detail' f.pk %}">{% datestr f.scheduled_at "SHORT_DATETIME_FORMAT" %}</a> — {{ f.get_status_display }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+  </section>
+
+  <aside class="space-y-3 text-sm text-slate/60">
+    <p>{% translate "أنشأها" %}: {% if hearing.created_by %}{{ hearing.created_by.get_full_name|default:hearing.created_by.email }}{% else %}{{ sys_actor }}{% endif %}</p>
+    <p>{% datestr hearing.created_at "SHORT_DATETIME_FORMAT" %}</p>
+    <p class="text-xs text-slate/40">{% translate "لا تُحذف الجلسات — تُلغى فقط (سجل قانوني)." %}</p>
+  </aside>
+</div>
+{% endblock %}

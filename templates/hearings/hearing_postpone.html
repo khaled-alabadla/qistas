@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{% translate "تأجيل الجلسة" %} · {{ hearing.case.case_number }}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl">
+  <nav class="mb-4 text-xs text-slate/70">
+    <a href="{% url 'hearings:detail' hearing.pk %}" class="hover:text-navy">{% num hearing.case.case_number %} · {% datestr hearing.scheduled_at "SHORT_DATE_FORMAT" %}</a>
+    <span aria-hidden="true"> ‹ </span>
+    <span class="font-medium text-ink">{% translate "تأجيل" %}</span>
+  </nav>
+
+  <h1 class="mb-1 text-xl font-semibold text-ink">{% translate "تأجيل الجلسة" %}</h1>
+  <p class="mb-4 text-sm text-slate/70">{% translate "سيتم إنشاء جلسة مجدولة جديدة بالتاريخ المُدخل." %}</p>
+
+  {% if form.non_field_errors %}
+    <div class="mb-4">{% for e in form.non_field_errors %}{% include "components/alert.html" with tone="error" text=e %}{% endfor %}</div>
+  {% endif %}
+
+  <form method="post" novalidate class="space-y-4 rounded-xl border border-line bg-white p-6">
+    {% csrf_token %}
+    <div class="grid gap-4 sm:grid-cols-2">
+      {% include "components/_form_field.html" with field=form.next_hearing_date %}
+      {% include "components/_form_field.html" with field=form.next_hearing_time %}
+    </div>
+    {% include "components/_form_field.html" with field=form.next_action %}
+    {% include "components/_form_field.html" with field=form.reason %}
+    <div class="flex gap-2">
+      <button type="submit" class="btn btn-primary">{% translate "تأجيل" %}</button>
+      <a href="{% url 'hearings:detail' hearing.pk %}" class="btn btn-ghost">{% translate "إلغاء" %}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

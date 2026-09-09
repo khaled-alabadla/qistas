@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{% translate "تسجيل نتيجة الجلسة" %} · {{ hearing.case.case_number }}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl">
+  <nav class="mb-4 text-xs text-slate/70">
+    <a href="{% url 'hearings:detail' hearing.pk %}" class="hover:text-navy">{% num hearing.case.case_number %} · {% datestr hearing.scheduled_at "SHORT_DATE_FORMAT" %}</a>
+    <span aria-hidden="true"> ‹ </span>
+    <span class="font-medium text-ink">{% translate "تسجيل النتيجة" %}</span>
+  </nav>
+
+  <h1 class="mb-1 text-xl font-semibold text-ink">{% translate "تسجيل نتيجة الجلسة" %}</h1>
+  <p class="mb-4 text-sm text-slate/70">{% translate "عند إدخال تاريخ جلسة قادمة سيتم إنشاء جلسة مجدولة جديدة تلقائيًا." %}</p>
+
+  <form method="post" novalidate class="space-y-4 rounded-xl border border-line bg-white p-6">
+    {% csrf_token %}
+    {% include "components/_form_field.html" with field=form.result %}
+    {% include "components/_form_field.html" with field=form.notes %}
+    {% include "components/_form_field.html" with field=form.next_action %}
+    <div class="grid gap-4 sm:grid-cols-2">
+      {% include "components/_form_field.html" with field=form.next_hearing_date %}
+      {% include "components/_form_field.html" with field=form.next_hearing_time %}
+    </div>
+    <div class="flex gap-2">
+      <button type="submit" class="btn btn-primary">{% translate "حفظ النتيجة" %}</button>
+      <a href="{% url 'hearings:detail' hearing.pk %}" class="btn btn-ghost">{% translate "إلغاء" %}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

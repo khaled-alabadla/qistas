@@ -43,6 +43,12 @@ _CASE_MANAGE = {
 }
 _CASE_CONFIDENTIAL = {"cases.view_confidential_case"}
 
+# Phase 4 — courts (full) + hearings.
+_COURT_VIEW = {"courts.view_court"}
+_COURT_MANAGE = {*_COURT_VIEW, "courts.add_court", "courts.change_court"}
+_HEARING_VIEW = {"hearings.view_hearing"}
+_HEARING_MANAGE = {*_HEARING_VIEW, "hearings.add_hearing", "hearings.change_hearing"}
+
 ROLE_PERMISSIONS: dict[str, set[str]] = {
     GroupChoice.OFFICE_MANAGER: {
         "accounts.view_user",
@@ -57,13 +63,15 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
         *_CASE_CONFIDENTIAL,
         "cases.add_casetype",
         "cases.change_casetype",
-        "courts.add_court",
-        "courts.change_court",
+        *_COURT_MANAGE,
+        *_HEARING_MANAGE,
     },
-    GroupChoice.LAWYER: _CLIENT_MANAGE | _CASE_MANAGE | _CASE_CONFIDENTIAL,
-    GroupChoice.PARALEGAL: _CLIENT_VIEW | _CASE_MANAGE,
-    GroupChoice.ADMIN_CLERK: _CLIENT_MANAGE | _CASE_MANAGE,
-    GroupChoice.FINANCE_CLERK: _CLIENT_VIEW | _CASE_VIEW,
+    GroupChoice.LAWYER: (
+        _CLIENT_MANAGE | _CASE_MANAGE | _CASE_CONFIDENTIAL | _COURT_VIEW | _HEARING_MANAGE
+    ),
+    GroupChoice.PARALEGAL: _CLIENT_VIEW | _CASE_MANAGE | _COURT_VIEW | _HEARING_MANAGE,
+    GroupChoice.ADMIN_CLERK: _CLIENT_MANAGE | _CASE_MANAGE | _COURT_VIEW | _HEARING_MANAGE,
+    GroupChoice.FINANCE_CLERK: _CLIENT_VIEW | _CASE_VIEW | _HEARING_VIEW,
 }
 
 

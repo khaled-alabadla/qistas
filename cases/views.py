@@ -35,6 +35,7 @@ from core.permissions.capabilities import Capability, can
 from core.permissions.decorators import require_capability
 from core.permissions.mixins import CapabilityRequiredMixin
 from core.querysets import assert_scoped
+from hearings.selectors import case_hearings
 
 User = get_user_model()
 
@@ -43,13 +44,13 @@ PAGE_SIZE = 25
 TAB_LINKS = (
     ("overview", _("نظرة عامة")),
     ("parties", _("الأطراف")),
+    ("hearings", _("الجلسات")),
     ("notes", _("الملاحظات")),
     ("correspondence", _("المراسلات")),
     ("timeline", _("الخط الزمني")),
 )
 REAL_TABS = tuple(key for key, _label in TAB_LINKS)
 DISABLED_TABS = (
-    _("الجلسات"),
     _("المهام"),
     _("المستندات"),
     _("الفواتير"),
@@ -143,6 +144,8 @@ class CaseDetailView(CapabilityRequiredMixin, LoginRequiredMixin, DetailView):
                 "notes": [n for n in notes if n.kind == NoteKind.GENERAL],
                 "correspondence": [n for n in notes if n.kind == NoteKind.CORRESPONDENCE],
                 "timeline": case.events.select_related("actor")[:100],
+                "hearings": case_hearings(case),
+                "next_hearing": case.next_hearing,
                 "status_form": CaseStatusForm(initial={"status": case.status}),
                 "lawyer_form": SupportingLawyerForm(),
                 "disabled_tabs": DISABLED_TABS,

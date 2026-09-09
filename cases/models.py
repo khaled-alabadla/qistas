@@ -203,6 +203,22 @@ class Case(TimeStampedModel, AuthoredModel):
     def is_closed(self) -> bool:
         return self.status == CaseStatus.CLOSED
 
+    @property
+    def next_hearing(self):
+        """The soonest still-scheduled future hearing (spec §22/§26). **Derived**,
+        never stored — rescheduling / cancelling / completing a hearing changes
+        the answer for free (docs/adr/0028)."""
+        from django.utils import timezone
+
+        from hearings.models import HearingStatus
+
+        return (
+            self.hearings.filter(status=HearingStatus.SCHEDULED, scheduled_at__gte=timezone.now())
+            .select_related("court")
+            .order_by("scheduled_at")
+            .first()
+        )
+
     def get_confidential(self) -> CaseConfidential:
         """Row for writing — creates it if absent. Never call this on a GET/read
         path (it writes a row + an auditlog 'created' event); use
@@ -329,6 +345,13 @@ class CaseEventType(models.TextChoices):
     NOTE_ADDED = "note_added", _("إضافة ملاحظة")
     CLOSED = "closed", _("إغلاق القضية")
     REOPENED = "reopened", _("إعادة فتح القضية")
+    # Hearings (Phase 4) — written by hearings.services via record_case_event.
+    HEARING_SCHEDULED = "hearing_scheduled", _("جدولة جلسة")
+    HEARING_UPDATED = "hearing_updated", _("تعديل بيانات جلسة")
+    HEARING_RESCHEDULED = "hearing_rescheduled", _("إعادة جدولة جلسة")
+    HEARING_HELD = "hearing_held", _("عقد جلسة")
+    HEARING_POSTPONED = "hearing_postponed", _("تأجيل جلسة")
+    HEARING_CANCELLED = "hearing_cancelled", _("إلغاء جلسة")
 
 
 class _AppendOnlyQuerySet(models.QuerySet):

@@ -43,6 +43,12 @@ class Capability(TextChoices):
     CASES_VIEW = "cases.view", _("عرض القضايا")
     CASES_MANAGE = "cases.manage", _("إضافة وتعديل القضايا")
     CASES_VIEW_CONFIDENTIAL = "cases.view_confidential", _("عرض الملاحظات السرية للقضايا")
+    # Phase 4 — Courts, Hearings, Calendar
+    COURTS_VIEW = "courts.view", _("عرض المحاكم")
+    COURTS_MANAGE = "courts.manage", _("إضافة وتعديل المحاكم")
+    HEARINGS_VIEW = "hearings.view", _("عرض الجلسات")
+    HEARINGS_MANAGE = "hearings.manage", _("جدولة وتحديث الجلسات")
+    AGENDA_VIEW = "agenda.view", _("عرض التقويم")
 
 
 # group -> capabilities it grants. Fixed in code for v1 (docs/adr/0007);
@@ -53,6 +59,9 @@ _ALL_STAFF = {
     Capability.NOTIFICATIONS_VIEW,
     Capability.CLIENTS_VIEW,
     Capability.CASES_VIEW,
+    Capability.COURTS_VIEW,
+    Capability.HEARINGS_VIEW,
+    Capability.AGENDA_VIEW,
 }
 # Roles that intake / represent clients and legitimately need the national ID.
 _CLIENT_HANDLERS = {Capability.CLIENTS_MANAGE, Capability.CLIENTS_VIEW_SENSITIVE}
@@ -60,6 +69,9 @@ _CLIENT_HANDLERS = {Capability.CLIENTS_MANAGE, Capability.CLIENTS_VIEW_SENSITIVE
 _CASE_HANDLERS = {Capability.CASES_MANAGE}
 # Roles trusted with privileged legal / internal case notes (docs/adr/0008, 0009).
 _CASE_CONFIDENTIAL = {Capability.CASES_VIEW_CONFIDENTIAL}
+# Roles that run case logistics — the same handlers also schedule hearings (ADR-0028).
+# Courts are shared reference data — only the office manager curates them (ADR-0028).
+_HEARING_HANDLERS = {Capability.HEARINGS_MANAGE}
 
 GROUP_CAPABILITIES: dict[str, set[str]] = {
     Group.OFFICE_MANAGER: {
@@ -74,10 +86,19 @@ GROUP_CAPABILITIES: dict[str, set[str]] = {
         Capability.CASES_VIEW,
         Capability.CASES_MANAGE,
         Capability.CASES_VIEW_CONFIDENTIAL,
+        Capability.COURTS_VIEW,
+        Capability.COURTS_MANAGE,
+        Capability.HEARINGS_VIEW,
+        Capability.HEARINGS_MANAGE,
+        Capability.AGENDA_VIEW,
     },
-    Group.LAWYER: _ALL_STAFF | _CLIENT_HANDLERS | _CASE_HANDLERS | _CASE_CONFIDENTIAL,
-    Group.PARALEGAL: _ALL_STAFF | _CASE_HANDLERS,
-    Group.ADMIN_CLERK: _ALL_STAFF | _CLIENT_HANDLERS | _CASE_HANDLERS,
+    Group.LAWYER: _ALL_STAFF
+    | _CLIENT_HANDLERS
+    | _CASE_HANDLERS
+    | _CASE_CONFIDENTIAL
+    | _HEARING_HANDLERS,
+    Group.PARALEGAL: _ALL_STAFF | _CASE_HANDLERS | _HEARING_HANDLERS,
+    Group.ADMIN_CLERK: _ALL_STAFF | _CLIENT_HANDLERS | _CASE_HANDLERS | _HEARING_HANDLERS,
     Group.FINANCE_CLERK: set(_ALL_STAFF),
 }
 # normalise to plain str

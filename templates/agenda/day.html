@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{% translate "التقويم" %} · {{ heading }}{% endblock %}
+
+{% block content %}
+{% include "agenda/_toolbar.html" with view="day" %}
+
+<div class="mx-auto max-w-2xl rounded-xl border border-line bg-white p-5">
+  <h2 class="mb-4 text-base font-semibold {% if is_today %}text-navy{% else %}text-ink{% endif %}">
+    {{ weekday_name }} · {% datestr day "DATE_FORMAT" %}
+  </h2>
+  {% if events %}
+    <ul class="space-y-2">
+      {% for e in events %}
+        <li class="flex items-start gap-3 rounded-lg border border-line p-3">
+          <span dir="ltr" class="mt-0.5 shrink-0 tabular-nums text-sm font-medium text-slate/70">{% datestr e.start "TIME_FORMAT" %}</span>
+          <div class="min-w-0">
+            <a href="{{ e.url }}" class="font-medium text-navy hover:underline">{{ e.title }}</a>
+            <p class="text-xs text-slate/60">
+              {{ e.meta.case_title }}{% if e.meta.court %} · {{ e.meta.court }}{% endif %}{% if e.meta.room %} · {% translate "قاعة" %} {{ e.meta.room }}{% endif %}
+            </p>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="text-sm text-slate/50">{% translate "لا توجد مواعيد في هذا اليوم." %}</p>
+  {% endif %}
+</div>
+{% endblock %}

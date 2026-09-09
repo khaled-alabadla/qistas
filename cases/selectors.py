@@ -2,7 +2,26 @@
 
 from __future__ import annotations
 
+from django.db.models import OuterRef, Subquery
+from django.utils import timezone
+
 from cases.models import Case, CasePriority, CaseStatus
+
+
+def _next_hearing_subquery():
+    """Soonest still-scheduled future hearing datetime per case (docs/adr/0028) —
+    derived, never stored. Imported lazily to avoid a cases→hearings import cycle."""
+    from hearings.models import Hearing, HearingStatus
+
+    return Subquery(
+        Hearing.objects.filter(
+            case=OuterRef("pk"),
+            status=HearingStatus.SCHEDULED,
+            scheduled_at__gte=timezone.now(),
+        )
+        .order_by("scheduled_at")
+        .values("scheduled_at")[:1]
+    )
 
 
 def case_list(
@@ -17,6 +36,7 @@ def case_list(
     include_closed: bool = False,
 ):
     qs = Case.objects.for_user(user).select_related("type", "client", "assigned_lawyer", "court")
+    qs = qs.annotate(next_hearing_at=_next_hearing_subquery())
     if query:
         qs = qs.search(query)
     if status in CaseStatus.values:

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% if is_create %}{% translate "إضافة محكمة" %}{% else %}{% translate "تعديل المحكمة" %}{% endif %} · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl">
+  <nav class="mb-4 text-xs text-slate/70">
+    <a href="{% url 'courts:list' %}" class="hover:text-navy">{% translate "المحاكم" %}</a>
+    <span aria-hidden="true"> ‹ </span>
+    <span class="font-medium text-ink">{% if is_create %}{% translate "محكمة جديدة" %}{% else %}{{ court.name }}{% endif %}</span>
+  </nav>
+
+  <h1 class="mb-4 text-xl font-semibold text-ink">
+    {% if is_create %}{% translate "إضافة محكمة" %}{% else %}{% translate "تعديل المحكمة" %}{% endif %}
+  </h1>
+
+  {% if form.non_field_errors %}
+    <div class="mb-4">{% for e in form.non_field_errors %}{% include "components/alert.html" with tone="error" text=e %}{% endfor %}</div>
+  {% endif %}
+
+  <form method="post" novalidate class="space-y-4 rounded-xl border border-line bg-white p-6">
+    {% csrf_token %}
+    {% include "components/_form_field.html" with field=form.name %}
+    {% include "components/_form_field.html" with field=form.type %}
+    {% include "components/_form_field.html" with field=form.city %}
+    {% include "components/_form_field.html" with field=form.department %}
+    {% include "components/_form_field.html" with field=form.address %}
+    {% include "components/_form_field.html" with field=form.phone %}
+    {% include "components/_form_field.html" with field=form.notes %}
+    <div class="flex items-center gap-2">
+      {{ form.is_active }}
+      <label for="{{ form.is_active.id_for_label }}" class="text-sm text-ink">{{ form.is_active.label }}</label>
+    </div>
+    <div class="flex gap-2">
+      <button type="submit" class="btn btn-primary">{% translate "حفظ" %}</button>
+      <a href="{% if court %}{% url 'courts:detail' court.pk %}{% else %}{% url 'courts:list' %}{% endif %}" class="btn btn-ghost">{% translate "إلغاء" %}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -41,6 +41,18 @@ class AuditAction(models.TextChoices):
     CASE_PARTY_CHANGED = "case.party_changed", _("تعديل أطراف القضية")
     CASE_NOTE_ADDED = "case.note_added", _("إضافة ملاحظة للقضية")
     CASE_CONFIDENTIAL_UPDATED = "case.confidential_updated", _("تعديل الملاحظات السرية للقضية")
+    # Courts (Phase 4)
+    COURT_CREATED = "court.created", _("إنشاء محكمة")
+    COURT_UPDATED = "court.updated", _("تعديل بيانات محكمة")
+    COURT_ACTIVATED = "court.activated", _("تفعيل محكمة")
+    COURT_DEACTIVATED = "court.deactivated", _("إلغاء تفعيل محكمة")
+    # Hearings (Phase 4)
+    HEARING_SCHEDULED = "hearing.scheduled", _("جدولة جلسة")
+    HEARING_UPDATED = "hearing.updated", _("تعديل بيانات جلسة")
+    HEARING_RESCHEDULED = "hearing.rescheduled", _("إعادة جدولة جلسة")
+    HEARING_HELD = "hearing.held", _("عقد جلسة")
+    HEARING_POSTPONED = "hearing.postponed", _("تأجيل جلسة")
+    HEARING_CANCELLED = "hearing.cancelled", _("إلغاء جلسة")
     OTHER = "other", _("أخرى")
 
 
