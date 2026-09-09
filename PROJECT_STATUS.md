@@ -4,10 +4,10 @@
 > `COMPLETED ≠ APPROVED` — a phase starts only after the user says
 > **APPROVE PHASE N** / **ابدأ المرحلة N**.
 
-Current Phase: **4 — Hearings + Courts + Calendar** (Phases 1–3 approved + merged to master)
+Current Phase: **5 — Tasks + Deadlines** (Phases 1–4 approved + merged to master)
 
 Planning artifacts: `QISTAS_PHASE_0_ANALYSIS.md` · `QISTAS_GRILL_REVIEW.md` ·
-`docs/architecture.md` · `docs/adr/0001`–`0028` · `docs/PHASE_1_PLAN.md`
+`docs/architecture.md` · `docs/adr/0001`–`0029` · `docs/PHASE_1_PLAN.md`
 
 ---
 
@@ -154,8 +154,8 @@ diff pattern (bug-027). 7 `CASE_*` `AuditAction` members added.
 Branch: `phase/3-cases` — one commit `phase(3): complete cases`, pushed, **not merged**.
 
 ## Phase 4 — Hearings + Courts + Calendar
-Status: **COMPLETE (technical)** — see `docs/PHASE_4_REPORT.md`
-Approval: **PENDING**
+Status: **APPROVED + merged to `master`** (PR #3, merge commit `9557168`) — see `docs/PHASE_4_REPORT.md`
+Approval: **APPROVED 2026-09-09** ("APPROVE PHASE 4")
 Design: `docs/adr/0028-hearings-calendar-and-derived-next-hearing.md`
 
 Full `courts` CRUD (department/address/phone/notes, `CourtQuerySet` scoping +
@@ -197,8 +197,50 @@ Branch: `phase/4-courts-hearings` — one commit `phase(4): complete courts and 
 pushed, **not merged**.
 
 ## Phase 5 — Tasks + Deadlines
-Status: NOT STARTED
-Approval: N/A
+Status: **COMPLETE (technical)** — see `docs/PHASE_5_REPORT.md`
+Approval: **PENDING**
+Design: `docs/adr/0029-tasks-and-deadlines.md`
+
+`tasks` app, two models: **`Task`** (title/description, `assigned_to`, optional
+`case`/`client`, priority, `due_date` DateField, status new/in_progress/done/
+cancelled — **no `overdue`**, ADR-0006; **soft-deletable** via `deleted_at` +
+`deleted_by`) and **`Deadline`** (procedural cut-off — no assignee, `pending`/
+`met`/`missed`/`cancelled`, required `due_date`, **never hard-deleted** — cancel
+only, ADR-0022). "Overdue" = computed property + queryset filter, no cron.
+CRUD + status actions + soft-delete (task); all through `tasks.services`
+(freshly-fetched diff, `AuditLog` every mutation, `CaseEvent` when case-linked).
+`tasks.selectors` (list/search/filter/pagination, `my_open_tasks`,
+`overdue_tasks`, `upcoming_deadlines`, `calendar_items`). **Calendar
+integration**: `agenda.selectors.calendar_events` now merges hearings + tasks +
+deadlines (all-day items). **Dashboard integration**: `core:landing` shows
+مهامي / مهام متأخرة / مواعيد قادمة widgets. Case workspace المهام tab is now real.
+Capabilities `tasks.view` (all staff) / `tasks.manage` (office_manager, lawyer,
+paralegal, admin_clerk — one pair for both models). `sync_roles` extended. 7
+`TASK_*`/`DEADLINE_*` `AuditAction`; 5 `TASK_*`/`DEADLINE_*` `CaseEventType`.
+Nav: المكتب → المهام / المواعيد النهائية / التقويم. `tasks/0002` trigram GIN.
+
+**Verification:**
+- Tests: **337 pass / 0 fail / 3 skipped** (`@pytest.mark.postgres`) on SQLite —
+  `tasks` 47 (models/services/views/permissions/search/smoke).
+- `ruff` / `ruff format --check` / `pip-audit` / `makemigrations --check` /
+  `manage.py check` / `check --deploy --fail-level WARNING` (prod) — all clean.
+- Seed chain (`…_courts` → `_clients` → `_cases` → `_hearings` → `seed_demo_tasks`,
+  idempotent) + `sync_roles --check` clean after sync.
+- `/code-review` (self): 2 findings fixed with regression tests (distinct-unsafe
+  `_with_current` — also fixed the latent bug in `cases`/`hearings` forms via a
+  shared `core.forms.with_current_choice`; closed-case task creation via `?case=`).
+  Self security + performance review — pass.
+
+**DEFERRED / UNVERIFIED — same Docker/PostgreSQL environment blocker as Phases 1–4:**
+1. Full suite on **PostgreSQL 16** (SQLite only).
+2. `tasks/migrations/0002_task_search_indexes` (trigram GIN,
+   `TRGM_COLUMNS == SEARCH_FIELDS`) — never executed (PG-only, guarded).
+3. The `@pytest.mark.postgres` tests.
+4. `docker compose` full-stack smoke (equivalent verified via the Django test client).
+5. `compilemessages` (Docker-only; harmless).
+
+Branch: `phase/5-tasks-deadlines` — one commit `phase(5): complete tasks and deadlines`,
+pushed, **not merged**.
 
 ## Phase 6 — Documents
 Status: NOT STARTED

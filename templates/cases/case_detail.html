@@ -236,6 +236,68 @@
     {% endif %}
   </div>
 
+{% elif tab == 'tasks' %}
+  <div class="space-y-8">
+    <div>
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h3 class="text-base font-semibold text-ink">{% translate "المهام" %}</h3>
+        {% if can_manage %}
+          <a href="{% url 'tasks:create' %}?case={{ case.pk }}" class="btn btn-secondary">{% translate "إضافة مهمة" %}</a>
+        {% endif %}
+      </div>
+      {% if case_tasks %}
+        <div class="overflow-x-auto rounded-lg border border-line">
+          <table class="w-full text-start text-sm">
+            <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+              <tr>
+                <th class="px-3 py-2 text-start font-medium">{% translate "العنوان" %}</th>
+                <th class="px-3 py-2 text-start font-medium">{% translate "المُسند إليه" %}</th>
+                <th class="px-3 py-2 text-start font-medium">{% translate "الاستحقاق" %}</th>
+                <th class="px-3 py-2 text-start font-medium">{% translate "الحالة" %}</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-line">
+              {% for t in case_tasks %}
+                <tr>
+                  <td class="px-3 py-2"><a class="text-navy hover:underline" href="{% url 'tasks:detail' t.pk %}">{{ t.title }}</a></td>
+                  <td class="px-3 py-2">{% if t.assigned_to %}{{ t.assigned_to.get_full_name|default:t.assigned_to.email }}{% else %}—{% endif %}</td>
+                  <td class="px-3 py-2 whitespace-nowrap {% if t.is_overdue %}text-danger font-medium{% endif %}">{% if t.due_date %}{% datestr t.due_date %}{% else %}—{% endif %}</td>
+                  <td class="px-3 py-2">{% include "tasks/_badges.html" with t=t %}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-sm text-slate/50">{% translate "لا توجد مهام لهذه القضية." %}</p>
+      {% endif %}
+    </div>
+
+    <div>
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h3 class="text-base font-semibold text-ink">{% translate "المواعيد النهائية" %}</h3>
+        {% if can_manage %}
+          <a href="{% url 'tasks:deadline_create' %}?case={{ case.pk }}" class="btn btn-secondary">{% translate "إضافة موعد نهائي" %}</a>
+        {% endif %}
+      </div>
+      {% if case_deadlines %}
+        <ul class="space-y-2 text-sm">
+          {% for d in case_deadlines %}
+            <li class="flex items-center justify-between gap-2 rounded-lg border border-line px-3 py-2">
+              <a class="text-navy hover:underline" href="{% url 'tasks:deadline_detail' d.pk %}">{{ d.title }}</a>
+              <span class="flex items-center gap-2">
+                <span class="{% if d.is_overdue %}text-danger font-medium{% else %}text-slate/60{% endif %}">{% datestr d.due_date %}</span>
+                {% include "tasks/_deadline_badge.html" with d=d %}
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-sm text-slate/50">{% translate "لا توجد مواعيد نهائية لهذه القضية." %}</p>
+      {% endif %}
+    </div>
+  </div>
+
 {% elif tab == 'notes' or tab == 'correspondence' %}
   {% if tab == 'notes' %}{% with items=notes kind='general' %}{% include "cases/_notes.html" %}{% endwith %}
   {% else %}{% with items=correspondence kind='correspondence' %}{% include "cases/_notes.html" %}{% endwith %}{% endif %}

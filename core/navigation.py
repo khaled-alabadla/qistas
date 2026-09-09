@@ -84,6 +84,16 @@ NAV: tuple[NavItem, ...] = (
         icon="calendar",
         children=(
             NavItem(
+                label=_("المهام"),
+                url_name="tasks:list",
+                capability=Capability.TASKS_VIEW,
+            ),
+            NavItem(
+                label=_("المواعيد النهائية"),
+                url_name="tasks:deadlines",
+                capability=Capability.TASKS_VIEW,
+            ),
+            NavItem(
                 label=_("التقويم"),
                 url_name="agenda:month",
                 capability=Capability.AGENDA_VIEW,

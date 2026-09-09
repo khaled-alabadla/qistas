@@ -12,11 +12,26 @@ from core.permissions.mixins import CapabilityRequiredMixin
 
 
 class LandingView(TemplateView):
-    """The authenticated home page. The real operational dashboard is Phase 9;
-    Phase 1 shows a purposeful empty state. Login is enforced by
-    ``accounts.middleware.LoginRequiredMiddleware``."""
+    """The authenticated home page. The full operational dashboard is Phase 9;
+    Phase 5 surfaces real task/deadline widgets (docs/adr/0029). Login is
+    enforced by ``accounts.middleware.LoginRequiredMiddleware``."""
 
     template_name = "core/landing.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        from core.permissions.capabilities import Capability, can
+        from tasks.selectors import my_open_tasks, overdue_tasks, upcoming_deadlines
+
+        user = self.request.user
+        if can(user, Capability.TASKS_VIEW):
+            ctx["my_tasks"] = list(my_open_tasks(user)[:8])
+            overdue = overdue_tasks(user)
+            ctx["overdue_tasks"] = list(overdue[:8])
+            ctx["overdue_count"] = overdue.count()
+            ctx["upcoming_deadlines"] = list(upcoming_deadlines(user, days=30)[:8])
+            ctx["has_widgets"] = True
+        return ctx
 
 
 class SettingsView(CapabilityRequiredMixin, TemplateView):

@@ -12,6 +12,7 @@ from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 
 from cases.models import Case, CaseStatus
+from core.forms import with_current_choice as _with_current
 from courts.models import Court
 from hearings.models import Hearing, HearingStatus, HearingType
 
@@ -32,14 +33,6 @@ def _reject_past(value):
         if value < timezone.localdate():
             raise forms.ValidationError(_("لا يمكن أن يكون التاريخ في الماضي."))
     return value
-
-
-def _with_current(queryset, current_pk):
-    """Widen ``queryset`` to also include ``current_pk`` (so an edit form never
-    hides the value the hearing already holds — cf. cases.forms bug-041)."""
-    if not current_pk:
-        return queryset
-    return (queryset.model.objects.filter(pk=current_pk) | queryset).distinct()
 
 
 class _DateInput(forms.DateInput):

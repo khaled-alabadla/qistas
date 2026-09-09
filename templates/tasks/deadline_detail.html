@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{{ deadline.title }} · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+{% translate "النظام" as sys_actor %}
+<nav class="mb-4 text-xs text-slate/70">
+  <a href="{% url 'tasks:deadlines' %}" class="hover:text-navy">{% translate "المواعيد النهائية" %}</a>
+  <span aria-hidden="true"> ‹ </span>
+  <span class="font-medium text-ink">{{ deadline.title }}</span>
+</nav>
+
+<div class="mb-6 flex flex-wrap items-start justify-between gap-3">
+  <div class="flex flex-wrap items-center gap-2">
+    <h1 class="text-xl font-semibold text-ink">{{ deadline.title }}</h1>
+    {% include "tasks/_deadline_badge.html" with d=deadline %}
+  </div>
+  {% if can_manage %}
+    <a href="{% url 'tasks:deadline_update' deadline.pk %}" class="btn btn-secondary">{% translate "تعديل" %}</a>
+  {% endif %}
+</div>
+
+<div class="grid gap-6 lg:grid-cols-3">
+  <section class="lg:col-span-2 rounded-xl border border-line bg-white p-5">
+    <dl class="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+      <div><dt class="text-slate/60">{% translate "التاريخ النهائي" %}</dt><dd class="text-ink {% if deadline.is_overdue %}text-danger font-medium{% endif %}">{% datestr deadline.due_date %}</dd></div>
+      <div><dt class="text-slate/60">{% translate "الحالة" %}</dt><dd class="text-ink">{{ deadline.get_status_display }}{% if deadline.completed_at %} · {% datestr deadline.completed_at "SHORT_DATETIME_FORMAT" %}{% endif %}</dd></div>
+      <div><dt class="text-slate/60">{% translate "القضية" %}</dt><dd>{% if deadline.case %}<a class="text-navy hover:underline" href="{% url 'cases:detail' deadline.case_id %}">{% num deadline.case.case_number %} — {{ deadline.case.title }}</a>{% else %}—{% endif %}</dd></div>
+      <div><dt class="text-slate/60">{% translate "الموكل" %}</dt><dd>{% if deadline.client %}<a class="text-navy hover:underline" href="{% url 'clients:detail' deadline.client_id %}">{{ deadline.client.display_name }}</a>{% else %}—{% endif %}</dd></div>
+    </dl>
+    {% if deadline.description %}
+      <div class="mt-4"><dt class="text-slate/60 text-sm">{% translate "الوصف" %}</dt><dd class="mt-1 whitespace-pre-line text-sm text-ink">{{ deadline.description }}</dd></div>
+    {% endif %}
+  </section>
+
+  <aside class="space-y-4">
+    {% if can_manage %}
+    <div class="rounded-xl border border-line bg-white p-5">
+      <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "تغيير الحالة" %}</h3>
+      <form method="post" action="{% url 'tasks:deadline_status' deadline.pk %}" class="space-y-2">
+        {% csrf_token %}
+        {% include "components/_form_field.html" with field=status_form.status %}
+        <button class="btn btn-primary w-full">{% translate "تحديث" %}</button>
+      </form>
+    </div>
+    {% endif %}
+    <p class="text-xs text-slate/50">
+      {% translate "أنشأه" %}: {% if deadline.created_by %}{{ deadline.created_by.get_full_name|default:deadline.created_by.email }}{% else %}{{ sys_actor }}{% endif %} ·
+      {% datestr deadline.created_at "SHORT_DATETIME_FORMAT" %}
+    </p>
+    <p class="text-xs text-slate/40">{% translate "لا يُحذف الموعد النهائي — يُلغى فقط (سجل إجرائي)." %}</p>
+  </aside>
+</div>
+{% endblock %}

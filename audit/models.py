@@ -53,6 +53,14 @@ class AuditAction(models.TextChoices):
     HEARING_HELD = "hearing.held", _("عقد جلسة")
     HEARING_POSTPONED = "hearing.postponed", _("تأجيل جلسة")
     HEARING_CANCELLED = "hearing.cancelled", _("إلغاء جلسة")
+    # Tasks + deadlines (Phase 5)
+    TASK_CREATED = "task.created", _("إنشاء مهمة")
+    TASK_UPDATED = "task.updated", _("تعديل مهمة")
+    TASK_STATUS_CHANGED = "task.status_changed", _("تغيير حالة مهمة")
+    TASK_DELETED = "task.deleted", _("حذف مهمة")
+    DEADLINE_CREATED = "deadline.created", _("إنشاء موعد نهائي")
+    DEADLINE_UPDATED = "deadline.updated", _("تعديل موعد نهائي")
+    DEADLINE_STATUS_CHANGED = "deadline.status_changed", _("تغيير حالة موعد نهائي")
     OTHER = "other", _("أخرى")
 
 

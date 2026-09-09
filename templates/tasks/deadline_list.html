@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{% translate "المواعيد النهائية" %} · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <h1 class="text-xl font-semibold text-ink">{% translate "المواعيد النهائية" %}</h1>
+    <p class="text-sm text-slate/70">
+      {% blocktranslate count n=total_count %}موعد واحد{% plural %}{{ n }} مواعيد{% endblocktranslate %}
+    </p>
+  </div>
+  <div class="flex gap-2">
+    <a href="{% url 'tasks:list' %}" class="btn btn-ghost">{% translate "المهام" %}</a>
+    {% if can_manage %}
+      <a href="{% url 'tasks:deadline_create' %}" class="btn btn-primary">{% translate "إضافة موعد نهائي" %}</a>
+    {% endif %}
+  </div>
+</div>
+
+<form method="get" class="mb-4 grid gap-3 rounded-xl border border-line bg-white p-4 sm:grid-cols-4">
+  <div class="sm:col-span-2">{% include "components/_form_field.html" with field=filter_form.q %}</div>
+  <div>{% include "components/_form_field.html" with field=filter_form.status %}</div>
+  <div class="flex items-center gap-2 pt-6">{{ filter_form.overdue }}<label for="{{ filter_form.overdue.id_for_label }}" class="text-sm text-ink">{{ filter_form.overdue.label }}</label></div>
+  <div class="sm:col-span-4 flex gap-2">
+    <button type="submit" class="btn btn-primary">{% translate "تطبيق" %}</button>
+    <a href="{% url 'tasks:deadlines' %}" class="btn btn-ghost">{% translate "مسح" %}</a>
+  </div>
+</form>
+
+{% if deadlines %}
+<div class="overflow-x-auto rounded-lg border border-line">
+  <table class="w-full text-start text-sm">
+    <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+      <tr>
+        <th class="px-3 py-2 text-start font-medium">{% translate "العنوان" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "التاريخ النهائي" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "القضية / الموكل" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "الحالة" %}</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-line">
+      {% for d in deadlines %}
+        <tr class="hover:bg-mist/50">
+          <td class="px-3 py-2"><a class="font-medium text-navy hover:underline" href="{% url 'tasks:deadline_detail' d.pk %}">{{ d.title }}</a></td>
+          <td class="px-3 py-2 whitespace-nowrap {% if d.is_overdue %}text-danger font-medium{% endif %}">{% datestr d.due_date %}</td>
+          <td class="px-3 py-2">
+            {% if d.case %}<a class="text-navy hover:underline" href="{% url 'cases:detail' d.case_id %}">{% num d.case.case_number %}</a>
+            {% elif d.client %}{{ d.client.display_name }}{% else %}—{% endif %}
+          </td>
+          <td class="px-3 py-2">{% include "tasks/_deadline_badge.html" with d=d %}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "components/pagination.html" with page_obj=page_obj querystring=querystring %}
+{% else %}
+  {% translate "لا توجد مواعيد مطابقة" as es_title %}
+  {% translate "أضف موعدًا نهائيًا لتتبّع المهل الإجرائية." as es_msg %}
+  {% if can_manage %}
+    {% url 'tasks:deadline_create' as create_url %}{% translate "إضافة موعد نهائي" as create_label %}
+    {% empty_state es_title es_msg action_url=create_url action_label=create_label %}
+  {% else %}{% empty_state es_title es_msg %}{% endif %}
+{% endif %}
+{% endblock %}

@@ -352,6 +352,12 @@ class CaseEventType(models.TextChoices):
     HEARING_HELD = "hearing_held", _("عقد جلسة")
     HEARING_POSTPONED = "hearing_postponed", _("تأجيل جلسة")
     HEARING_CANCELLED = "hearing_cancelled", _("إلغاء جلسة")
+    # Tasks + deadlines (Phase 5) — written by tasks.services via record_case_event.
+    TASK_ADDED = "task_added", _("إضافة مهمة")
+    TASK_STATUS_CHANGED = "task_status_changed", _("تغيير حالة مهمة")
+    TASK_REMOVED = "task_removed", _("حذف مهمة")
+    DEADLINE_ADDED = "deadline_added", _("إضافة موعد نهائي")
+    DEADLINE_STATUS_CHANGED = "deadline_status_changed", _("تغيير حالة موعد نهائي")
 
 
 class _AppendOnlyQuerySet(models.QuerySet):
