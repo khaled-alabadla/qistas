@@ -61,6 +61,11 @@ class AuditAction(models.TextChoices):
     DEADLINE_CREATED = "deadline.created", _("إنشاء موعد نهائي")
     DEADLINE_UPDATED = "deadline.updated", _("تعديل موعد نهائي")
     DEADLINE_STATUS_CHANGED = "deadline.status_changed", _("تغيير حالة موعد نهائي")
+    # Documents (Phase 6)
+    DOCUMENT_UPLOADED = "document.uploaded", _("رفع مستند")
+    DOCUMENT_UPDATED = "document.updated", _("تعديل بيانات مستند")
+    DOCUMENT_DOWNLOADED = "document.downloaded", _("تنزيل مستند")
+    DOCUMENT_RETIRED = "document.retired", _("سحب مستند")
     OTHER = "other", _("أخرى")
 
 

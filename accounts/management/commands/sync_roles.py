@@ -60,6 +60,10 @@ _TASK_MANAGE = {
     "tasks.change_deadline",
 }
 
+# Phase 6 — documents (no delete codename — retired, never hard-deleted).
+_DOCUMENT_VIEW = {"documents.view_document"}
+_DOCUMENT_MANAGE = {*_DOCUMENT_VIEW, "documents.add_document", "documents.change_document"}
+
 ROLE_PERMISSIONS: dict[str, set[str]] = {
     GroupChoice.OFFICE_MANAGER: {
         "accounts.view_user",
@@ -77,6 +81,7 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
         *_COURT_MANAGE,
         *_HEARING_MANAGE,
         *_TASK_MANAGE,
+        *_DOCUMENT_MANAGE,
     },
     GroupChoice.LAWYER: (
         _CLIENT_MANAGE
@@ -85,14 +90,27 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
         | _COURT_VIEW
         | _HEARING_MANAGE
         | _TASK_MANAGE
+        | _DOCUMENT_MANAGE
     ),
     GroupChoice.PARALEGAL: (
-        _CLIENT_VIEW | _CASE_MANAGE | _COURT_VIEW | _HEARING_MANAGE | _TASK_MANAGE
+        _CLIENT_VIEW
+        | _CASE_MANAGE
+        | _COURT_VIEW
+        | _HEARING_MANAGE
+        | _TASK_MANAGE
+        | _DOCUMENT_MANAGE
     ),
     GroupChoice.ADMIN_CLERK: (
-        _CLIENT_MANAGE | _CASE_MANAGE | _COURT_VIEW | _HEARING_MANAGE | _TASK_MANAGE
+        _CLIENT_MANAGE
+        | _CASE_MANAGE
+        | _COURT_VIEW
+        | _HEARING_MANAGE
+        | _TASK_MANAGE
+        | _DOCUMENT_MANAGE
     ),
-    GroupChoice.FINANCE_CLERK: _CLIENT_VIEW | _CASE_VIEW | _HEARING_VIEW | _TASK_VIEW,
+    GroupChoice.FINANCE_CLERK: (
+        _CLIENT_VIEW | _CASE_VIEW | _HEARING_VIEW | _TASK_VIEW | _DOCUMENT_VIEW
+    ),
 }
 
 

@@ -55,6 +55,7 @@ LOCAL_APPS = [
     "hearings",
     "agenda",
     "tasks",
+    "documents",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -192,9 +193,22 @@ STORAGES = {
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
+    # Private legal-document store (docs/adr/0030). `base_url=None` -> `.url`
+    # raises; a document is only reachable through the audited download view.
+    # Never web-served: no MEDIA route, no whitenoise mapping.
+    "documents": {
+        "BACKEND": "documents.storage.PrivateFileSystemStorage",
+        "OPTIONS": {"location": str(BASE_DIR / "media" / "documents")},
+    },
 }
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+# ── Documents (Phase 6, spec §35, docs/adr/0030) ─────────────
+DOCUMENTS_MAX_UPLOAD_MB = env.int("QISTAS_DOCUMENTS_MAX_UPLOAD_MB", default=25)
+# Stream uploads above 5 MB straight to a temp file (default is 2.5 MB).
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
+FILE_UPLOAD_PERMISSIONS = 0o640
 
 # ── Email ───────────────────────────────────────────────────
 DEFAULT_FROM_EMAIL = env("DJANGO_DEFAULT_FROM_EMAIL", default="qistas@example.com")

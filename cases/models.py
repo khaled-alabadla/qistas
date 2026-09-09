@@ -358,6 +358,9 @@ class CaseEventType(models.TextChoices):
     TASK_REMOVED = "task_removed", _("حذف مهمة")
     DEADLINE_ADDED = "deadline_added", _("إضافة موعد نهائي")
     DEADLINE_STATUS_CHANGED = "deadline_status_changed", _("تغيير حالة موعد نهائي")
+    # Documents (Phase 6) — written by documents.services via record_case_event.
+    DOCUMENT_ADDED = "document_added", _("إضافة مستند")
+    DOCUMENT_REMOVED = "document_removed", _("سحب مستند")
 
 
 class _AppendOnlyQuerySet(models.QuerySet):

@@ -101,6 +101,24 @@ NAV: tuple[NavItem, ...] = (
         ),
     ),
     NavItem(
+        label=_("المستندات والعقود"),
+        capability=Capability.DOCUMENTS_VIEW,
+        icon="folder",
+        children=(
+            NavItem(
+                label=_("المستندات"),
+                url_name="documents:list",
+                capability=Capability.DOCUMENTS_VIEW,
+            ),
+            NavItem(
+                label=_("العقود"),
+                url_name=None,
+                capability=Capability.DOCUMENTS_VIEW,
+                disabled=True,
+            ),
+        ),
+    ),
+    NavItem(
         label=_("الإشعارات"),
         url_name=None,
         capability=Capability.NOTIFICATIONS_VIEW,

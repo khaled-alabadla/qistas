@@ -52,6 +52,9 @@ class Capability(TextChoices):
     # Phase 5 — Tasks + Deadlines
     TASKS_VIEW = "tasks.view", _("عرض المهام والمواعيد النهائية")
     TASKS_MANAGE = "tasks.manage", _("إضافة وتحديث المهام والمواعيد النهائية")
+    # Phase 6 — Documents
+    DOCUMENTS_VIEW = "documents.view", _("عرض المستندات وتنزيلها")
+    DOCUMENTS_MANAGE = "documents.manage", _("رفع المستندات وتعديلها وسحبها")
 
 
 # group -> capabilities it grants. Fixed in code for v1 (docs/adr/0007);
@@ -66,6 +69,7 @@ _ALL_STAFF = {
     Capability.HEARINGS_VIEW,
     Capability.AGENDA_VIEW,
     Capability.TASKS_VIEW,
+    Capability.DOCUMENTS_VIEW,
 }
 # Roles that intake / represent clients and legitimately need the national ID.
 _CLIENT_HANDLERS = {Capability.CLIENTS_MANAGE, Capability.CLIENTS_VIEW_SENSITIVE}
@@ -79,6 +83,9 @@ _HEARING_HANDLERS = {Capability.HEARINGS_MANAGE}
 # The same case handlers own tasks + deadlines (docs/adr/0029). One capability
 # pair covers both models. finance_clerk is view-only.
 _TASK_HANDLERS = {Capability.TASKS_MANAGE}
+# Same case handlers upload / edit / retire documents (docs/adr/0030).
+# finance_clerk keeps documents.view (invoice/receipt context) but cannot manage.
+_DOCUMENT_HANDLERS = {Capability.DOCUMENTS_MANAGE}
 
 GROUP_CAPABILITIES: dict[str, set[str]] = {
     Group.OFFICE_MANAGER: {
@@ -100,19 +107,27 @@ GROUP_CAPABILITIES: dict[str, set[str]] = {
         Capability.AGENDA_VIEW,
         Capability.TASKS_VIEW,
         Capability.TASKS_MANAGE,
+        Capability.DOCUMENTS_VIEW,
+        Capability.DOCUMENTS_MANAGE,
     },
     Group.LAWYER: _ALL_STAFF
     | _CLIENT_HANDLERS
     | _CASE_HANDLERS
     | _CASE_CONFIDENTIAL
     | _HEARING_HANDLERS
-    | _TASK_HANDLERS,
-    Group.PARALEGAL: _ALL_STAFF | _CASE_HANDLERS | _HEARING_HANDLERS | _TASK_HANDLERS,
+    | _TASK_HANDLERS
+    | _DOCUMENT_HANDLERS,
+    Group.PARALEGAL: _ALL_STAFF
+    | _CASE_HANDLERS
+    | _HEARING_HANDLERS
+    | _TASK_HANDLERS
+    | _DOCUMENT_HANDLERS,
     Group.ADMIN_CLERK: _ALL_STAFF
     | _CLIENT_HANDLERS
     | _CASE_HANDLERS
     | _HEARING_HANDLERS
-    | _TASK_HANDLERS,
+    | _TASK_HANDLERS
+    | _DOCUMENT_HANDLERS,
     Group.FINANCE_CLERK: set(_ALL_STAFF),
 }
 # normalise to plain str

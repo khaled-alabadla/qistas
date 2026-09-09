@@ -298,6 +298,47 @@
     </div>
   </div>
 
+{% elif tab == 'documents' %}
+  <div class="space-y-4">
+    {% if can_documents_manage %}
+    <div class="flex flex-wrap gap-2">
+      <a href="{% url 'documents:upload' %}?case={{ case.pk }}&client={{ case.client_id }}" class="btn btn-secondary">{% translate "رفع مستند" %}</a>
+    </div>
+    {% endif %}
+    {% if can_documents %}
+      {% if case_documents %}
+        <div class="overflow-x-auto rounded-lg border border-line">
+          <table class="w-full text-start text-sm">
+            <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+              <tr>
+                <th class="px-3 py-2 text-start font-medium">{% translate "الاسم" %}</th>
+                <th class="px-3 py-2 text-start font-medium">{% translate "النوع" %}</th>
+                <th class="px-3 py-2 text-start font-medium">{% translate "الحجم" %}</th>
+                <th class="px-3 py-2 text-start font-medium">{% translate "رُفع في" %}</th>
+                <th class="px-3 py-2"></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-line">
+              {% for d in case_documents %}
+                <tr>
+                  <td class="px-3 py-2"><a class="text-navy hover:underline" href="{% url 'documents:detail' d.pk %}">{{ d.name }}</a></td>
+                  <td class="px-3 py-2">{{ d.get_document_type_display }}</td>
+                  <td class="px-3 py-2"><bdi dir="ltr">{{ d.size|filesizeformat }}</bdi></td>
+                  <td class="px-3 py-2 whitespace-nowrap">{% datestr d.created_at "SHORT_DATE_FORMAT" %}</td>
+                  <td class="px-3 py-2 text-end"><a class="text-xs text-navy hover:underline" href="{% url 'documents:download' d.pk %}">{% translate "تنزيل" %}</a></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-sm text-slate/50">{% translate "لا توجد مستندات لهذه القضية." %}</p>
+      {% endif %}
+    {% else %}
+      <p class="text-sm text-slate/50">{% translate "لا تملك صلاحية عرض المستندات." %}</p>
+    {% endif %}
+  </div>
+
 {% elif tab == 'notes' or tab == 'correspondence' %}
   {% if tab == 'notes' %}{% with items=notes kind='general' %}{% include "cases/_notes.html" %}{% endwith %}
   {% else %}{% with items=correspondence kind='correspondence' %}{% include "cases/_notes.html" %}{% endwith %}{% endif %}
