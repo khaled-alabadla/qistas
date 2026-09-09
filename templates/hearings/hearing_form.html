@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{% if is_create %}{% translate "جدولة جلسة" %}{% else %}{% translate "تعديل الجلسة" %}{% endif %} · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl">
+  <nav class="mb-4 text-xs text-slate/70">
+    <a href="{% url 'hearings:list' %}" class="hover:text-navy">{% translate "الجلسات" %}</a>
+    {% if case %}<span aria-hidden="true"> ‹ </span><a href="{% url 'cases:detail' case.pk %}?tab=hearings" class="hover:text-navy">{% num case.case_number %}</a>{% endif %}
+    {% if not is_create %}<span aria-hidden="true"> ‹ </span><a href="{% url 'hearings:detail' hearing.pk %}" class="hover:text-navy">{% datestr hearing.scheduled_at "SHORT_DATE_FORMAT" %}</a>{% endif %}
+    <span aria-hidden="true"> ‹ </span>
+    <span class="font-medium text-ink">{% if is_create %}{% translate "جلسة جديدة" %}{% else %}{% translate "تعديل" %}{% endif %}</span>
+  </nav>
+
+  <h1 class="mb-4 text-xl font-semibold text-ink">
+    {% if is_create %}{% translate "جدولة جلسة" %}{% else %}{% translate "تعديل / إعادة جدولة الجلسة" %}{% endif %}
+  </h1>
+
+  {% if form.non_field_errors %}
+    <div class="mb-4">{% for e in form.non_field_errors %}{% include "components/alert.html" with tone="error" text=e %}{% endfor %}</div>
+  {% endif %}
+
+  <form method="post" novalidate class="space-y-4 rounded-xl border border-line bg-white p-6">
+    {% csrf_token %}
+    {% if form.case %}{% include "components/_form_field.html" with field=form.case %}{% endif %}
+    <div class="grid gap-4 sm:grid-cols-2">
+      {% include "components/_form_field.html" with field=form.date %}
+      {% include "components/_form_field.html" with field=form.time %}
+    </div>
+    {% include "components/_form_field.html" with field=form.hearing_type %}
+    {% include "components/_form_field.html" with field=form.court %}
+    {% include "components/_form_field.html" with field=form.lawyer %}
+    {% include "components/_form_field.html" with field=form.room %}
+    {% include "components/_form_field.html" with field=form.notes %}
+    <div class="flex gap-2">
+      <button type="submit" class="btn btn-primary">{% translate "حفظ" %}</button>
+      <a href="{% if not is_create %}{% url 'hearings:detail' hearing.pk %}{% elif case %}{% url 'cases:detail' case.pk %}?tab=hearings{% else %}{% url 'hearings:list' %}{% endif %}" class="btn btn-ghost">{% translate "إلغاء" %}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

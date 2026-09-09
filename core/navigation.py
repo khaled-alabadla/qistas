@@ -68,9 +68,25 @@ NAV: tuple[NavItem, ...] = (
             ),
             NavItem(
                 label=_("الجلسات"),
-                url_name=None,
-                capability=Capability.CASES_VIEW,
-                disabled=True,
+                url_name="hearings:list",
+                capability=Capability.HEARINGS_VIEW,
+            ),
+            NavItem(
+                label=_("المحاكم"),
+                url_name="courts:list",
+                capability=Capability.COURTS_VIEW,
+            ),
+        ),
+    ),
+    NavItem(
+        label=_("المكتب"),
+        capability=Capability.AGENDA_VIEW,
+        icon="calendar",
+        children=(
+            NavItem(
+                label=_("التقويم"),
+                url_name="agenda:month",
+                capability=Capability.AGENDA_VIEW,
             ),
         ),
     ),

@@ -1,0 +1,16 @@
+{% load i18n %}{% comment %}params: view, prev_url, next_url, today_url, heading{% endcomment %}
+<div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+  <div class="flex items-center gap-2">
+    <h1 class="text-xl font-semibold text-ink">{{ heading }}</h1>
+  </div>
+  <div class="flex items-center gap-1">
+    <a href="{{ prev_url }}" class="btn btn-secondary" aria-label="{% translate 'السابق' %}">‹</a>
+    <a href="{{ today_url }}" class="btn btn-ghost">{% translate "اليوم" %}</a>
+    <a href="{{ next_url }}" class="btn btn-secondary" aria-label="{% translate 'التالي' %}">›</a>
+  </div>
+  <nav class="flex overflow-hidden rounded-md border border-line text-sm" aria-label="{% translate 'نمط العرض' %}">
+    <a href="{% url 'agenda:month' %}" class="px-3 py-1.5 {% if view == 'month' %}bg-navy text-white{% else %}bg-white text-ink hover:bg-mist{% endif %}">{% translate "شهر" %}</a>
+    <a href="{% url 'agenda:week' %}" class="border-s border-line px-3 py-1.5 {% if view == 'week' %}bg-navy text-white{% else %}bg-white text-ink hover:bg-mist{% endif %}">{% translate "أسبوع" %}</a>
+    <a href="{% url 'agenda:day' %}" class="border-s border-line px-3 py-1.5 {% if view == 'day' %}bg-navy text-white{% else %}bg-white text-ink hover:bg-mist{% endif %}">{% translate "يوم" %}</a>
+  </nav>
+</div>

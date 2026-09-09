@@ -4,10 +4,10 @@
 > `COMPLETED ≠ APPROVED` — a phase starts only after the user says
 > **APPROVE PHASE N** / **ابدأ المرحلة N**.
 
-Current Phase: **3 — Cases** (Phases 1 & 2 approved + merged to master)
+Current Phase: **4 — Hearings + Courts + Calendar** (Phases 1–3 approved + merged to master)
 
 Planning artifacts: `QISTAS_PHASE_0_ANALYSIS.md` · `QISTAS_GRILL_REVIEW.md` ·
-`docs/architecture.md` · `docs/adr/0001`–`0027` · `docs/PHASE_1_PLAN.md`
+`docs/architecture.md` · `docs/adr/0001`–`0028` · `docs/PHASE_1_PLAN.md`
 
 ---
 
@@ -95,8 +95,8 @@ Branch: `phase/2-clients` — **two commits**, pushed, **not merged**:
 - (this cleanup adds a third: `fix(ci): align master workflow and phase docs`)
 
 ## Phase 3 — Cases
-Status: **COMPLETE (technical)** — see `docs/PHASE_3_REPORT.md`
-Approval: **PENDING**
+Status: **APPROVED + merged to `master`** (PR #2, merge commit `83674a7`) — see `docs/PHASE_3_REPORT.md`
+Approval: **APPROVED 2026-09-09** ("APPROVE PHASE 3")
 
 `courts` app (minimal): `Court` model (name/type/city/is_active, `(name, city)`
 unique) + admin + `seed_demo_courts` — full court CRUD is Phase 4.
@@ -154,8 +154,47 @@ diff pattern (bug-027). 7 `CASE_*` `AuditAction` members added.
 Branch: `phase/3-cases` — one commit `phase(3): complete cases`, pushed, **not merged**.
 
 ## Phase 4 — Hearings + Courts + Calendar
-Status: NOT STARTED
-Approval: N/A
+Status: **COMPLETE (technical)** — see `docs/PHASE_4_REPORT.md`
+Approval: **PENDING**
+Design: `docs/adr/0028-hearings-calendar-and-derived-next-hearing.md`
+
+Full `courts` CRUD (department/address/phone/notes, `CourtQuerySet` scoping +
+`icontains`/trigram search, `is_active` toggle — never deleted, ADR-0022) ·
+`hearings` app: timezone-aware `scheduled_at` (single source of truth; forms
+split date + optional time @ 09:00, service recombines), `hearing_type` /
+`status` (مجدولة/تمت/مؤجلة/ملغاة) / `room` / results, lifecycle
+schedule→update/reschedule→complete/postpone/cancel — **no row ever deleted**;
+complete/postpone with a next date **spawn a new scheduled row** · **`Case.next_hearing`
+derived, never stored** (property + list `Subquery` annotation) · `agenda` app —
+month/week/day, stdlib `calendar` (Saturday start), **no model**, a scoped
+derived-event aggregator (`calendar_events`) · case-workspace الجلسات tab is now
+real + next-hearing on overview/list · nav: الجلسات + المحاكم under القضايا,
+المكتب→التقويم · capabilities `courts.view`(all)/`courts.manage`(office_manager),
+`hearings.view`(all)/`hearings.manage`(case handlers), `agenda.view`(all);
+`sync_roles` extended · 6 `HEARING_*` + 4 `COURT_*` `AuditAction`; 6 `HEARING_*`
+`CaseEventType` · filtering/search/pagination throughout · RTL/Arabic-first.
+
+**Verification:**
+- Tests: **295 pass / 0 fail / 3 skipped** (`@pytest.mark.postgres`) on SQLite —
+  `hearings` 39, `courts` 27, `agenda` 8, + a 16-URL end-to-end HTTP smoke.
+- `ruff` / `ruff format --check` / `pip-audit` / `makemigrations --check` /
+  `manage.py check` / `check --deploy --fail-level WARNING` (prod) — all clean.
+- Seed chain (`seed_demo_courts` → `_clients` → `_cases` → `_hearings`, idempotent)
+  + `sync_roles --check` clean after sync.
+- `/code-review` (self): 4 findings fixed with regression tests (page-2 filter
+  leak; past next-date; cancel-reason UX; CourtFactory location). Self security +
+  performance review — pass.
+
+**DEFERRED / UNVERIFIED — same Docker/PostgreSQL environment blocker as Phases 1–3:**
+1. Full suite on **PostgreSQL 16** (SQLite only).
+2. `courts/migrations/0003_court_search_indexes` (trigram GIN,
+   `TRGM_COLUMNS == SEARCH_FIELDS`) — never executed (PG-only, guarded).
+3. The `@pytest.mark.postgres` tests.
+4. `docker compose` full-stack smoke (equivalent verified via the Django test client).
+5. `compilemessages` (Docker-only; harmless).
+
+Branch: `phase/4-courts-hearings` — one commit `phase(4): complete courts and hearings`,
+pushed, **not merged**.
 
 ## Phase 5 — Tasks + Deadlines
 Status: NOT STARTED

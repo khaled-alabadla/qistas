@@ -46,7 +46,9 @@ def test_detail_ok_and_missing_is_404(client, office_manager):
     assert client.get(reverse("cases:detail", args=[999999])).status_code == 404
 
 
-@pytest.mark.parametrize("tab", ["overview", "parties", "notes", "correspondence", "timeline"])
+@pytest.mark.parametrize(
+    "tab", ["overview", "parties", "hearings", "notes", "correspondence", "timeline"]
+)
 def test_detail_tabs_render(client, office_manager, tab):
     c = CaseFactory()
     client.force_login(office_manager)
@@ -58,7 +60,7 @@ def test_detail_tabs_render(client, office_manager, tab):
 def test_detail_unknown_tab_falls_back_to_overview(client, office_manager):
     c = CaseFactory()
     client.force_login(office_manager)
-    resp = client.get(reverse("cases:detail", args=[c.pk]), {"tab": "hearings"})
+    resp = client.get(reverse("cases:detail", args=[c.pk]), {"tab": "invoices"})
     assert resp.context["tab"] == "overview"
 
 

@@ -4,17 +4,9 @@ import factory
 
 from cases.models import Case, CasePriority, CaseStatus, CaseType
 from clients.tests.factories import ClientFactory
-from courts.models import Court, CourtType
+from courts.tests.factories import CourtFactory
 
-
-class CourtFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = Court
-        django_get_or_create = ("name", "city")
-
-    name = factory.Sequence(lambda n: f"محكمة بداية {n}")
-    type = CourtType.FIRST_INSTANCE
-    city = "رام الله"
+__all__ = ["CaseFactory", "CaseTypeFactory", "CourtFactory"]
 
 
 class CaseTypeFactory(factory.django.DjangoModelFactory):

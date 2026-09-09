@@ -37,6 +37,7 @@
         <th class="px-3 py-2 text-start font-medium">{% translate "الموكل" %}</th>
         <th class="px-3 py-2 text-start font-medium">{% translate "النوع" %}</th>
         <th class="px-3 py-2 text-start font-medium">{% translate "المحامي المسؤول" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "الجلسة القادمة" %}</th>
         <th class="px-3 py-2 text-start font-medium">{% translate "الأولوية" %}</th>
         <th class="px-3 py-2 text-start font-medium">{% translate "الحالة" %}</th>
       </tr>
@@ -49,6 +50,7 @@
           <td class="px-3 py-2">{{ c.client.display_name }}</td>
           <td class="px-3 py-2">{{ c.type.name }}</td>
           <td class="px-3 py-2">{% if c.assigned_lawyer %}{{ c.assigned_lawyer.get_full_name|default:c.assigned_lawyer.email }}{% else %}—{% endif %}</td>
+          <td class="px-3 py-2 whitespace-nowrap">{% if c.next_hearing_at %}{% datestr c.next_hearing_at "SHORT_DATE_FORMAT" %}{% else %}—{% endif %}</td>
           <td class="px-3 py-2">
             {% if c.priority == 'urgent' %}{% badge c.get_priority_display "error" %}
             {% elif c.priority == 'high' %}{% badge c.get_priority_display "warning" %}

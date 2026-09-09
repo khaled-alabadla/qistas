@@ -1,0 +1,7 @@
+{% load i18n qistas %}{% comment %}param: e (an event dict){% endcomment %}
+<a href="{{ e.url }}"
+   class="block truncate rounded px-1.5 py-0.5 text-xs {% if e.status == 'cancelled' %}bg-mist text-slate/50 line-through{% elif e.done %}bg-emerald-50 text-emerald-800{% else %}bg-bronze/15 text-navy{% endif %} hover:brightness-95"
+   title="{{ e.title }} — {{ e.meta.case_title }}{% if e.meta.court %} · {{ e.meta.court }}{% endif %}">
+  <span dir="ltr" class="tabular-nums">{% datestr e.start "TIME_FORMAT" %}</span>
+  {{ e.title }}
+</a>

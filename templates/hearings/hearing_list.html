@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{% translate "الجلسات" %} · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <h1 class="text-xl font-semibold text-ink">{% translate "الجلسات" %}</h1>
+    <p class="text-sm text-slate/70">
+      {% blocktranslate count n=total_count %}جلسة واحدة{% plural %}{{ n }} جلسات{% endblocktranslate %}
+    </p>
+  </div>
+  <div class="flex gap-2">
+    <a href="{% url 'agenda:month' %}" class="btn btn-ghost">{% translate "التقويم" %}</a>
+    {% if can_manage %}
+      <a href="{% url 'hearings:schedule' %}" class="btn btn-primary">{% translate "جدولة جلسة" %}</a>
+    {% endif %}
+  </div>
+</div>
+
+<form method="get" class="mb-4 grid gap-3 rounded-xl border border-line bg-white p-4 sm:grid-cols-4">
+  <div class="sm:col-span-2">{% include "components/_form_field.html" with field=filter_form.q %}</div>
+  <div>{% include "components/_form_field.html" with field=filter_form.when %}</div>
+  <div>{% include "components/_form_field.html" with field=filter_form.status %}</div>
+  <div>{% include "components/_form_field.html" with field=filter_form.hearing_type %}</div>
+  <div>{% include "components/_form_field.html" with field=filter_form.court %}</div>
+  <div class="sm:col-span-4 flex gap-2">
+    <button type="submit" class="btn btn-primary">{% translate "تطبيق" %}</button>
+    <a href="{% url 'hearings:list' %}" class="btn btn-ghost">{% translate "مسح" %}</a>
+  </div>
+</form>
+
+{% if hearings %}
+<div class="overflow-x-auto rounded-lg border border-line">
+  <table class="w-full text-start text-sm">
+    <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+      <tr>
+        <th class="px-3 py-2 text-start font-medium">{% translate "الموعد" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "القضية" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "النوع" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "المحكمة" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "المحامي" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "الحالة" %}</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-line">
+      {% for h in hearings %}
+        <tr class="hover:bg-mist/50">
+          <td class="px-3 py-2 whitespace-nowrap">
+            <a class="font-medium text-navy hover:underline" href="{% url 'hearings:detail' h.pk %}">{% datestr h.scheduled_at "SHORT_DATETIME_FORMAT" %}</a>
+          </td>
+          <td class="px-3 py-2">
+            <a class="text-navy hover:underline" href="{% url 'cases:detail' h.case_id %}">{% num h.case.case_number %}</a>
+            <span class="text-slate/60"> · {{ h.case.title }}</span>
+          </td>
+          <td class="px-3 py-2">{{ h.get_hearing_type_display }}</td>
+          <td class="px-3 py-2">{% if h.court %}{{ h.court.name }}{% else %}—{% endif %}</td>
+          <td class="px-3 py-2">{% if h.lawyer %}{{ h.lawyer.get_full_name|default:h.lawyer.email }}{% else %}—{% endif %}</td>
+          <td class="px-3 py-2">{% include "hearings/_status_badge.html" with h=h %}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "components/pagination.html" with page_obj=page_obj querystring=querystring %}
+{% else %}
+  {% translate "لا توجد جلسات مطابقة" as es_title %}
+  {% translate "جرّب تعديل معايير البحث، أو جدول أول جلسة من صفحة القضية." as es_msg %}
+  {% empty_state es_title es_msg %}
+{% endif %}
+{% endblock %}

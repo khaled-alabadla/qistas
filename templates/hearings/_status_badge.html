@@ -1,0 +1,5 @@
+{% load qistas %}{% comment %}param: h (a Hearing){% endcomment %}
+{% if h.status == 'held' %}{% badge h.get_status_display "success" %}
+{% elif h.status == 'postponed' %}{% badge h.get_status_display "warning" %}
+{% elif h.status == 'cancelled' %}{% badge h.get_status_display "neutral" %}
+{% else %}{% badge h.get_status_display "bronze" %}{% endif %}

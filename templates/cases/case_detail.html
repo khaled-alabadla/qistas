@@ -63,6 +63,15 @@
           {% if case.internal_reference %}<div><dt class="text-slate/60">{% translate "مرجع داخلي" %}</dt><dd>{% num case.internal_reference %}</dd></div>{% endif %}
           {% if case.filing_date %}<div><dt class="text-slate/60">{% translate "تاريخ التقديم" %}</dt><dd>{% datestr case.filing_date %}</dd></div>{% endif %}
           {% if case.claim_amount is not None %}<div><dt class="text-slate/60">{% translate "قيمة المطالبة" %}</dt><dd>{% num case.claim_amount 2 %}</dd></div>{% endif %}
+          <div>
+            <dt class="text-slate/60">{% translate "الجلسة القادمة" %}</dt>
+            <dd class="text-ink">
+              {% if next_hearing %}
+                <a class="text-navy hover:underline" href="{% url 'hearings:detail' next_hearing.pk %}">{% datestr next_hearing.scheduled_at "SHORT_DATETIME_FORMAT" %}</a>
+                {% if next_hearing.court %} · {{ next_hearing.court.name }}{% endif %}
+              {% else %}—{% endif %}
+            </dd>
+          </div>
         </dl>
         {% if case.description %}
           <div class="mt-4">
@@ -186,6 +195,44 @@
         </ul>
       {% endif %}
     </div>
+    {% endif %}
+  </div>
+
+{% elif tab == 'hearings' %}
+  <div class="space-y-6">
+    {% if can_manage %}
+    <div class="flex flex-wrap gap-2">
+      <a href="{% url 'hearings:schedule' %}?case={{ case.pk }}" class="btn btn-secondary">{% translate "جدولة جلسة" %}</a>
+    </div>
+    {% endif %}
+
+    {% if hearings %}
+    <div class="overflow-x-auto rounded-lg border border-line">
+      <table class="w-full text-start text-sm">
+        <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+          <tr>
+            <th class="px-3 py-2 text-start font-medium">{% translate "الموعد" %}</th>
+            <th class="px-3 py-2 text-start font-medium">{% translate "النوع" %}</th>
+            <th class="px-3 py-2 text-start font-medium">{% translate "المحكمة" %}</th>
+            <th class="px-3 py-2 text-start font-medium">{% translate "الحالة" %}</th>
+            <th class="px-3 py-2 text-start font-medium">{% translate "الإجراء التالي" %}</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-line">
+          {% for h in hearings %}
+            <tr class="hover:bg-mist/50">
+              <td class="px-3 py-2 whitespace-nowrap"><a class="font-medium text-navy hover:underline" href="{% url 'hearings:detail' h.pk %}">{% datestr h.scheduled_at "SHORT_DATETIME_FORMAT" %}</a></td>
+              <td class="px-3 py-2">{{ h.get_hearing_type_display }}</td>
+              <td class="px-3 py-2">{% if h.court %}{{ h.court.name }}{% else %}—{% endif %}</td>
+              <td class="px-3 py-2">{% include "hearings/_status_badge.html" with h=h %}</td>
+              <td class="px-3 py-2">{{ h.next_action|default:"—" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <p class="text-sm text-slate/50">{% translate "لا توجد جلسات لهذه القضية بعد." %}</p>
     {% endif %}
   </div>
 
