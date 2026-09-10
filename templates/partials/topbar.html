@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n qistas %}
 <header class="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-line bg-white/95 px-4 backdrop-blur sm:px-8">
   <button type="button" @click="sidebarOpen = !sidebarOpen"
           class="rounded-md p-2 text-slate hover:bg-mist lg:hidden"
@@ -9,6 +9,16 @@
   <div class="min-w-0 flex-1">
     {% block breadcrumb %}{% endblock %}
   </div>
+
+  {% if user.is_authenticated and user|has_capability:'notifications.view' %}
+  <a href="{% url 'notifications:list' %}" class="relative rounded-md p-2 text-slate hover:bg-mist"
+     aria-label="{% translate 'الإشعارات' %}{% if unread_notification_count %} ({% num unread_notification_count %}){% endif %}">
+    <span aria-hidden="true">🔔</span>
+    {% if unread_notification_count %}
+      <span class="absolute -end-0.5 -top-0.5 grid min-w-4 place-items-center rounded-full bg-danger px-1 text-[10px] font-semibold leading-4 text-white">{% num unread_notification_count %}</span>
+    {% endif %}
+  </a>
+  {% endif %}
 
   {% if user.is_authenticated %}
   <div x-data="{ open: false }" class="relative">
