@@ -4,10 +4,10 @@
 > `COMPLETED ≠ APPROVED` — a phase starts only after the user says
 > **APPROVE PHASE N** / **ابدأ المرحلة N**.
 
-Current Phase: **10 — Reports** (Phases 1–9 approved + merged to master)
+Current Phase: **11 — Notifications** (Phases 1–10 approved + merged to master)
 
 Planning artifacts: `QISTAS_PHASE_0_ANALYSIS.md` · `QISTAS_GRILL_REVIEW.md` ·
-`docs/architecture.md` · `docs/adr/0001`–`0034` · `docs/PHASE_1_PLAN.md`
+`docs/architecture.md` · `docs/adr/0001`–`0035` · `docs/PHASE_1_PLAN.md`
 
 ---
 
@@ -644,12 +644,104 @@ with page 1.
 - Aging-bucket sub-totals in the outstanding report are computed from the
   displayed (capped) rows; the headline per-currency outstanding is exact.
 
-Branch: `phase/10-reports` — one commit `phase(10): complete reports`, pushed,
-**not merged**. Parent: `21ff0ea` (Phase 9 merge, PR #8).
+Branch: `phase/10-reports` — merged to `master` (PR #9, merge commit `ac1b500`).
 
 ## Phase 11 — Notifications
-Status: NOT STARTED
-Approval: N/A
+Status: **COMPLETE (technical)** — see `docs/PHASE_11_REPORT.md`
+Approval: **PENDING**
+Design: `docs/adr/0035-notifications.md`
+
+`notifications` app — **one model, `Notification`**: a per-user inbox row that is
+a *reference* (`entity_type` / `entity_id`, like `AuditLog`), never a copy of
+domain state. `recipient` `CASCADE`, `category` (5-value `TextChoices`), `title`
+/ `body` (short server-generated Arabic — §99), `url`, `dedupe_key`, `read_at`
+(null = unread). **`UniqueConstraint(recipient, dedupe_key)`** + indexes
+`(recipient, read_at)` / `(recipient, -created_at)` / `category`. **No sensitive
+figures in a body** (ADR-0009) — invoice notifications carry the number + due
+date, never the amount. No delete / archive / retention (spec defines none).
+Not in `sync_roles`; not registered with django-auditlog.
+
+**Generation = 5 idempotent reminder scans** (`notifications/generation.py`)
+wrapped by `manage.py generate_notifications` (system cron — ADR-0005, no
+worker; `--only <cats>` supported). `seed_demo_notifications` is the same under
+a seed-chain name. Categories + `dedupe_key`:
+`hearing_upcoming` (`…:{scheduled_date}`, `NOTIFY_HEARING_WITHIN_DAYS`=3) ·
+`task_overdue` (`…:{due_date}`, computed ADR-0006) ·
+`deadline_approaching` (`…:{due_date}`, `NOTIFY_DEADLINE_WITHIN_DAYS`=7 **or
+past**) · `invoice_overdue` (`…:{due_date}`, computed) ·
+`contract_expiring` (`…:{end_date}`, `expiring_soon(NOTIFY_CONTRACT_WITHIN_DAYS=30)`).
+Date-keyed → a reschedule / new due date makes **one** fresh notification, a
+stable event never re-notifies. Each scan = `filter(dedupe_key__in=…)` + one
+`bulk_create(ignore_conflicts=True)` — no per-row / per-recipient query.
+
+**Recipients** resolved to who can act (case team = `assigned_lawyer` +
+`supporting_lawyers`; task = `assigned_to`; invoice = office manager + finance
+clerk; fallback = office manager(s)), then intersected with
+`users_with_capability(<domain>.view)` **before** any row is written.
+`invoice_overdue` gates on **`finance.view`** — a **paralegal never receives or
+sees a finance notification** (ADR-0032, dedicated regression tests). The stored
+`url` targets the domain detail view, which re-enforces the same gate — a
+notification is never a side channel around domain authz.
+
+**Lifecycle** recipient-scoped: `Notification.objects.for_user(user)`
+(`recipient=user` only) is the only path; `get_object_or_404` on it → **404 on
+URL tampering** (strict per-user siloing). List (paginated, all/unread +
+category filter) · open (`GET` → mark read → host-checked redirect to target) ·
+mark-one-read (`POST`) · mark-all-read (`POST`). `_safe_next` /
+`url_has_allowed_host_and_scheme` on every redirect.
+
+**Nav:** `core.context_processors` gains `unread_notification_count` (one
+indexed `COUNT`, 0 for anonymous). Sidebar `الإشعارات` is a live link with a
+count badge; topbar gets a bell. **Channels: in-app only** (spec §45 requires no
+email/SMS).
+
+**Verification:**
+- Tests: **741 pass / 0 fail / 4 skipped** (`@pytest.mark.postgres`) on SQLite —
+  **+51 notification tests** (`test_models` / `test_services` / `test_generation`
+  / `test_command` / `test_views` / `test_context`): unique-constraint +
+  recipient scoping + unread filter; `notify` / `bulk_notify` idempotency +
+  in-batch dedupe; every trigger's recipient + target + idempotency +
+  reschedule-produces-one-fresh; **`invoice_overdue` reaches finance users only,
+  paralegal gets ZERO, no amount in body**; command safe-to-rerun + `--only`;
+  anon-redirect + IDOR 404 + cross-user mark no-op + `GET` rejected + offsite
+  `next`/`url` rejected; badge is per-user + a single COUNT.
+- `ruff` / `ruff format --check` / `pip-audit` (no vulns) / `makemigrations
+  --check` / `manage.py check` — all clean.
+- `manage.py check --deploy`: the same 5 warnings, **test-settings only**
+  (`prod.py` sets HSTS / SSL / secure cookies / env `SECRET_KEY`).
+- Self **security review — PASS** (no Critical/High): IDOR (404 on tamper),
+  recipient isolation, finance side-channel (recipient rule + capability
+  intersection + target-view re-check), XSS (auto-escaped bodies, no `|safe`),
+  no mass assignment (server-generated rows only), forged read-state impossible
+  (scoped queryset). Self **performance review — PASS**: each scan is flat (one
+  events query + one prefetch + two recipient-set queries + two write queries);
+  badge is one indexed COUNT.
+- `/code-review high` command is **not available in this environment** (same as
+  Phases 4–10); a rigorous **self code-review** was done — findings fixed
+  pre-commit (deadline `now` timezone handling; N+1 avoided by reading the
+  `supporting_lawyers` prefetch cache).
+
+**DEFERRED / UNVERIFIED — same Docker/PostgreSQL blocker as Phases 1–10:**
+1. Full suite on **PostgreSQL 16** (SQLite only). Expect ~741 pass, 0 skipped.
+2. The 4 `@pytest.mark.postgres` tests. **Phase 11 adds one migration**
+   (`notifications/0001_initial`) — portable ORM only, no PG-specific DDL.
+3. `docker compose` full-stack smoke; `generate_notifications` against PostgreSQL.
+4. `compilemessages` (Docker-only; harmless).
+5. `check --deploy` against **prod settings** (needs `DJANGO_SECRET_KEY` + PG).
+
+**Known limitations:**
+- §45's wishlist categories that are **not** built this phase: "case assignment",
+  "document uploaded", "important case update" — the Phase 11 scope list is
+  reminder-shaped; `notifications.services.notify` is the seam for event-driven
+  categories later (no schema change needed).
+- Notifications surface only as often as cron runs (the dashboard + calendar are
+  the real-time surfaces).
+- `bulk_create(ignore_conflicts=True)` return count can slightly over-report on
+  a genuine concurrent-scan race (the pre-filter makes the window tiny); the
+  rows themselves are still correct (unique constraint).
+
+Branch: `phase/11-notifications` — one commit `phase(11): complete notifications`,
+pushed, **not merged**. Parent: `ac1b500` (Phase 10 merge, PR #9).
 
 ## Phase 12 — Audit + Advanced Security (hardening)
 Status: NOT STARTED

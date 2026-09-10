@@ -34,7 +34,10 @@
            {% if item.disabled %}aria-disabled="true" tabindex="-1"{% endif %}>
           <span aria-hidden="true" class="h-1.5 w-1.5 rounded-full bg-bronze/70"></span>
           {{ item.label }}
-          {% if item.disabled %}<span class="ms-auto text-[10px] text-sand/40">{% translate "قريبًا" %}</span>{% endif %}
+          {% if item.url_name == 'notifications:list' and unread_notification_count %}
+            <span class="ms-auto min-w-5 rounded-full bg-bronze px-1.5 text-center text-[11px] font-semibold leading-5 text-navy"
+                  aria-label="{% blocktranslate count n=unread_notification_count %}{{ n }} إشعار غير مقروء{% plural %}{{ n }} إشعارات غير مقروءة{% endblocktranslate %}">{% num unread_notification_count %}</span>
+          {% elif item.disabled %}<span class="ms-auto text-[10px] text-sand/40">{% translate "قريبًا" %}</span>{% endif %}
         </a>
       {% endif %}
     {% endfor %}

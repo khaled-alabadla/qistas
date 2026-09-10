@@ -6,7 +6,7 @@ from django.conf import settings
 from django.urls import NoReverseMatch, reverse
 
 from core.navigation import NAV, NavItem
-from core.permissions.capabilities import can, capabilities_for
+from core.permissions.capabilities import Capability, can, capabilities_for
 
 
 def _resolve(item: NavItem, user) -> dict | None:
@@ -36,11 +36,25 @@ def _resolve(item: NavItem, user) -> dict | None:
 
 def navigation(request) -> dict:
     user = getattr(request, "user", None)
+    caps = capabilities_for(user)
     items = [i for i in (_resolve(n, user) for n in NAV) if i]
     return {
         "nav_items": items,
-        "user_capabilities": capabilities_for(user),
+        "user_capabilities": caps,
+        "unread_notification_count": _unread_notifications(user, caps),
     }
+
+
+def _unread_notifications(user, caps) -> int:
+    """One indexed COUNT for the navigation badge (docs/adr/0035 §5). Served by
+    the ``(recipient, read_at)`` index; skipped entirely for anonymous users."""
+    if not user or not getattr(user, "is_authenticated", False):
+        return 0
+    if Capability.NOTIFICATIONS_VIEW not in caps:
+        return 0
+    from notifications.selectors import unread_count
+
+    return unread_count(user)
 
 
 def app_meta(request) -> dict:

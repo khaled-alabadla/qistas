@@ -183,3 +183,30 @@ def can(user, capability: str) -> bool:
     if user.is_superuser:
         return True
     return str(capability) in capabilities_for(user)
+
+
+def groups_with_capability(capability: str) -> frozenset[str]:
+    """Every group name whose capability set grants ``capability``. Used by the
+    notification reminder scan to resolve recipients (docs/adr/0035 §3)."""
+    cap = str(capability)
+    return frozenset(g for g, caps in GROUP_CAPABILITIES.items() if cap in caps)
+
+
+def users_with_capability(capability: str):
+    """Active users who hold ``capability`` through group membership.
+
+    A defence-in-depth backstop for notification generation: the recipient list
+    is intersected with this before any row is created, so e.g. a finance
+    notification can never reach a paralegal (docs/adr/0032, 0035 §3).
+    Superusers are intentionally **not** included — the reminder scan targets
+    real staff inboxes, not the break-glass account.
+    """
+    from django.contrib.auth import get_user_model
+
+    return (
+        get_user_model()
+        ._default_manager.filter(
+            is_active=True, groups__name__in=list(groups_with_capability(capability))
+        )
+        .distinct()
+    )

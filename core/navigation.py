@@ -157,10 +157,9 @@ NAV: tuple[NavItem, ...] = (
     ),
     NavItem(
         label=_("الإشعارات"),
-        url_name=None,
+        url_name="notifications:list",
         capability=Capability.NOTIFICATIONS_VIEW,
         icon="bell",
-        disabled=True,
     ),
     NavItem(
         label=_("الإعدادات"),

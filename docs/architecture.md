@@ -52,7 +52,7 @@ qistas/
 
 ### App roadmap (informational — not built until each phase is approved)
 
-`core` `accounts` `audit` (P1 ✓) · `clients` (P2 ✓) · `cases` +parties+notes+timeline + `courts` (minimal) (P3 ✓) · `courts` (full) `hearings` `agenda` (P4 ✓) · `tasks` +deadlines (P5 ✓) · `documents` (P6 ✓) · `contracts` (P7 ✓) · `finance` (P8 ✓) · `dashboard` (P9 ✓) · `reports` (P10 ✓) · `notifications` (P11) · security/audit hardening (P12) · quality/perf/UX hardening (P13) · production readiness (P14).
+`core` `accounts` `audit` (P1 ✓) · `clients` (P2 ✓) · `cases` +parties+notes+timeline + `courts` (minimal) (P3 ✓) · `courts` (full) `hearings` `agenda` (P4 ✓) · `tasks` +deadlines (P5 ✓) · `documents` (P6 ✓) · `contracts` (P7 ✓) · `finance` (P8 ✓) · `dashboard` (P9 ✓) · `reports` (P10 ✓) · `notifications` (P11 ✓) · security/audit hardening (P12) · quality/perf/UX hardening (P13) · production readiness (P14).
 
 ### Clients (P2) — implemented notes
 
@@ -185,6 +185,50 @@ Four enforced layers; the UI is **never** a security boundary (spec §15).
 - **Exports:** CSV (UTF-8 **+ BOM**, `\r\n`, Western digits, money as plain dot-decimal `Decimal`), same view + capability gate, **audited** (`AuditAction.REPORT_EXPORTED`, metadata only — slug/format/row-count/filters, never row content or figures). Server-generated filename `qistas-<slug>-<date>.csv`, no stored file, no public path. **Print** = a `@media print` stylesheet. **Server-side PDF (WeasyPrint) is deferred** — system-library / Docker-only, same class as `compilemessages`; spec §44 hedges ("where useful") and §13 says "no heavyweight PDF stack unless required"; the `ReportResult` shape already separates data from rendering.
 - **Spreadsheet injection (spec §12):** `reports.framework.csv_safe` prefixes any cell/header text starting with `= + - @` or a control char with `'`.
 - **Performance (spec §14):** each builder = one row query (`select_related` for every rendered FK) sliced to `MAX_ROWS = 5000` + a few summary aggregates, **no per-row query**; a capped result is flagged `truncated`. HTML paginates the in-memory capped list; query-count regression tests assert flatness across a 2→8-row population for five builders.
+
+## 13c. Notifications — ADR-0035 (built in Phase 11)
+
+- **`notifications` owns one model, `Notification`** — a per-user inbox row that
+  is a *reference* (`entity_type` / `entity_id`, like `AuditLog`), never a copy
+  of domain state. `recipient` `CASCADE` (personal data), `read_at` null = unread,
+  `dedupe_key` + `UniqueConstraint(recipient, dedupe_key)` = the idempotency
+  backstop. Indexes: `(recipient, read_at)`, `(recipient, -created_at)`,
+  `category`. **No sensitive figures in a body** (ADR-0009) — an invoice
+  notification carries the number + due date, never the amount. No delete /
+  archive / retention (spec defines none, §18). Not in `sync_roles`, not
+  registered with django-auditlog (an inbox row is not a domain record).
+- **Generation = five idempotent reminder scans** (`notifications/generation.py`)
+  wrapped by `manage.py generate_notifications` (system cron — ADR-0005; no
+  worker). Categories: `hearing_upcoming` (scheduled, within
+  `NOTIFY_HEARING_WITHIN_DAYS`=3), `task_overdue` (computed, ADR-0006),
+  `deadline_approaching` (pending, within `NOTIFY_DEADLINE_WITHIN_DAYS`=7 **or
+  past**), `invoice_overdue` (computed), `contract_expiring`
+  (`expiring_soon(NOTIFY_CONTRACT_WITHIN_DAYS=30)`). The `dedupe_key` embeds the
+  date that matters (`…:{scheduled_date}` / `…:{due_date}` / `…:{end_date}`) so a
+  reschedule / new due date legitimately produces **one** fresh notification and
+  a stable event never re-notifies ("avoid notification spam", §45). Each scan is
+  `filter(dedupe_key__in=…)` + one `bulk_create(ignore_conflicts=True)` — no
+  per-row, no per-recipient query.
+- **Recipients are resolved to who can act, then re-checked** (spec Phase 11
+  §13–14): case-linked hearing/deadline/contract → the case team
+  (`assigned_lawyer` + `supporting_lawyers`); task → `assigned_to`; invoice → the
+  finance-responsible set (office manager + finance clerk); fallback → office
+  manager(s). Every candidate is intersected with
+  `users_with_capability(<domain>.view)` **before** the row is written. Invoice
+  notifications gate on **`finance.view`** — a **paralegal never receives or sees
+  one** (ADR-0032). The stored `url` targets the domain detail view, which
+  re-enforces the same gate — a notification is **never a side channel** around
+  domain authz.
+- **Lifecycle is recipient-scoped:** `Notification.objects.for_user(user)`
+  (`recipient=user` only, ADR-0019) is the only path; `get_object_or_404` on it
+  → **404 on URL tampering** (strict per-user siloing — 404, not the all-staff
+  403). List / open / mark-one-read (`POST`) / mark-all-read (`POST`); "open"
+  marks read then redirects to the (host-checked) target.
+- **Badge** = `core.context_processors` gains `unread_notification_count` — one
+  indexed `COUNT` (served by `(recipient, read_at)`), 0 for anonymous. Sidebar
+  `الإشعارات` is a live link; topbar gets a bell + count. No new middleware.
+- **Channels: in-app only** — spec §45 requires no email/SMS; `core/tasks.py`
+  stays the seam if a digest is ever specified.
 
 ## 14. Testing strategy — ADR-0025
 

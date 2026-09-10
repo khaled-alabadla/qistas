@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{% translate "الإشعارات" %} · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <h1 class="text-xl font-semibold text-ink">{% translate "الإشعارات" %}</h1>
+    <p class="text-sm text-slate/70">
+      {% blocktranslate count n=unread_count %}إشعار واحد غير مقروء{% plural %}{{ n }} إشعارات غير مقروءة{% endblocktranslate %}
+    </p>
+  </div>
+  {% if unread_count %}
+    <form method="post" action="{% url 'notifications:mark_all_read' %}">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <button type="submit" class="btn btn-ghost">{% translate "تعليم الكل كمقروء" %}</button>
+    </form>
+  {% endif %}
+</div>
+
+<div class="mb-4 flex flex-wrap items-center gap-3">
+  <div class="inline-flex overflow-hidden rounded-lg border border-line text-sm">
+    <a href="{% url 'notifications:list' %}{% if active_category %}?category={{ active_category }}{% endif %}"
+       class="px-3 py-1.5 {% if not unread_only %}bg-navy text-white{% else %}bg-white text-ink hover:bg-mist{% endif %}">{% translate "الكل" %}</a>
+    <a href="{% url 'notifications:list' %}?filter=unread{% if active_category %}&category={{ active_category }}{% endif %}"
+       class="border-s border-line px-3 py-1.5 {% if unread_only %}bg-navy text-white{% else %}bg-white text-ink hover:bg-mist{% endif %}">{% translate "غير المقروءة" %}</a>
+  </div>
+  <form method="get" class="flex items-center gap-2">
+    {% if unread_only %}<input type="hidden" name="filter" value="unread">{% endif %}
+    <select name="category" onchange="this.form.submit()"
+            class="rounded-md border border-line bg-white px-2 py-1.5 text-sm">
+      <option value="">{% translate "كل الفئات" %}</option>
+      {% for value, label in categories %}
+        <option value="{{ value }}" {% if value == active_category %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <noscript><button type="submit" class="btn btn-ghost">{% translate "تصفية" %}</button></noscript>
+  </form>
+</div>
+
+{% if notifications %}
+<ul class="divide-y divide-line rounded-lg border border-line bg-white">
+  {% for n in notifications %}
+    <li class="flex items-start gap-3 p-4 {% if n.is_unread %}bg-mist/40{% endif %}">
+      <span aria-hidden="true" class="mt-1.5 h-2 w-2 shrink-0 rounded-full {% if n.is_unread %}bg-bronze{% else %}bg-transparent{% endif %}"></span>
+      <div class="min-w-0 flex-1">
+        <div class="flex flex-wrap items-center gap-2">
+          {% if n.category == 'invoice_overdue' or n.category == 'task_overdue' %}
+            {% badge n.get_category_display "danger" %}
+          {% elif n.category == 'deadline_approaching' or n.category == 'contract_expiring' %}
+            {% badge n.get_category_display "warning" %}
+          {% else %}
+            {% badge n.get_category_display "navy" %}
+          {% endif %}
+          <span class="text-xs text-slate/60">{% datestr n.created_at "DATETIME_FORMAT" %}</span>
+        </div>
+        <a href="{% url 'notifications:open' n.pk %}" class="mt-1 block font-medium text-navy hover:underline">{{ n.title }}</a>
+        <p class="mt-0.5 text-sm text-slate/80">{{ n.body }}</p>
+      </div>
+      {% if n.is_unread %}
+        <form method="post" action="{% url 'notifications:mark_read' n.pk %}">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button type="submit" class="shrink-0 text-xs text-slate/60 hover:text-navy hover:underline">{% translate "تعليم كمقروء" %}</button>
+        </form>
+      {% endif %}
+    </li>
+  {% endfor %}
+</ul>
+{% include "components/pagination.html" with page_obj=page_obj querystring=querystring %}
+{% else %}
+  {% if unread_only %}
+    {% translate "لا توجد إشعارات غير مقروءة" as es_title %}
+    {% translate "أنت على اطّلاع بكل جديد." as es_msg %}
+  {% else %}
+    {% translate "لا توجد إشعارات" as es_title %}
+    {% translate "ستظهر هنا التذكيرات بالجلسات والمهام والمواعيد والفواتير والعقود." as es_msg %}
+  {% endif %}
+  {% empty_state es_title es_msg %}
+{% endif %}
+{% endblock %}
