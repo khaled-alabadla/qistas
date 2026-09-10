@@ -4,10 +4,10 @@
 > `COMPLETED ≠ APPROVED` — a phase starts only after the user says
 > **APPROVE PHASE N** / **ابدأ المرحلة N**.
 
-Current Phase: **9 — Dashboard + Analytics** (Phases 1–8 approved + merged to master)
+Current Phase: **10 — Reports** (Phases 1–9 approved + merged to master)
 
 Planning artifacts: `QISTAS_PHASE_0_ANALYSIS.md` · `QISTAS_GRILL_REVIEW.md` ·
-`docs/architecture.md` · `docs/adr/0001`–`0033` · `docs/PHASE_1_PLAN.md`
+`docs/architecture.md` · `docs/adr/0001`–`0034` · `docs/PHASE_1_PLAN.md`
 
 ---
 
@@ -485,8 +485,8 @@ Branch: `phase/8-finance` — one commit `phase(8): complete finance`, pushed,
 **not merged**. Parent: `7908beb` (Phase 7 merge, PR #6).
 
 ## Phase 9 — Dashboard + Analytics
-Status: **COMPLETE (technical)** — see `docs/PHASE_9_REPORT.md`
-Approval: **PENDING**
+Status: **APPROVED + merged to `master`** (PR #8, merge commit `21ff0ea`) — see `docs/PHASE_9_REPORT.md`
+Approval: **APPROVED** ("APPROVE PHASE 9")
 Design: `docs/adr/0033-dashboard.md`
 
 **The dashboard *is* the landing page.** `core:landing` → `dashboard/dashboard.html`;
@@ -562,8 +562,90 @@ Branch: `phase/9-dashboard` — one commit `phase(9): complete dashboard`, pushe
 **not merged**. Parent: `32e350b` (Phase 8 merge, PR #7).
 
 ## Phase 10 — Reports
-Status: NOT STARTED
-Approval: N/A
+Status: **COMPLETE (technical)** — see `docs/PHASE_10_REPORT.md`
+Approval: **PENDING**
+Design: `docs/adr/0034-reports.md`
+
+`reports` app — a **read/export layer over the Phase 1–9 domains; owns no
+models** (`framework.py` typed `ReportResult` + CSV writer · `registry.py`
+catalogue · `forms.py` · `selectors.py` builders · thin views · templates).
+`ReportView` renders one report as a paginated HTML table or, with
+`?format=csv`, an audited CSV. No JSON/chart endpoint.
+
+**Reports (spec §43):** general — `cases` · `clients` · `hearings` · `tasks` ·
+`deadlines`; financial — `revenue` · `payments` · `outstanding` (with aging) ·
+`expenses` · `case-financials`.
+
+**Authorization (spec Phase 10 §6):** every report gated on its **domain**
+capability in the view, **before any query or file generation** (HTML + CSV).
+Financial reports require **`finance.view`** — a **paralegal gets 403 on the
+page and the export** (critical regression test, all five). `reports.view` is an
+all-staff nav capability only (like `dashboard.view`) — not in `sync_roles`,
+never "see every report"; the index lists only runnable reports.
+
+**Finance (ADR-0032):** no total re-implemented — reuses
+`_invoice_totals_by_currency`, `Invoice.objects.with_balances()/.open()/
+.overdue()`, `Payment.net_amount`, `core.money.quantize`; `Decimal` end to end.
+**Currencies never summed** — per-currency total blocks only.
+
+**Exports:** CSV (UTF-8 + BOM, `\r\n`, Western digits, `csv_safe` formula-
+injection guard on every cell + header, server-generated filename, no stored
+file/public path). **Print** = `@media print` stylesheet. **Server-side PDF
+(WeasyPrint) DEFERRED** — Docker/system-library only, spec §44 hedges,
+§13 says no heavyweight PDF stack unless required. Every CSV export →
+`AuditAction.REPORT_EXPORTED` (metadata only).
+
+**Filter resolution (bug-055 generalised):** hidden `_run=1` marks a real
+submission (cleaned values verbatim); absent (fresh load / pagination / bare CSV
+link) → field `initial`s + default 90-day window, so page 2 never disagrees
+with page 1.
+
+**Nav:** `التقارير` between `المالية` and `الإشعارات`.
+
+**Verification:**
+- Tests: **~689 pass / 0 fail / 4 skipped** (`@pytest.mark.postgres`) on SQLite
+  — **+129 reports tests** (`test_access` / `test_filters` / `test_general_reports`
+  / `test_financial_reports` / `test_exports` / `test_performance` / `test_views`):
+  login + per-report capability matrix + **paralegal-vs-financial-report 403
+  (page & export)** + groupless-user-safe-empty + unknown-slug-404 + IDOR/tamper;
+  reversed/garbage/unknown-choice filter rejection + date boundary inclusivity +
+  combined filters + **page-2-keeps-default (bug-055)** + CSV-matches-page-window;
+  report correctness (open-only, active-case counts, computed overdue, status
+  counts, ordering); Decimal + credit-note-aware + **per-currency separation
+  (never `1500`)** + aging buckets + net-of-reversal; CSV headers/rows/values +
+  **formula-injection neutralised** + BOM + server filename + audit-metadata-only
+  + auth-before-generation; **flat query count** (2→8 rows identical, ≤ 15);
+  every report renders full + empty.
+- `ruff` / `ruff format --check` / `pip-audit` (no vulns) / `makemigrations
+  --check` (no changes — `reports` has no models) / `manage.py check` — clean.
+- `manage.py check --deploy`: 5 warnings, **test-settings only** (`prod.py` sets
+  HSTS / SSL / secure cookies / env `SECRET_KEY`).
+- Self **security review — PASS** (no Critical/High). Self **performance / N+1
+  review — PASS** (bounded, flat; `MAX_ROWS` cap; no per-row query).
+- `/code-review high` command is **not available in this environment**
+  (`.claude/commands/` has only `designqc` / `handoff` / `reframe` /
+  `security-audit`); a rigorous **self code-review** was done instead —
+  consistent with Phases 4–9. Findings fixed pre-commit (filter-resolution /
+  window consistency, audit-metadata source, aging-bucket accuracy note).
+
+**DEFERRED / UNVERIFIED — same Docker/PostgreSQL blocker as Phases 1–9:**
+1. Full suite on **PostgreSQL 16** (SQLite only).
+2. The 4 `@pytest.mark.postgres` tests.
+3. `docker compose` full-stack smoke; report/export tests on PostgreSQL.
+4. `compilemessages` (Docker-only; harmless).
+5. `check --deploy` against **prod settings** (needs `DJANGO_SECRET_KEY` + PG).
+6. **Server-side PDF export** — deferred by design (ADR-0034 §7).
+
+**Known limitations:**
+- No PDF export (browser print-to-PDF is the interim); no saved report
+  definitions; no trend / period-over-period analysis; no scheduled delivery
+  (Phase 11). Reports are capped at `MAX_ROWS = 5000` rows — a truncated result
+  is flagged and asks the user to narrow filters.
+- Aging-bucket sub-totals in the outstanding report are computed from the
+  displayed (capped) rows; the headline per-currency outstanding is exact.
+
+Branch: `phase/10-reports` — one commit `phase(10): complete reports`, pushed,
+**not merged**. Parent: `21ff0ea` (Phase 9 merge, PR #8).
 
 ## Phase 11 — Notifications
 Status: NOT STARTED

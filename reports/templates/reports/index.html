@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{% translate "التقارير" %} · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-xl font-semibold text-ink">{% translate "التقارير" %}</h1>
+  <p class="text-sm text-slate/70">{% translate "تقارير تشغيلية على بيانات المكتب. كل تقرير يحترم صلاحيات مجاله." %}</p>
+</div>
+
+{% if not has_any %}
+  {% translate "لا تتوفّر لك تقارير" as t_none %}
+  {% translate "لا تملك صلاحية عرض أي مجال يمكن إصدار تقرير عنه." as t_none_msg %}
+  {% empty_state t_none t_none_msg %}
+{% else %}
+
+{% if general_reports %}
+<section class="mb-8">
+  <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/50">{% translate "تقارير عامة" %}</h2>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    {% for r in general_reports %}
+      <a href="{% url 'reports:detail' r.slug %}"
+         class="rounded-xl border border-line bg-white p-4 transition hover:border-navy/30 hover:shadow-sm">
+        <p class="font-semibold text-ink">{{ r.label }}</p>
+        <p class="mt-1 text-xs text-slate/60">{{ r.description }}</p>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if financial_reports %}
+<section>
+  <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/50">
+    {% translate "تقارير مالية" %}
+    {% translate "صلاحية مالية" as t_fin %}{% badge t_fin "bronze" %}
+  </h2>
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    {% for r in financial_reports %}
+      <a href="{% url 'reports:detail' r.slug %}"
+         class="rounded-xl border border-bronze/30 bg-bronze/5 p-4 transition hover:border-bronze hover:shadow-sm">
+        <p class="font-semibold text-ink">{{ r.label }}</p>
+        <p class="mt-1 text-xs text-slate/60">{{ r.description }}</p>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% endif %}
+{% endblock %}

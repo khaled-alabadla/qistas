@@ -1,0 +1,52 @@
+{% load i18n qistas %}{% comment %}
+  param: columns — list[reports.framework.Column]
+  param: page_obj — Paginator page whose object_list is list[list[Cell]]
+{% endcomment %}
+<div class="report-table overflow-x-auto rounded-xl border border-line bg-white">
+  <table class="w-full text-start text-sm">
+    <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+      <tr>
+        {% for col in columns %}
+          <th class="px-3 py-2 font-medium {% if col.numeric %}text-end{% else %}text-start{% endif %}">{{ col.label }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-line">
+      {% for row in page_obj %}
+        <tr class="hover:bg-mist/40">
+          {% for cell in row %}
+            <td class="px-3 py-2 align-top {% if cell.numeric %}text-end{% endif %}">
+              {% if cell.kind == 'badge' %}
+                {% badge cell.display cell.tone|default:"neutral" %}
+              {% elif cell.href %}
+                <a class="text-navy hover:underline" href="{{ cell.href }}"><bdi dir="ltr">{{ cell.display }}</bdi></a>
+              {% elif cell.numeric or cell.kind == 'date' or cell.kind == 'datetime' %}
+                <bdi dir="ltr">{{ cell.display }}</bdi>
+              {% else %}
+                {{ cell.display }}
+              {% endif %}
+            </td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if page_obj.paginator.num_pages > 1 %}
+  <nav class="report-noprint mt-4 flex items-center justify-between text-sm" aria-label="{% translate 'ترقيم الصفحات' %}">
+    <span class="text-slate/60">
+      {% blocktranslate with p=page_obj.number n=page_obj.paginator.num_pages %}صفحة {{ p }} من {{ n }}{% endblocktranslate %}
+    </span>
+    <div class="flex gap-1">
+      {% if page_obj.has_previous %}
+        <a href="?{{ querystring }}page={{ page_obj.previous_page_number }}"
+           class="rounded-md border border-line bg-white px-3 py-1.5 hover:bg-mist">{% translate "السابق" %}</a>
+      {% endif %}
+      {% if page_obj.has_next %}
+        <a href="?{{ querystring }}page={{ page_obj.next_page_number }}"
+           class="rounded-md border border-line bg-white px-3 py-1.5 hover:bg-mist">{% translate "التالي" %}</a>
+      {% endif %}
+    </div>
+  </nav>
+{% endif %}

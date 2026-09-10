@@ -31,6 +31,7 @@ class Capability(TextChoices):
     """Named permissions checked in views/templates. Values are stable strings."""
 
     DASHBOARD_VIEW = "dashboard.view", _("عرض الرئيسية")
+    REPORTS_VIEW = "reports.view", _("عرض التقارير")
     NOTIFICATIONS_VIEW = "notifications.view", _("عرض الإشعارات")
     SETTINGS_VIEW = "settings.view", _("عرض الإعدادات")
     AUDIT_VIEW = "audit.view", _("عرض سجل التدقيق")
@@ -68,6 +69,7 @@ class Capability(TextChoices):
 # Every staff member can see the dashboard, notifications, and the client directory.
 _ALL_STAFF = {
     Capability.DASHBOARD_VIEW,
+    Capability.REPORTS_VIEW,
     Capability.NOTIFICATIONS_VIEW,
     Capability.CLIENTS_VIEW,
     Capability.CASES_VIEW,
@@ -110,6 +112,7 @@ _FINANCE_HANDLERS = {Capability.FINANCE_VIEW, Capability.FINANCE_MANAGE}
 GROUP_CAPABILITIES: dict[str, set[str]] = {
     Group.OFFICE_MANAGER: {
         Capability.DASHBOARD_VIEW,
+        Capability.REPORTS_VIEW,
         Capability.NOTIFICATIONS_VIEW,
         Capability.SETTINGS_VIEW,
         Capability.AUDIT_VIEW,

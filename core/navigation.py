@@ -150,6 +150,12 @@ NAV: tuple[NavItem, ...] = (
         ),
     ),
     NavItem(
+        label=_("التقارير"),
+        url_name="reports:index",
+        capability=Capability.REPORTS_VIEW,
+        icon="chart",
+    ),
+    NavItem(
         label=_("الإشعارات"),
         url_name=None,
         capability=Capability.NOTIFICATIONS_VIEW,

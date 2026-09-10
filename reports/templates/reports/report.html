@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{{ report.label }} · {% translate "التقارير" %} · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<style>
+  @media print {
+    aside, header, .report-noprint { display: none !important; }
+    main { padding: 0 !important; }
+    .report-table { font-size: 11px; }
+  }
+</style>
+
+<nav class="mb-2 text-xs text-slate/50">
+  <a href="{% url 'reports:index' %}" class="hover:underline">{% translate "التقارير" %}</a>
+  <span aria-hidden="true"> / </span>{{ report.label }}
+</nav>
+
+<div class="mb-5 flex flex-wrap items-start justify-between gap-3">
+  <div>
+    <h1 class="text-xl font-semibold text-ink">{{ report.label }}</h1>
+    <p class="text-sm text-slate/70">{{ report.description }}</p>
+  </div>
+  <div class="report-noprint flex gap-2">
+    <a href="?{{ querystring }}format=csv"
+       class="rounded-md border border-line bg-white px-3 py-2 text-sm font-medium text-ink hover:bg-mist">
+      {% translate "تصدير CSV" %}
+    </a>
+    <button type="button" onclick="window.print()"
+       class="rounded-md border border-line bg-white px-3 py-2 text-sm font-medium text-ink hover:bg-mist">
+      {% translate "طباعة" %}
+    </button>
+  </div>
+</div>
+
+<form method="get" class="report-noprint mb-6 rounded-xl border border-line bg-white p-4">
+  {# marks a real filter submission — absent on fresh loads / pagination / bare CSV links #}
+  <input type="hidden" name="_run" value="1">
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    {% for field in form %}
+      <label class="block text-sm">
+        <span class="mb-1 block text-xs font-medium text-slate/60">{{ field.label }}</span>
+        {{ field }}
+        {% if field.errors %}<span class="mt-1 block text-xs text-danger">{{ field.errors|join:"، " }}</span>{% endif %}
+      </label>
+    {% endfor %}
+  </div>
+  {% if form.non_field_errors %}
+    <p class="mt-3 text-sm text-danger">{{ form.non_field_errors|join:"، " }}</p>
+  {% endif %}
+  <div class="mt-4 flex gap-2">
+    <button type="submit" class="rounded-md bg-navy px-4 py-2 text-sm font-medium text-white hover:bg-navy/90">
+      {% translate "تطبيق" %}
+    </button>
+    <a href="{% url 'reports:detail' report.slug %}" class="rounded-md px-4 py-2 text-sm text-slate/70 hover:text-ink">
+      {% translate "إعادة تعيين" %}
+    </a>
+  </div>
+</form>
+
+{% if result is None %}
+  <div class="rounded-xl border border-danger/30 bg-danger/5 p-4 text-sm text-danger">
+    {% translate "صحّح المرشّحات لعرض التقرير." %}
+  </div>
+{% else %}
+
+  <p class="mb-4 text-xs text-slate/50">
+    {% blocktranslate with n=result.row_count at=result.generated_at|date:"SHORT_DATETIME_FORMAT" %}
+      {{ n }} سجلًّا · وقت الإصدار {{ at }}
+    {% endblocktranslate %}
+  </p>
+
+  {% include "reports/_summary.html" with result=result %}
+
+  {% if result.notes %}
+    <ul class="mb-4 space-y-1 text-xs text-slate/50">
+      {% for note in result.notes %}<li>— {{ note }}</li>{% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if result.truncated %}
+    <div class="report-noprint mb-4 rounded-lg border border-bronze/30 bg-bronze/5 p-3 text-xs text-bronze-700">
+      {% translate "عُرض الحد الأقصى من السجلات. ضيّق نطاق المرشّحات للحصول على نتيجة كاملة." %}
+    </div>
+  {% endif %}
+
+  {% if result.is_empty %}
+    {% translate "لا سجلّات مطابقة" as t_empty %}
+    {% translate "غيّر المرشّحات ثم أعد التطبيق." as t_empty_msg %}
+    {% empty_state t_empty t_empty_msg %}
+  {% else %}
+    {% include "reports/_table.html" with columns=result.columns page_obj=page_obj %}
+  {% endif %}
+
+{% endif %}
+{% endblock %}

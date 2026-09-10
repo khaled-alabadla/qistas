@@ -84,6 +84,8 @@ class AuditAction(models.TextChoices):
     EXPENSE_CREATED = "expense.created", _("إنشاء مصروف")
     EXPENSE_UPDATED = "expense.updated", _("تعديل مصروف")
     EXPENSE_RETIRED = "expense.retired", _("سحب مصروف")
+
+    REPORT_EXPORTED = "report.exported", _("تصدير تقرير")
     OTHER = "other", _("أخرى")
 
 

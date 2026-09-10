@@ -1,0 +1,36 @@
+{% load i18n qistas %}{% comment %}
+  param: result — reports.framework.ReportResult
+  Renders the summary metrics chips and the per-currency total blocks.
+  Currencies are shown side by side and never added together (ADR-0032).
+{% endcomment %}
+{% if result.metrics %}
+  <div class="mb-4 flex flex-wrap gap-2">
+    {% for m in result.metrics %}
+      <div class="rounded-lg border px-3 py-2 text-sm
+        {% if m.tone == 'danger' %}border-danger/30 bg-danger/5{% else %}border-line bg-white{% endif %}">
+        <span class="text-slate/60">{{ m.label }}:</span>
+        <span class="font-semibold {% if m.tone == 'danger' %}text-danger{% else %}text-ink{% endif %}">
+          {% num m.value %}
+        </span>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% if result.currency_totals %}
+  <div class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    {% for block in result.currency_totals %}
+      <div class="rounded-xl border border-line bg-white p-4">
+        <p class="mb-2 text-xs font-semibold text-slate/50"><bdi dir="ltr">{{ block.currency }}</bdi></p>
+        <dl class="space-y-1 text-sm">
+          {% for label, amount in block.items %}
+            <div class="flex justify-between gap-3 {% if forloop.first %}font-semibold text-ink{% else %}text-slate/70{% endif %}">
+              <dt>{{ label }}</dt>
+              <dd><bdi dir="ltr">{{ amount|floatformat:2 }}&nbsp;{{ block.currency }}</bdi></dd>
+            </div>
+          {% endfor %}
+        </dl>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
