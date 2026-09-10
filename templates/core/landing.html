@@ -95,6 +95,28 @@
       {% endif %}
     </section>
     {% endif %}
+
+    {% if show_finance_widget %}
+    {# المبالغ المستحقة #}
+    <section class="rounded-xl border border-line bg-white p-5">
+      <div class="mb-3 flex items-center justify-between">
+        <h2 class="text-base font-semibold text-ink">{% translate "المبالغ المستحقة" %} <span class="text-slate/60">({% num outstanding_invoices_count %})</span></h2>
+        <a href="{% url 'finance:invoice_list' %}" class="text-xs text-navy hover:underline">{% translate "الكل" %}</a>
+      </div>
+      {% if outstanding_invoices %}
+        <ul class="space-y-2 text-sm">
+          {% for inv in outstanding_invoices %}
+            <li class="flex items-center justify-between gap-2 border-b border-line pb-2 last:border-0">
+              <a class="truncate text-navy hover:underline" href="{% url 'finance:invoice_detail' inv.pk %}">{{ inv }} — {{ inv.client.display_name }}</a>
+              <span class="shrink-0 text-xs {% if inv.is_overdue %}text-danger font-medium{% else %}text-slate/60{% endif %}">{% include "finance/_money.html" with amount=inv.outstanding currency=inv.currency %}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-sm text-slate/50">{% translate "لا فواتير مستحقة." %}</p>
+      {% endif %}
+    </section>
+    {% endif %}
   </div>
 
   <p class="mt-6 text-xs text-slate/50">

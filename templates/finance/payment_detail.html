@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{{ payment.reference }} · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+{% translate "النظام" as sys_actor %}
+<nav class="mb-4 text-xs text-slate/70">
+  <a href="{% url 'finance:payment_list' %}" class="hover:text-navy">{% translate "المدفوعات" %}</a>
+  <span aria-hidden="true"> ‹ </span>
+  <span class="font-medium text-ink">{% num payment.reference %}</span>
+</nav>
+
+<div class="mb-6 flex flex-wrap items-center gap-2">
+  <h1 class="text-xl font-semibold text-ink">{% num payment.reference %}</h1>
+  {% if payment.reversed_amount > 0 %}{% translate "مُسترجَع جزئيًا أو كليًا" as lbl_rev %}{% badge lbl_rev "warning" %}{% endif %}
+</div>
+
+<div class="grid gap-6 lg:grid-cols-3">
+  <section class="lg:col-span-2 rounded-xl border border-line bg-white p-5">
+    <dl class="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+      <div><dt class="text-slate/60">{% translate "الفاتورة" %}</dt><dd><a class="text-navy hover:underline" href="{% url 'finance:invoice_detail' payment.invoice_id %}">{{ payment.invoice }}</a></dd></div>
+      <div><dt class="text-slate/60">{% translate "الموكل" %}</dt><dd><a class="text-navy hover:underline" href="{% url 'clients:detail' payment.invoice.client_id %}">{{ payment.invoice.client.display_name }}</a></dd></div>
+      <div><dt class="text-slate/60">{% translate "المبلغ" %}</dt><dd>{% include "finance/_money.html" with amount=payment.amount currency=payment.invoice.currency %}</dd></div>
+      <div><dt class="text-slate/60">{% translate "الصافي بعد الاسترجاع" %}</dt><dd>{% include "finance/_money.html" with amount=payment.net_amount currency=payment.invoice.currency %}</dd></div>
+      <div><dt class="text-slate/60">{% translate "تاريخ الدفع" %}</dt><dd>{% datestr payment.paid_on %}</dd></div>
+      <div><dt class="text-slate/60">{% translate "الطريقة" %}</dt><dd>{{ payment.get_method_display }}</dd></div>
+      {% if payment.external_reference %}<div><dt class="text-slate/60">{% translate "مرجع خارجي" %}</dt><dd><bdi dir="ltr">{{ payment.external_reference }}</bdi></dd></div>{% endif %}
+    </dl>
+    {% if payment.note %}<div class="mt-4"><dt class="text-slate/60 text-sm">{% translate "ملاحظات" %}</dt><dd class="mt-1 whitespace-pre-line text-sm text-ink">{{ payment.note }}</dd></div>{% endif %}
+
+    {% if reversals %}
+    <div class="mt-5">
+      <h3 class="mb-2 text-sm font-semibold text-ink">{% translate "الاسترجاعات" %}</h3>
+      <ul class="space-y-2 text-sm">
+        {% for r in reversals %}
+          <li class="rounded-lg border border-line px-3 py-2">
+            <div class="flex items-center justify-between gap-2">
+              <span>{% include "finance/_money.html" with amount=r.amount currency=payment.invoice.currency %}</span>
+              <span class="text-slate/60">{% datestr r.reversed_on %}</span>
+            </div>
+            <p class="mt-1 whitespace-pre-line text-xs text-slate/70">{{ r.reason }}</p>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </section>
+
+  <aside class="space-y-4">
+    {% if can_manage and payment.net_amount > 0 %}
+    <div class="rounded-xl border border-line bg-white p-5">
+      <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "استرجاع الدفعة" %}</h3>
+      <form method="post" action="{% url 'finance:payment_reverse' payment.pk %}" class="space-y-2">
+        {% csrf_token %}
+        {% include "components/_form_field.html" with field=reversal_form.amount %}
+        {% include "components/_form_field.html" with field=reversal_form.reversed_on %}
+        {% include "components/_form_field.html" with field=reversal_form.reason %}
+        <button class="btn btn-danger w-full">{% translate "تسجيل استرجاع" %}</button>
+      </form>
+    </div>
+    {% endif %}
+    <p class="text-xs text-slate/50">
+      {% translate "سجّلها" %}: {% if payment.created_by %}{{ payment.created_by.get_full_name|default:payment.created_by.email }}{% else %}{{ sys_actor }}{% endif %} ·
+      {% datestr payment.created_at "SHORT_DATETIME_FORMAT" %}
+    </p>
+    <p class="text-xs text-slate/40">{% translate "الدفعة سجل ثابت — تُصحَّح بالاسترجاع، ولا تُحذف." %}</p>
+  </aside>
+</div>
+{% endblock %}

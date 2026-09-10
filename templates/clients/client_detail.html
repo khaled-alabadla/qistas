@@ -122,18 +122,57 @@
       {% endif %}
     </div>
     {% endif %}
+
+    {% if can_finance %}
+    <div class="rounded-xl border border-line bg-white p-5">
+      <div class="mb-3 flex items-center justify-between">
+        <h3 class="text-base font-semibold text-ink">{% translate "الفواتير" %}</h3>
+        <span class="flex items-center gap-3 text-xs">
+          {% if can_finance_manage %}<a href="{% url 'finance:invoice_create' %}?client={{ client.pk }}" class="text-navy hover:underline">{% translate "فاتورة جديدة" %}</a>{% endif %}
+          <a href="{% url 'finance:invoice_list' %}?client={{ client.pk }}" class="text-navy hover:underline">{% translate "عرض الكل" %}</a>
+        </span>
+      </div>
+      {% if client_invoices %}
+        <ul class="divide-y divide-line text-sm">
+          {% for inv in client_invoices %}
+            <li class="flex items-center justify-between gap-2 py-2">
+              <a class="truncate text-navy hover:underline" href="{% url 'finance:invoice_detail' inv.pk %}">{{ inv }}</a>
+              <span class="flex shrink-0 items-center gap-2">{% include "finance/_money.html" with amount=inv.outstanding currency=inv.currency %}{% include "finance/_invoice_badge.html" with inv=inv %}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-sm text-slate/50">{% translate "لا فواتير لهذا الموكل." %}</p>
+      {% endif %}
+    </div>
+
+    {% if client_payments %}
+    <div class="rounded-xl border border-line bg-white p-5">
+      <div class="mb-3 flex items-center justify-between">
+        <h3 class="text-base font-semibold text-ink">{% translate "المدفوعات" %}</h3>
+        <a href="{% url 'finance:payment_list' %}?client={{ client.pk }}" class="text-xs text-navy hover:underline">{% translate "عرض الكل" %}</a>
+      </div>
+      <ul class="divide-y divide-line text-sm">
+        {% for p in client_payments %}
+          <li class="flex items-center justify-between gap-2 py-2">
+            <a class="truncate text-navy hover:underline" href="{% url 'finance:payment_detail' p.pk %}">{% num p.reference %}</a>
+            <span class="shrink-0 text-slate/60">{% datestr p.paid_on %} · {% include "finance/_money.html" with amount=p.net_amount %}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+    {% endif %}
   </section>
 
   <aside class="space-y-6">
+    {% if can_finance %}
     <div class="rounded-xl border border-line bg-white p-5">
       <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "ملخص مالي" %}</h3>
-      <dl class="space-y-2 text-sm">
-        <div class="flex justify-between"><dt class="text-slate/60">{% translate "إجمالي الفواتير" %}</dt><dd>{% num finance_summary.invoiced 2 %}</dd></div>
-        <div class="flex justify-between"><dt class="text-slate/60">{% translate "المدفوع" %}</dt><dd>{% num finance_summary.paid 2 %}</dd></div>
-        <div class="flex justify-between"><dt class="text-slate/60">{% translate "المتبقي" %}</dt><dd>{% num finance_summary.outstanding 2 %}</dd></div>
-      </dl>
-      <p class="mt-2 text-xs text-slate/40">{% translate "تتوفر الأرقام المالية بعد إضافة وحدة المالية." %}</p>
+      {% include "finance/_summary.html" with summary=finance_summary %}
+      <p class="mt-2 text-xs text-slate/40">{% translate "تُحتسب من الفواتير الصادرة فقط، بعد خصم الإشعارات الدائنة." %}</p>
     </div>
+    {% endif %}
 
     <div class="rounded-xl border border-line bg-white p-5">
       <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "النشاط" %}</h3>

@@ -4,10 +4,10 @@
 > `COMPLETED ≠ APPROVED` — a phase starts only after the user says
 > **APPROVE PHASE N** / **ابدأ المرحلة N**.
 
-Current Phase: **7 — Contracts** (Phases 1–6 approved + merged to master)
+Current Phase: **8 — Finance** (Phases 1–7 approved + merged to master)
 
 Planning artifacts: `QISTAS_PHASE_0_ANALYSIS.md` · `QISTAS_GRILL_REVIEW.md` ·
-`docs/architecture.md` · `docs/adr/0001`–`0031` · `docs/PHASE_1_PLAN.md`
+`docs/architecture.md` · `docs/adr/0001`–`0032` · `docs/PHASE_1_PLAN.md`
 
 ---
 
@@ -300,8 +300,8 @@ Branch: `phase/6-documents` — one commit `phase(6): complete documents`,
 pushed, **not merged**.
 
 ## Phase 7 — Contracts
-Status: **COMPLETE (technical)** — see `docs/PHASE_7_REPORT.md`
-Approval: **PENDING**
+Status: **APPROVED + merged to `master`** (PR #6, merge commit `7908beb`) — see `docs/PHASE_7_REPORT.md`
+Approval: **APPROVED** ("APPROVE PHASE 7")
 Design: `docs/adr/0031-contracts.md`
 
 `contracts` app: **`Contract`** — `contract_number` `CT-YYYY-NNNN` (transaction-safe,
@@ -404,8 +404,85 @@ Branch: `phase/7-contracts` — one commit `phase(7): complete contracts`,
 pushed, **not merged**. Parent: `46dc56e` (Phase 6 merge, PR #5).
 
 ## Phase 8 — Finance
-Status: NOT STARTED
-Approval: N/A
+Status: **COMPLETE (technical)** — see `docs/PHASE_8_REPORT.md`
+Approval: **PENDING**
+Design: `docs/adr/0032-finance.md` (building on ADR-0011, 0012, 0013)
+
+`finance` app — 6 models, `Decimal` end to end (`core.money.quantize`, 2dp
+ROUND_HALF_UP), all arithmetic server-side, no hard delete of any row.
+
+- **`FeeAgreement`** ("رسوم القضايا" = agreed legal fee, NOT an expense — ADR-0013):
+  `FA-YYYY-NNNN`, FK `case` PROTECT, `fee_type` (fixed / hourly / contingency /
+  retainer) with the matching money field validated, guarded status
+  (draft→active→completed/cancelled).
+- **`Invoice`** + **`InvoiceLineItem`**: `INV-YYYY-NNNN` **assigned at issue**
+  (ADR-0011, gaps OK), FK client PROTECT / case+fee_agreement SET_NULL. `discount`
+  + `tax_rate` inputs; `subtotal` / `tax_amount` / `total` are **server-computed
+  snapshots, frozen at issue** (ADR-0012) — `recalculate_invoice` is the sole
+  writer while draft, no code path mutates an issued invoice. `amount_paid`
+  maintained only by the service under a row lock. Line items CASCADE (aggregate
+  child), added/removed only while draft via `CaseParty`-style action views.
+  `is_overdue` **computed, never stored** (ADR-0006). Draft → cancel directly;
+  issued → corrected only by a credit note.
+- **`Payment`** (immutable, `add/view` only): `PMT-YYYY-NNNN`, FK invoice PROTECT.
+  **Overpayment guard (§40):** `record_payment` holds `select_for_update` on the
+  invoice row across the outstanding-balance read + `amount_paid` write;
+  `amount > outstanding` → `ValidationError`; `amount_paid <= total`
+  `CheckConstraint` backstop. **`PaymentReversal`** for voids (Σ ≤ payment).
+- **`CreditNote`** (`add/view` only): `CN-YYYY-NNNN`, against an issued invoice
+  (Σ ≤ total); a full-value note flips the invoice to `cancelled`.
+- **`Expense`** (money out, standalone — never in an invoice/fee total):
+  `EXP-YYYY-NNNN`, category, `spent_on`, FK case+client SET_NULL, **soft-delete**.
+
+Capabilities: **`finance.view`** (office_manager / finance_clerk / lawyer /
+admin_clerk — **paralegal has NO finance access**, §12/§98 — the first
+non-all-staff domain) / **`finance.manage`** (office_manager + finance_clerk
+only). `sync_roles` extended — **no `delete` codename anywhere in finance**.
+13 `*_*` `AuditAction` (metadata only, ADR-0009); 4 `CaseEventType` (`cases/0008`).
+`finance/0002` trigram GIN.
+
+Integration: `المالية` nav section live · `core:landing` "المبالغ المستحقة"
+widget · case workspace real **المالية** tab · client profile real ملخص مالي +
+invoice/payment cards · `agenda.calendar_events` merges invoice due dates
+(re-checks `finance.view` since the agenda is all-staff) · `core.money.py` shared ·
+`Invoice.objects.with_balances()` annotation kills the outstanding-balance N+1 ·
+`seed_demo_finance`.
+
+**Verification:**
+- Tests: **529 pass / 0 fail / 4 skipped** (`@pytest.mark.postgres`) on SQLite —
+  **+90 finance tests** (models / fee agreements / invoices / payments / expenses
+  / permissions / smoke): server-side totals, forged-total/number/status rejection,
+  issued immutability, credit-note full/partial, **overpayment rejected +
+  `@postgres` concurrent-overpayment** + SQLite sequential guard, reversal, IDOR /
+  URL-tampering / mass-assignment, capability matrix (paralegal = no access),
+  agenda-calendar finance-leak guard, invoice-list flat-query-count N+1 guard,
+  `TRGM==SEARCH_FIELDS`.
+- `ruff` / `ruff format --check` / `pip-audit` (no vulns) / `makemigrations
+  --check` / `manage.py check` — all clean.
+- `manage.py check --deploy`: 5 warnings, **test-settings only** (`prod.py` sets
+  HSTS / SSL redirect / secure cookies / env `SECRET_KEY`).
+- Self **security review — PASS** (no Critical/High); self **performance / N+1
+  review — PASS**.
+
+**DEFERRED / UNVERIFIED — same Docker/PostgreSQL blocker as Phases 1–7:**
+1. Full suite on **PostgreSQL 16** (SQLite only).
+2. Trigram migrations on real PG (incl. `finance/0002`) — guarded, PG-only.
+3. The 4 `@pytest.mark.postgres` tests — incl.
+   `test_concurrent_payments_cannot_overpay` (the one that actually exercises
+   `select_for_update`; a sequential guard test covers SQLite).
+4. `docker compose` full-stack smoke.
+5. `compilemessages` (Docker-only; harmless).
+6. `check --deploy` against **prod settings** (needs `DJANGO_SECRET_KEY` + PG).
+
+**Known limitations:** overdue is a computed flag not a stored `متأخرة` status
+(ADR-0006 — flips back on payment); a discount set before line items is stored
+as-entered (`total` never goes negative; `issue_invoice` rejects `discount >
+subtotal`); no optimistic-locking token on draft edits (design intent, deferred).
+Reports = Phase 10, dashboard = Phase 9, notifications = Phase 11 — **no Phase 9+
+functionality introduced** (verified).
+
+Branch: `phase/8-finance` — one commit `phase(8): complete finance`, pushed,
+**not merged**. Parent: `7908beb` (Phase 7 merge, PR #6).
 
 ## Phase 9 — Dashboard + Analytics
 Status: NOT STARTED

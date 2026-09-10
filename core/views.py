@@ -40,6 +40,14 @@ class LandingView(TemplateView):
             ctx["expiring_contracts"] = list(expiring[:8])
             ctx["expiring_contracts_count"] = expiring.count()
             ctx["has_widgets"] = True
+        ctx["show_finance_widget"] = can(user, Capability.FINANCE_VIEW)
+        if ctx["show_finance_widget"]:
+            from finance.selectors import outstanding_invoices
+
+            outstanding = outstanding_invoices(user)
+            ctx["outstanding_invoices"] = list(outstanding[:8])
+            ctx["outstanding_invoices_count"] = outstanding.count()
+            ctx["has_widgets"] = True
         return ctx
 
 

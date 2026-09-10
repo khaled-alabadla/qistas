@@ -52,7 +52,7 @@ qistas/
 
 ### App roadmap (informational — not built until each phase is approved)
 
-`core` `accounts` `audit` (P1 ✓) · `clients` (P2 ✓) · `cases` +parties+notes+timeline + `courts` (minimal) (P3 ✓) · `courts` (full) `hearings` `agenda` (P4 ✓) · `tasks` +deadlines (P5 ✓) · `documents` (P6 ✓) · `contracts` (P7 ✓) · `finance` (P8) · `dashboard` (P9) · `reports` (P10) · `notifications` (P11) · security/audit hardening (P12) · quality/perf/UX hardening (P13) · production readiness (P14).
+`core` `accounts` `audit` (P1 ✓) · `clients` (P2 ✓) · `cases` +parties+notes+timeline + `courts` (minimal) (P3 ✓) · `courts` (full) `hearings` `agenda` (P4 ✓) · `tasks` +deadlines (P5 ✓) · `documents` (P6 ✓) · `contracts` (P7 ✓) · `finance` (P8 ✓) · `dashboard` (P9) · `reports` (P10) · `notifications` (P11) · security/audit hardening (P12) · quality/perf/UX hardening (P13) · production readiness (P14).
 
 ### Clients (P2) — implemented notes
 
@@ -149,13 +149,18 @@ Four enforced layers; the UI is **never** a security boundary (spec §15).
 
 **Seam for the future:** a thin `core/tasks.py` module of plain callables. Each management command is a one-line wrapper around a callable. Introducing `django-q2` or Celery later means changing the wrappers, not the callers. Phase 1 creates the empty `core/tasks.py` and documents the pattern; it schedules nothing (Phase 1 has no time-based feature).
 
-## 13. Money & finance — design intent (built in Phase 8)
+## 13. Money & finance — ADR-0032 (built in Phase 8)
 
-- `Decimal(14,2)`, `currency` field, `ROUND_HALF_UP` (round final tax + total only).
-- **Issued invoices are immutable (ADR-0012).** Once an invoice leaves `draft`, its line items and monetary fields are frozen. Corrections use a **credit-note / correction** mechanism — the full workflow is a Finance-phase deliverable, not Phase 1.
-- Payments immutable; `PaymentReversal` for voids/corrections (Finance phase).
-- `select_for_update` on the invoice row for payment writes; overpayment rejected (spec §40). Optimistic-locking token on financial (and case) edit forms.
-- **`FeeAgreement` (ADR-0013):** "رسوم القضايا" is an agreed legal fee with the client (fixed / hourly / contingency / retainer), attached to a case. **Not** an `Expense`. Structure finalized in the Finance phase.
+- `core.money`: `Currency` `TextChoices` (ILS / JOD / USD / EUR) + `quantize` = the **one** rounding rule (`Decimal("0.01")`, `ROUND_HALF_UP`). Every stored monetary result (line totals, subtotal, tax, total) goes through it. `Decimal` end to end — **never** `float`. All arithmetic lives in `finance.services`, never a form field.
+- **`finance` app — 6 models:** `FeeAgreement` · `Invoice` + `InvoiceLineItem` · `Payment` + `PaymentReversal` · `CreditNote` · `Expense`. Standard layering (models / selectors / services / thin views / forms). **No finance row is ever hard-deleted** — every model's `default_permissions` omits `delete`; `Payment` / `PaymentReversal` / `CreditNote` omit `change` too.
+- **`FeeAgreement` (ADR-0013):** "رسوم القضايا" — the agreed legal fee (fixed / hourly / contingency / retainer), FK `case` PROTECT, guarded status (draft→active→completed/cancelled). **Not** an `Expense`; it records the contracted value, invoices do the billing (`Invoice.fee_agreement` optional FK).
+- **`Invoice` — stored totals, frozen at issue (ADR-0011, 0012):** `invoice_number` `INV-YYYY-NNNN` **allocated at issue** (`NumberSequence`, gaps acceptable), nullable on drafts. `subtotal` / `tax_amount` / `total` are **server-computed snapshots** — `finance.services.recalculate_invoice` is the sole writer while the invoice is a `draft`, and **no code path mutates a line item or a monetary field of an issued invoice** (`_require_draft` guards every mutator; the edit view bounces an issued invoice; admin freezes issued fields). `amount_paid` is maintained only by the payment service under a row lock. A **draft** cancels directly; an **issued** invoice is corrected only by a `CreditNote` (full value ⇒ `cancelled`).
+- **`متأخرة` / overdue is COMPUTED, not stored (ADR-0006):** `Invoice.is_overdue` = `status in {unpaid, partially_paid}` and `due_date < today`. It flips back the instant the invoice is paid and depends on the current date, so it is a property + `.overdue()` filter — **no cron, no stored status** (unlike a contract's `expired`, which is a genuine lifecycle end).
+- **Overpayment guard (§40):** `finance.services.record_payment` opens `transaction.atomic`, takes `Invoice.objects.select_for_update()` on the invoice row, reads `credited_total − amount_paid` **and** writes `amount_paid = F("amount_paid") + amount` under that lock; `amount > outstanding` ⇒ `ValidationError`. DB `CheckConstraint amount_paid ≤ total` is the backstop. `issue_credit_note` / `reverse_payment` take the same lock, so they serialize with payments. Payments / reversals / credit notes are append-only (`PaymentReversal` voids a payment, `CreditNote` corrects an issued invoice).
+- **`Expense` (ADR-0013):** money out — `EXP-YYYY-NNNN`, category, FK case+client SET_NULL, **soft-delete** (retained + audited). **Never added to an invoice `total` or a fee agreement** — reporting keeps money-in and money-out separate.
+- **`Invoice.objects.with_balances()`** annotates `_credited_sum` so `outstanding` / `credited_total` need no per-row query — used on every list / card / calendar queryset.
+- **Permissions:** finance is the **first domain that is NOT all-staff** (spec §98 "permission-controlled"). `finance.view` = office_manager / finance_clerk / lawyer / admin_clerk; `finance.manage` = office_manager + finance_clerk only; **paralegal has zero finance access**. Any all-staff aggregator that could surface finance data re-checks `finance.view` (`finance.selectors.calendar_items`; the case-workspace finance tab, client-profile finance cards and `case_/client_financials` are gated on `can_finance` in the view).
+- Optimistic-locking tokens on draft-invoice edits (earlier "design intent") are **not** built — issued-invoice immutability + the payment row lock cover the real concurrency risks; a draft is single-clerk work. Recorded in ADR-0032 as a possible future change.
 
 ## 14. Testing strategy — ADR-0025
 

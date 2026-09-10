@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% if is_create %}{% translate "فاتورة جديدة" %}{% else %}{% translate "تعديل الفاتورة" %}{% endif %} · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl">
+  <nav class="mb-4 text-xs text-slate/70">
+    <a href="{% url 'finance:invoice_list' %}" class="hover:text-navy">{% translate "الفواتير" %}</a>
+    <span aria-hidden="true"> ‹ </span>
+    <span class="font-medium text-ink">{% if is_create %}{% translate "مسودة جديدة" %}{% else %}{{ invoice }}{% endif %}</span>
+  </nav>
+
+  <h1 class="mb-1 text-xl font-semibold text-ink">{% if is_create %}{% translate "فاتورة جديدة" %}{% else %}{% translate "تعديل الفاتورة" %}{% endif %}</h1>
+  <p class="mb-4 text-sm text-slate/60">{% translate "تُنشأ الفاتورة كمسودة؛ تُضاف البنود ثم تُصدر. لا يُعدَّل محتواها بعد الإصدار." %}</p>
+
+  {% if form.non_field_errors %}
+    <div class="mb-4">{% for e in form.non_field_errors %}{% include "components/alert.html" with tone="error" text=e %}{% endfor %}</div>
+  {% endif %}
+
+  <form method="post" novalidate class="space-y-4 rounded-xl border border-line bg-white p-6">
+    {% csrf_token %}
+    <div class="grid gap-4 sm:grid-cols-2">
+      {% include "components/_form_field.html" with field=form.client %}
+      {% include "components/_form_field.html" with field=form.case %}
+    </div>
+    {% include "components/_form_field.html" with field=form.fee_agreement %}
+    <div class="grid gap-4 sm:grid-cols-3">
+      {% include "components/_form_field.html" with field=form.due_date %}
+      {% include "components/_form_field.html" with field=form.currency %}
+    </div>
+    <div class="grid gap-4 sm:grid-cols-2">
+      {% include "components/_form_field.html" with field=form.discount %}
+      {% include "components/_form_field.html" with field=form.tax_rate %}
+    </div>
+    {% include "components/_form_field.html" with field=form.notes %}
+    <div class="flex gap-2">
+      <button type="submit" class="btn btn-primary">{% translate "حفظ" %}</button>
+      <a href="{% if invoice %}{% url 'finance:invoice_detail' invoice.pk %}{% else %}{% url 'finance:invoice_list' %}{% endif %}" class="btn btn-ghost">{% translate "إلغاء" %}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

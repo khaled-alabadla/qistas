@@ -80,25 +80,31 @@ class ClientDetailView(CapabilityRequiredMixin, LoginRequiredMixin, DetailView):
         from documents.selectors import client_documents
 
         user = self.request.user
+        client = self.object
         ctx["can_manage"] = can(user, Capability.CLIENTS_MANAGE)
         ctx["can_view_sensitive"] = can(user, Capability.CLIENTS_VIEW_SENSITIVE)
         ctx["can_documents"] = can(user, Capability.DOCUMENTS_VIEW)
         ctx["can_documents_manage"] = can(user, Capability.DOCUMENTS_MANAGE)
-        ctx["client_documents"] = client_documents(self.object)[:8]
+        ctx["client_documents"] = client_documents(client)[:8]
         ctx["can_contracts"] = can(user, Capability.CONTRACTS_VIEW)
         ctx["can_contracts_manage"] = can(user, Capability.CONTRACTS_MANAGE)
-        ctx["client_contracts"] = client_contracts(self.object)[:8]
+        ctx["client_contracts"] = client_contracts(client)[:8]
         ctx["activity"] = AuditLog.objects.filter(
-            entity_type="clients.client", entity_id=str(self.object.pk)
+            entity_type="clients.client", entity_id=str(client.pk)
         ).select_related("actor")[:20]
-        # Financial summary placeholder — real figures arrive with Finance (Phase 8).
-        ctx["finance_summary"] = {"invoiced": 0, "paid": 0, "outstanding": 0}
+
+        # Financial summary (§21) — real figures, but only for finance viewers.
+        ctx["can_finance"] = can(user, Capability.FINANCE_VIEW)
+        ctx["can_finance_manage"] = can(user, Capability.FINANCE_MANAGE)
+        if ctx["can_finance"]:
+            from finance.selectors import client_financials, client_invoices, client_payments
+
+            ctx["finance_summary"] = client_financials(client)
+            ctx["client_invoices"] = client_invoices(client)[:6]
+            ctx["client_payments"] = client_payments(client)[:6]
+
         # Profile tabs whose modules do not exist yet (spec §21).
-        ctx["disabled_tabs"] = [
-            _("القضايا"),
-            _("الفواتير"),
-            _("المدفوعات"),
-        ]
+        ctx["disabled_tabs"] = [_("القضايا")]
         return ctx
 
 

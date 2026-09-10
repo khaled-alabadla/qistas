@@ -37,6 +37,13 @@ from core.permissions.decorators import require_capability
 from core.permissions.mixins import CapabilityRequiredMixin
 from core.querysets import assert_scoped
 from documents.selectors import case_documents
+from finance.selectors import (
+    case_expenses,
+    case_fee_agreements,
+    case_financials,
+    case_invoices,
+    case_payments,
+)
 from hearings.selectors import case_hearings
 from tasks.selectors import case_deadlines, case_tasks
 
@@ -51,15 +58,13 @@ TAB_LINKS = (
     ("tasks", _("المهام")),
     ("documents", _("المستندات")),
     ("contracts", _("العقود")),
+    ("finance", _("المالية")),
     ("notes", _("الملاحظات")),
     ("correspondence", _("المراسلات")),
     ("timeline", _("الخط الزمني")),
 )
 REAL_TABS = tuple(key for key, _label in TAB_LINKS)
-DISABLED_TABS = (
-    _("الفواتير"),
-    _("المدفوعات"),
-)
+DISABLED_TABS: tuple[str, ...] = ()  # every case tab is built now
 
 
 def _get_case(user, pk) -> Case:
@@ -147,6 +152,8 @@ class CaseDetailView(CapabilityRequiredMixin, LoginRequiredMixin, DetailView):
                 "can_documents_manage": can(user, Capability.DOCUMENTS_MANAGE),
                 "can_contracts": can(user, Capability.CONTRACTS_VIEW),
                 "can_contracts_manage": can(user, Capability.CONTRACTS_MANAGE),
+                "can_finance": can(user, Capability.FINANCE_VIEW),
+                "can_finance_manage": can(user, Capability.FINANCE_MANAGE),
                 "parties": case_parties(case, lawyer_links=lawyer_links),
                 "lawyer_links": lawyer_links,
                 "notes": [n for n in notes if n.kind == NoteKind.GENERAL],
@@ -166,6 +173,12 @@ class CaseDetailView(CapabilityRequiredMixin, LoginRequiredMixin, DetailView):
         )
         if can_confidential:
             ctx["confidential"] = case.confidential_or_none()
+        if ctx["can_finance"] and tab == "finance":
+            ctx["case_fee_agreements"] = case_fee_agreements(case)
+            ctx["case_invoices"] = case_invoices(case)
+            ctx["case_payments"] = case_payments(case)
+            ctx["case_expenses"] = case_expenses(case)
+            ctx["case_financials"] = case_financials(case)
         return ctx
 
 

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{% translate "الفواتير" %} · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <h1 class="text-xl font-semibold text-ink">{% translate "الفواتير" %}</h1>
+    <p class="text-sm text-slate/70">
+      {% blocktranslate count n=total_count %}فاتورة واحدة{% plural %}{{ n }} فواتير{% endblocktranslate %}
+    </p>
+  </div>
+  <div class="flex gap-2">
+    <a href="{% url 'finance:payment_list' %}" class="btn btn-ghost">{% translate "المدفوعات" %}</a>
+    {% if can_manage %}
+      <a href="{% url 'finance:invoice_create' %}" class="btn btn-primary">{% translate "فاتورة جديدة" %}</a>
+    {% endif %}
+  </div>
+</div>
+
+<form method="get" class="mb-4 grid gap-3 rounded-xl border border-line bg-white p-4 sm:grid-cols-4">
+  <div class="sm:col-span-2">{% include "components/_form_field.html" with field=filter_form.q %}</div>
+  <div>{% include "components/_form_field.html" with field=filter_form.status %}</div>
+  <div class="flex items-center gap-2 pt-6">{{ filter_form.overdue }}<label for="{{ filter_form.overdue.id_for_label }}" class="text-sm text-ink">{{ filter_form.overdue.label }}</label></div>
+  <div class="sm:col-span-4 flex gap-2">
+    <button type="submit" class="btn btn-primary">{% translate "تطبيق" %}</button>
+    <a href="{% url 'finance:invoice_list' %}" class="btn btn-ghost">{% translate "مسح" %}</a>
+  </div>
+</form>
+
+{% if invoices %}
+<div class="overflow-x-auto rounded-lg border border-line">
+  <table class="w-full text-start text-sm">
+    <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+      <tr>
+        <th class="px-3 py-2 text-start font-medium">{% translate "الرقم" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "الموكل" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "الإجمالي" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "المتبقي" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "الاستحقاق" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "الحالة" %}</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-line">
+      {% for inv in invoices %}
+        <tr class="hover:bg-mist/50">
+          <td class="px-3 py-2"><a class="font-medium text-navy hover:underline" href="{% url 'finance:invoice_detail' inv.pk %}">{{ inv }}</a></td>
+          <td class="px-3 py-2"><a class="text-navy hover:underline" href="{% url 'clients:detail' inv.client_id %}">{{ inv.client.display_name }}</a></td>
+          <td class="px-3 py-2">{% include "finance/_money.html" with amount=inv.total currency=inv.currency %}</td>
+          <td class="px-3 py-2">{% include "finance/_money.html" with amount=inv.outstanding currency=inv.currency %}</td>
+          <td class="px-3 py-2 whitespace-nowrap {% if inv.is_overdue %}text-danger font-medium{% endif %}">{% if inv.due_date %}{% datestr inv.due_date %}{% else %}—{% endif %}</td>
+          <td class="px-3 py-2">{% include "finance/_invoice_badge.html" with inv=inv %}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "components/pagination.html" with page_obj=page_obj querystring=querystring %}
+{% else %}
+  {% translate "لا توجد فواتير مطابقة" as es_title %}
+  {% translate "أنشئ فاتورة أو عدّل معايير البحث." as es_msg %}
+  {% if can_manage %}
+    {% url 'finance:invoice_create' as create_url %}{% translate "فاتورة جديدة" as create_label %}
+    {% empty_state es_title es_msg action_url=create_url action_label=create_label %}
+  {% else %}{% empty_state es_title es_msg %}{% endif %}
+{% endif %}
+{% endblock %}

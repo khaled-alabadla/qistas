@@ -58,6 +58,9 @@ class Capability(TextChoices):
     # Phase 7 — Contracts
     CONTRACTS_VIEW = "contracts.view", _("عرض العقود")
     CONTRACTS_MANAGE = "contracts.manage", _("إضافة وتعديل العقود")
+    # Phase 8 — Finance
+    FINANCE_VIEW = "finance.view", _("عرض السجلات المالية")
+    FINANCE_MANAGE = "finance.manage", _("إدارة الفواتير والمدفوعات والمصروفات واتفاقيات الأتعاب")
 
 
 # group -> capabilities it grants. Fixed in code for v1 (docs/adr/0007);
@@ -95,6 +98,14 @@ _DOCUMENT_HANDLERS = {Capability.DOCUMENTS_MANAGE}
 # paralegal is view-only here, finance_clerk keeps contracts.view (billing
 # context) but cannot manage (docs/adr/0031).
 _CONTRACT_HANDLERS = {Capability.CONTRACTS_MANAGE}
+# Finance is NOT all-staff — it is permission-controlled (spec §98). `finance.view`
+# reaches the office manager, the finance clerk, and the lawyers / admin clerks who
+# need billing context for their matters; **paralegal has no finance access** (§12
+# — "limited access to assigned work"). `finance.manage` (fee agreements, invoice
+# draft/issue/cancel, payments, reversals, credit notes, expenses) is the finance
+# clerk + office manager only (docs/adr/0032).
+_FINANCE_VIEWERS = {Capability.FINANCE_VIEW}
+_FINANCE_HANDLERS = {Capability.FINANCE_VIEW, Capability.FINANCE_MANAGE}
 
 GROUP_CAPABILITIES: dict[str, set[str]] = {
     Group.OFFICE_MANAGER: {
@@ -120,6 +131,8 @@ GROUP_CAPABILITIES: dict[str, set[str]] = {
         Capability.DOCUMENTS_MANAGE,
         Capability.CONTRACTS_VIEW,
         Capability.CONTRACTS_MANAGE,
+        Capability.FINANCE_VIEW,
+        Capability.FINANCE_MANAGE,
     },
     Group.LAWYER: _ALL_STAFF
     | _CLIENT_HANDLERS
@@ -128,7 +141,8 @@ GROUP_CAPABILITIES: dict[str, set[str]] = {
     | _HEARING_HANDLERS
     | _TASK_HANDLERS
     | _DOCUMENT_HANDLERS
-    | _CONTRACT_HANDLERS,
+    | _CONTRACT_HANDLERS
+    | _FINANCE_VIEWERS,
     Group.PARALEGAL: _ALL_STAFF
     | _CASE_HANDLERS
     | _HEARING_HANDLERS
@@ -140,8 +154,9 @@ GROUP_CAPABILITIES: dict[str, set[str]] = {
     | _HEARING_HANDLERS
     | _TASK_HANDLERS
     | _DOCUMENT_HANDLERS
-    | _CONTRACT_HANDLERS,
-    Group.FINANCE_CLERK: set(_ALL_STAFF),
+    | _CONTRACT_HANDLERS
+    | _FINANCE_VIEWERS,
+    Group.FINANCE_CLERK: set(_ALL_STAFF) | _FINANCE_HANDLERS,
 }
 # normalise to plain str
 GROUP_CAPABILITIES = {str(k): {str(c) for c in v} for k, v in GROUP_CAPABILITIES.items()}

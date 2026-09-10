@@ -1,0 +1,20 @@
+{% load i18n %}{% comment %}
+  param: summary — {by_currency: [{currency, invoiced, paid, credited, outstanding}], multi_currency}
+  param (optional): expenses — [{currency, total}]
+{% endcomment %}
+<dl class="space-y-3 text-sm">
+  {% for row in summary.by_currency %}
+    <div class="{% if not forloop.first %}border-t border-line pt-2{% endif %}">
+      {% if summary.multi_currency %}<p class="mb-1 text-xs font-medium text-slate/50"><bdi dir="ltr">{{ row.currency }}</bdi></p>{% endif %}
+      <div class="flex justify-between"><dt class="text-slate/60">{% translate "إجمالي الفواتير" %}</dt><dd>{% include "finance/_money.html" with amount=row.invoiced currency=row.currency %}</dd></div>
+      {% if row.credited > 0 %}<div class="flex justify-between"><dt class="text-slate/60">{% translate "إشعارات دائنة" %}</dt><dd>−{% include "finance/_money.html" with amount=row.credited %}</dd></div>{% endif %}
+      <div class="flex justify-between"><dt class="text-slate/60">{% translate "المدفوع" %}</dt><dd>{% include "finance/_money.html" with amount=row.paid %}</dd></div>
+      <div class="flex justify-between font-semibold {% if row.outstanding > 0 %}text-danger{% else %}text-ink{% endif %}"><dt>{% translate "المتبقي" %}</dt><dd>{% include "finance/_money.html" with amount=row.outstanding currency=row.currency %}</dd></div>
+    </div>
+  {% empty %}
+    <p class="text-slate/50">{% translate "لا فواتير صادرة." %}</p>
+  {% endfor %}
+  {% for e in expenses %}
+    <div class="flex justify-between border-t border-line pt-2 text-slate/60"><dt>{% translate "المصروفات" %}{% if summary.multi_currency or expenses|length > 1 %} (<bdi dir="ltr">{{ e.currency }}</bdi>){% endif %}</dt><dd>{% include "finance/_money.html" with amount=e.total currency=e.currency %}</dd></div>
+  {% endfor %}
+</dl>

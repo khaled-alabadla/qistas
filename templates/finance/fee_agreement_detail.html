@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{{ fee_agreement.reference }} · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+{% translate "النظام" as sys_actor %}
+<nav class="mb-4 text-xs text-slate/70">
+  <a href="{% url 'finance:fee_agreement_list' %}" class="hover:text-navy">{% translate "رسوم القضايا" %}</a>
+  <span aria-hidden="true"> ‹ </span>
+  <span class="font-medium text-ink">{% num fee_agreement.reference %}</span>
+</nav>
+
+<div class="mb-6 flex flex-wrap items-start justify-between gap-3">
+  <div class="flex flex-wrap items-center gap-2">
+    <h1 class="text-xl font-semibold text-ink">{{ fee_agreement.get_fee_type_display }}</h1>
+    {% include "finance/_fee_badge.html" with fa=fee_agreement %}
+  </div>
+  {% if can_manage and fee_agreement.is_open %}
+    <a href="{% url 'finance:fee_agreement_update' fee_agreement.pk %}" class="btn btn-secondary">{% translate "تعديل" %}</a>
+  {% endif %}
+</div>
+
+<div class="grid gap-6 lg:grid-cols-3">
+  <section class="lg:col-span-2 rounded-xl border border-line bg-white p-5">
+    <dl class="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+      <div><dt class="text-slate/60">{% translate "المرجع" %}</dt><dd>{% num fee_agreement.reference %}</dd></div>
+      <div><dt class="text-slate/60">{% translate "القضية" %}</dt><dd><a class="text-navy hover:underline" href="{% url 'cases:detail' fee_agreement.case_id %}">{% num fee_agreement.case.case_number %} — {{ fee_agreement.case.title }}</a></dd></div>
+      <div><dt class="text-slate/60">{% translate "الموكل" %}</dt><dd><a class="text-navy hover:underline" href="{% url 'clients:detail' fee_agreement.case.client_id %}">{{ fee_agreement.case.client.display_name }}</a></dd></div>
+      <div><dt class="text-slate/60">{% translate "نوع الأتعاب" %}</dt><dd>{{ fee_agreement.get_fee_type_display }}</dd></div>
+      {% if fee_agreement.fee_type == 'hourly' %}
+        <div><dt class="text-slate/60">{% translate "سعر الساعة" %}</dt><dd>{% include "finance/_money.html" with amount=fee_agreement.hourly_rate currency=fee_agreement.currency %}</dd></div>
+      {% elif fee_agreement.fee_type == 'contingency' %}
+        <div><dt class="text-slate/60">{% translate "النسبة" %}</dt><dd><bdi dir="ltr">{{ fee_agreement.contingency_percent|floatformat:2 }}%</bdi></dd></div>
+      {% else %}
+        <div><dt class="text-slate/60">{% translate "المبلغ" %}</dt><dd>{% include "finance/_money.html" with amount=fee_agreement.fixed_amount currency=fee_agreement.currency %}</dd></div>
+      {% endif %}
+      <div><dt class="text-slate/60">{% translate "تاريخ الاتفاق" %}</dt><dd>{% if fee_agreement.agreed_on %}{% datestr fee_agreement.agreed_on %}{% else %}—{% endif %}</dd></div>
+      <div><dt class="text-slate/60">{% translate "الفترة" %}</dt><dd>{% if fee_agreement.start_date %}{% datestr fee_agreement.start_date %}{% else %}—{% endif %} → {% if fee_agreement.end_date %}{% datestr fee_agreement.end_date %}{% else %}—{% endif %}</dd></div>
+    </dl>
+    {% if fee_agreement.description %}<div class="mt-4"><dt class="text-slate/60 text-sm">{% translate "الوصف" %}</dt><dd class="mt-1 whitespace-pre-line text-sm text-ink">{{ fee_agreement.description }}</dd></div>{% endif %}
+    {% if fee_agreement.notes %}<div class="mt-4"><dt class="text-slate/60 text-sm">{% translate "ملاحظات" %}</dt><dd class="mt-1 whitespace-pre-line text-sm text-ink">{{ fee_agreement.notes }}</dd></div>{% endif %}
+  </section>
+
+  <aside class="space-y-4">
+    {% if can_manage %}
+    <div class="rounded-xl border border-line bg-white p-5">
+      <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "تغيير الحالة" %}</h3>
+      <form method="post" action="{% url 'finance:fee_agreement_status' fee_agreement.pk %}" class="space-y-2">
+        {% csrf_token %}
+        {% include "components/_form_field.html" with field=status_form.status %}
+        <button class="btn btn-primary w-full">{% translate "تحديث" %}</button>
+      </form>
+    </div>
+    {% endif %}
+    <p class="text-xs text-slate/50">
+      {% translate "أنشأه" %}: {% if fee_agreement.created_by %}{{ fee_agreement.created_by.get_full_name|default:fee_agreement.created_by.email }}{% else %}{{ sys_actor }}{% endif %} ·
+      {% datestr fee_agreement.created_at "SHORT_DATETIME_FORMAT" %}
+    </p>
+  </aside>
+</div>
+{% endblock %}
