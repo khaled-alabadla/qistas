@@ -1,0 +1,26 @@
+{% load i18n qistas %}{% comment %}
+  A compact horizontal bar chart, CSS only (RTL-native, prints, no JS lib).
+  param: title (str), rows ([{label, value, key}] — sorted by value desc; the
+         first row's value is the bar scale)
+{% endcomment %}
+<div class="rounded-xl border border-line bg-white p-4">
+  <h3 class="mb-3 text-sm font-semibold text-ink">{{ title }}</h3>
+  {% if rows %}
+    <ul class="space-y-2 text-sm">
+      {% for r in rows|slice:":8" %}
+        <li>
+          <div class="mb-0.5 flex items-baseline justify-between gap-2">
+            <span class="truncate text-slate/70">{{ r.label }}</span>
+            <span class="shrink-0 font-medium text-ink">{% num r.value %}</span>
+          </div>
+          <div class="h-2 overflow-hidden rounded bg-mist">
+            <div class="h-full rounded bg-navy/70"
+                 style="width: {% widthratio r.value rows.0.value 100 %}%"></div>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="text-sm text-slate/50">{% translate "لا بيانات." %}</p>
+  {% endif %}
+</div>

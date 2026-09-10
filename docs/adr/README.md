@@ -39,3 +39,4 @@ All ADRs below were **Accepted 2026-09-08** (owner: Khaled; architect: Claude) a
 | [0030](0030-documents-storage-and-access.md) | Documents: private storage, validated uploads, audited downloads | Yes (Phase 6) |
 | [0031](0031-contracts.md) | Contracts: real status lifecycle + computed expiry, never deleted, `Document.contract` seam | Yes (Phase 7) |
 | [0032](0032-finance.md) | Finance: stored totals frozen at issue, row-locked overpayment guard, credit-note / reversal corrections, computed overdue, finance is NOT all-staff | Yes (Phase 8) |
+| [0033](0033-dashboard.md) | Dashboard: it *is* the landing page; a read/analytics layer owning no models; every widget capability-gated in the query; CSS bar charts (no Chart.js); per-currency, never summed | Yes (Phase 9) |

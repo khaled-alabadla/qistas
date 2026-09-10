@@ -1,0 +1,23 @@
+{% load i18n qistas %}{% comment %}param: block ({key, label, tone, count, items, all_url}){% endcomment %}
+<div class="rounded-xl border p-4 {% if block.tone == 'danger' %}border-danger/30 bg-danger/5{% elif block.tone == 'warning' %}border-bronze/30 bg-bronze/5{% else %}border-line bg-white{% endif %}">
+  <div class="mb-2 flex items-center justify-between gap-2">
+    <h3 class="text-sm font-semibold text-ink">
+      {{ block.label }}
+      <span class="{% if block.tone == 'danger' %}text-danger{% else %}text-slate/60{% endif %}">({% num block.count %})</span>
+    </h3>
+    {% if block.all_url %}<a href="{{ block.all_url }}" class="text-xs text-navy hover:underline">{% translate "الكل" %}</a>{% endif %}
+  </div>
+  <ul class="space-y-1.5 text-sm">
+    {% for it in block.items %}
+      <li class="flex items-center justify-between gap-2 border-b border-line/60 pb-1.5 last:border-0 last:pb-0">
+        {% if it.url %}<a class="truncate text-navy hover:underline" href="{{ it.url }}">{{ it.text }}</a>
+        {% else %}<span class="truncate text-ink">{{ it.text }}</span>{% endif %}
+        <span class="flex shrink-0 items-center gap-2 text-xs text-slate/60">
+          {% if it.money %}{% include "finance/_money.html" with amount=it.money.amount currency=it.money.currency %}{% endif %}
+          {% if it.badge %}{% badge it.badge "warning" %}{% endif %}
+          {% if it.when %}<span class="{% if block.tone == 'danger' %}text-danger font-medium{% endif %}">{% datestr it.when "SHORT_DATE_FORMAT" %}</span>{% endif %}
+        </span>
+      </li>
+    {% endfor %}
+  </ul>
+</div>

@@ -4,10 +4,10 @@
 > `COMPLETED ≠ APPROVED` — a phase starts only after the user says
 > **APPROVE PHASE N** / **ابدأ المرحلة N**.
 
-Current Phase: **8 — Finance** (Phases 1–7 approved + merged to master)
+Current Phase: **9 — Dashboard + Analytics** (Phases 1–8 approved + merged to master)
 
 Planning artifacts: `QISTAS_PHASE_0_ANALYSIS.md` · `QISTAS_GRILL_REVIEW.md` ·
-`docs/architecture.md` · `docs/adr/0001`–`0032` · `docs/PHASE_1_PLAN.md`
+`docs/architecture.md` · `docs/adr/0001`–`0033` · `docs/PHASE_1_PLAN.md`
 
 ---
 
@@ -404,8 +404,8 @@ Branch: `phase/7-contracts` — one commit `phase(7): complete contracts`,
 pushed, **not merged**. Parent: `46dc56e` (Phase 6 merge, PR #5).
 
 ## Phase 8 — Finance
-Status: **COMPLETE (technical)** — see `docs/PHASE_8_REPORT.md`
-Approval: **PENDING**
+Status: **APPROVED + merged to `master`** (PR #7, merge commit `32e350b`) — see `docs/PHASE_8_REPORT.md`
+Approval: **APPROVED** ("APPROVE PHASE 8")
 Design: `docs/adr/0032-finance.md` (building on ADR-0011, 0012, 0013)
 
 `finance` app — 6 models, `Decimal` end to end (`core.money.quantize`, 2dp
@@ -485,8 +485,81 @@ Branch: `phase/8-finance` — one commit `phase(8): complete finance`, pushed,
 **not merged**. Parent: `7908beb` (Phase 7 merge, PR #6).
 
 ## Phase 9 — Dashboard + Analytics
-Status: NOT STARTED
-Approval: N/A
+Status: **COMPLETE (technical)** — see `docs/PHASE_9_REPORT.md`
+Approval: **PENDING**
+Design: `docs/adr/0033-dashboard.md`
+
+**The dashboard *is* the landing page.** `core:landing` → `dashboard/dashboard.html`;
+no `/dashboard/` URL, no second home page. The Phase 5–8 landing widgets are
+folded into the dashboard's KPI row + Attention + Deadlines; `templates/core/
+landing.html` deleted.
+
+`dashboard` app — **owns no models**. `dashboard/selectors.py` is a
+**read/analytics layer** over the domains' `for_user()`-scoped managers +
+existing selectors; `core.views.LandingView` is a thin shell
+(`{**build_dashboard(user)}`). No `DashboardKPI` table, no cached-count model,
+no second ledger.
+
+- **KPIs (§18):** القضايا النشطة · جلسات اليوم · المهام المتأخرة · القضايا العاجلة
+  · إجمالي العملاء · عقود قريبة من الانتهاء · الفواتير المستحقة (count — finance-gated).
+- **Today's hearings (§19):** time / case / client / court / lawyer / status,
+  still-scheduled, in the office tz.
+- **Attention required (§19):** overdue tasks · overdue deadlines · hearings
+  next 7d · high-priority open cases · expiring contracts · overdue invoices
+  (finance-gated). Empty blocks hidden; a true empty state when nothing.
+- **Case analytics (§19):** by status / priority / type / lawyer — **CSS bar
+  charts, no Chart.js** (RTL-native, print-safe, no vendored asset / CSP
+  surface / `<script>`; no chart JSON endpoint — data is server-rendered).
+- **Financial overview (§19):** **per-currency**, credit-note aware, over issued
+  invoices — `firm_financials(user)`; ILS + USD shown separately, **never
+  summed**. Reuses `Invoice.objects.overdue()/.open()/.with_balances()` +
+  `core.money.quantize`.
+- **Recent activity (§19):** an allow-list of domain lifecycle audit actions
+  grouped by the capability that gates each group; `CASE_CONFIDENTIAL_UPDATED`
+  always excluded for non-`view_confidential` (ADR-0008).
+- **Upcoming deadlines / recently-updated cases** sections.
+
+**Authorization:** the page is every authenticated user's home; **each widget's
+data is only computed if the user holds that domain's `*.view` capability**
+(`build_dashboard` reads `capabilities_for(user)` once). **Finance is strict
+(ADR-0032): a paralegal's dashboard never runs a finance query.** A group-less
+user gets a valid empty dashboard. New domain-owned selectors:
+`hearings.selectors.today_hearings`/`upcoming_hearings`,
+`finance.selectors.overdue_invoices`/`firm_financials`.
+
+**Verification:**
+- Tests: **560 pass / 0 fail / 4 skipped** (`@pytest.mark.postgres`) on SQLite —
+  **+31 dashboard tests** (selectors / permissions / performance / views):
+  KPI correctness, computed-overdue, per-currency + credit-note-aware
+  financials, **paralegal sees no finance anywhere** (KPIs / attention /
+  overview / recent-activity — the critical regression), capability matrix,
+  group-less-user safe-empty, confidential-action exclusion, **flat
+  query-count** (8→24 rows identical), full-render + every-role smoke.
+- `ruff` / `ruff format --check` / `pip-audit` (no vulns) / `makemigrations
+  --check` (no changes — `dashboard` has no models) / `manage.py check` — clean.
+- `manage.py check --deploy`: 5 warnings, **test-settings only** (`prod.py` sets
+  HSTS / SSL / secure cookies / env `SECRET_KEY`).
+- Self **security review — PASS** (no Critical/High; the dashboard is *more*
+  locked down than the page it replaced — per-domain gating added). Self
+  **performance / N+1 review — PASS** (bounded, flat query count; shared counts
+  computed once; every list slice `select_related`; **no caching** — a
+  wrongly-keyed cache could serve one user's finance numbers to another).
+- `/code-review high` — findings addressed (see `docs/PHASE_9_REPORT.md`).
+
+**DEFERRED / UNVERIFIED — same Docker/PostgreSQL blocker as Phases 1–8:**
+1. Full suite on **PostgreSQL 16** (SQLite only).
+2. The 4 `@pytest.mark.postgres` tests (finance concurrency, numbering, trigram).
+3. `docker compose` full-stack smoke.
+4. `compilemessages` (Docker-only; harmless).
+5. `check --deploy` against **prod settings** (needs `DJANGO_SECRET_KEY` + PG).
+
+**Known limitations:** "Missing documents" (a §19 attention example) is **not**
+implemented — no "required documents" concept exists in the domain to define it
+from (spec §80). Case analytics are CSS bars, not an interactive JS chart
+(deliberate — ADR-0033).
+
+Branch: `phase/9-dashboard` — one commit `phase(9): complete dashboard`, pushed,
+**not merged**. Parent: `32e350b` (Phase 8 merge, PR #7).
 
 ## Phase 10 — Reports
 Status: NOT STARTED

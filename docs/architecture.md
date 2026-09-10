@@ -52,7 +52,7 @@ qistas/
 
 ### App roadmap (informational — not built until each phase is approved)
 
-`core` `accounts` `audit` (P1 ✓) · `clients` (P2 ✓) · `cases` +parties+notes+timeline + `courts` (minimal) (P3 ✓) · `courts` (full) `hearings` `agenda` (P4 ✓) · `tasks` +deadlines (P5 ✓) · `documents` (P6 ✓) · `contracts` (P7 ✓) · `finance` (P8 ✓) · `dashboard` (P9) · `reports` (P10) · `notifications` (P11) · security/audit hardening (P12) · quality/perf/UX hardening (P13) · production readiness (P14).
+`core` `accounts` `audit` (P1 ✓) · `clients` (P2 ✓) · `cases` +parties+notes+timeline + `courts` (minimal) (P3 ✓) · `courts` (full) `hearings` `agenda` (P4 ✓) · `tasks` +deadlines (P5 ✓) · `documents` (P6 ✓) · `contracts` (P7 ✓) · `finance` (P8 ✓) · `dashboard` (P9 ✓) · `reports` (P10) · `notifications` (P11) · security/audit hardening (P12) · quality/perf/UX hardening (P13) · production readiness (P14).
 
 ### Clients (P2) — implemented notes
 
@@ -161,6 +161,18 @@ Four enforced layers; the UI is **never** a security boundary (spec §15).
 - **`Invoice.objects.with_balances()`** annotates `_credited_sum` so `outstanding` / `credited_total` need no per-row query — used on every list / card / calendar queryset.
 - **Permissions:** finance is the **first domain that is NOT all-staff** (spec §98 "permission-controlled"). `finance.view` = office_manager / finance_clerk / lawyer / admin_clerk; `finance.manage` = office_manager + finance_clerk only; **paralegal has zero finance access**. Any all-staff aggregator that could surface finance data re-checks `finance.view` (`finance.selectors.calendar_items`; the case-workspace finance tab, client-profile finance cards and `case_/client_financials` are gated on `can_finance` in the view).
 - Optimistic-locking tokens on draft-invoice edits (earlier "design intent") are **not** built — issued-invoice immutability + the payment row lock cover the real concurrency risks; a draft is single-clerk work. Recorded in ADR-0032 as a possible future change.
+
+## 13a. Dashboard — ADR-0033 (built in Phase 9)
+
+- **The dashboard *is* the landing page.** `core:landing` → `dashboard/dashboard.html`; there is no `/dashboard/` URL and no second home page. The Phase 5–8 landing widgets are folded into the dashboard's KPI row + Attention + Deadlines; `templates/core/landing.html` is deleted.
+- **`dashboard` app owns no models** — `dashboard/selectors.py` is a **read/analytics layer** over the domains' own `for_user()`-scoped managers and existing selectors. `core.views.LandingView` is a thin shell (`{**build_dashboard(user)}`). No `DashboardKPI` table, no cached-count model, no second ledger (spec Phase 9 — "GOOD: count active cases from Case. BAD: a DashboardCaseKPI model").
+- **Every widget is capability-gated in the query, not just the template.** `build_dashboard` reads `capabilities_for(user)` once; a widget's data is only computed if the user holds that domain's `*.view` capability. **Finance is strict (ADR-0032): a paralegal's dashboard never runs a finance query** — no financial overview, no outstanding-invoices KPI, no overdue-invoices attention block, no finance rows in "recent activity". `finance.selectors.firm_financials` also self-checks `finance.view`. Recent-activity is an allow-list of lifecycle actions grouped by their gating capability; `CASE_CONFIDENTIAL_UPDATED` is always excluded for non-`view_confidential` (ADR-0008).
+- **Overdue stays computed** (ADR-0006) — every overdue figure reads a domain property / queryset method (`overdue_tasks`, `Deadline.overdue()`, `Invoice.overdue()`). The dashboard stores nothing.
+- **Case analytics = CSS bar charts, no Chart.js** (`dashboard/_bars.html`, `{% widthratio %}`) — RTL-native, print-safe, no vendored asset / CSP surface / `<script>`. Chart data is server-rendered into the page, so **no unprotected chart JSON endpoint** (spec §18).
+- **Financial Overview is per-currency, never summed** (ADR-0032) — `firm_financials` returns `by_currency: [{currency, invoiced, paid, credited, outstanding}]` + `expenses_by_currency`, credit-note aware, over issued invoices; the outstanding KPI is the *count* of open invoices.
+- **Performance (spec Phase 9 §10):** `build_dashboard` is a bounded number of queries (~30–45), **flat** with row count, no repeated identical query (shared counts computed once in `_attention`, handed to `_kpis`; each list block fetches one bounded slice and derives its count from it). Regression-tested (`dashboard/tests/test_performance.py`). **No caching** (spec Phase 9 §11) — a wrongly-keyed cache could serve one user's finance numbers to another.
+- New domain-owned selectors this phase (each with its domain): `hearings.selectors.today_hearings` / `upcoming_hearings`, `finance.selectors.overdue_invoices` / `firm_financials`.
+- **Not built:** "Missing documents" (a spec §19 attention example) — there is no "required documents" concept in the domain to define it from (spec §80 — no invented definitions); a future `RequiredDocument` checklist would add it.
 
 ## 14. Testing strategy — ADR-0025
 

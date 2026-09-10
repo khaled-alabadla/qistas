@@ -38,6 +38,7 @@ def test_phase5_pages_render(client, office_manager):
 def test_landing_widgets_present(client, office_manager):
     TaskFactory(assigned_to=office_manager, due_date=dt.date.today() - dt.timedelta(days=1))
     client.force_login(office_manager)
-    ctx = client.get(reverse("core:landing")).context
-    assert ctx["has_widgets"] is True
-    assert ctx["overdue_count"] == 1
+    ctx = client.get(reverse("core:landing")).context  # = the Phase 9 dashboard
+    kpi = next(k for k in ctx["kpis"] if k["key"] == "overdue_tasks")
+    assert kpi["value"] == 1
+    assert any(b["key"] == "overdue_tasks" for b in ctx["attention"]["blocks"])

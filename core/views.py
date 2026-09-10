@@ -12,43 +12,22 @@ from core.permissions.mixins import CapabilityRequiredMixin
 
 
 class LandingView(TemplateView):
-    """The authenticated home page. The full operational dashboard is Phase 9;
-    Phase 5 surfaces real task/deadline widgets (docs/adr/0029). Login is
-    enforced by ``accounts.middleware.LoginRequiredMiddleware``."""
+    """The authenticated home page = the operational dashboard (spec §17–19,
+    docs/adr/0033). All the aggregation lives in ``dashboard.selectors`` (a
+    read/analytics layer); this view is a thin shell. The my-tasks / overdue /
+    upcoming-deadline / expiring-contract / outstanding-invoice surfaces that
+    Phases 5–8 seeded here are now folded into the dashboard's KPI row +
+    Attention + Deadlines sections. Login is enforced by
+    ``accounts.middleware.LoginRequiredMiddleware``; per-widget access
+    (finance, confidential activity) is capability-filtered inside
+    ``build_dashboard`` — the page itself is every authenticated user's home."""
 
-    template_name = "core/landing.html"
+    template_name = "dashboard/dashboard.html"
 
     def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        from core.permissions.capabilities import Capability, can
-        from tasks.selectors import my_open_tasks, overdue_tasks, upcoming_deadlines
+        from dashboard.selectors import build_dashboard
 
-        user = self.request.user
-        ctx["show_tasks_widget"] = can(user, Capability.TASKS_VIEW)
-        if ctx["show_tasks_widget"]:
-            ctx["my_tasks"] = list(my_open_tasks(user)[:8])
-            overdue = overdue_tasks(user)
-            ctx["overdue_tasks"] = list(overdue[:8])
-            ctx["overdue_count"] = overdue.count()
-            ctx["upcoming_deadlines"] = list(upcoming_deadlines(user, days=30)[:8])
-            ctx["has_widgets"] = True
-        ctx["show_contracts_widget"] = can(user, Capability.CONTRACTS_VIEW)
-        if ctx["show_contracts_widget"]:
-            from contracts.selectors import expiring_contracts
-
-            expiring = expiring_contracts(user, days=30)
-            ctx["expiring_contracts"] = list(expiring[:8])
-            ctx["expiring_contracts_count"] = expiring.count()
-            ctx["has_widgets"] = True
-        ctx["show_finance_widget"] = can(user, Capability.FINANCE_VIEW)
-        if ctx["show_finance_widget"]:
-            from finance.selectors import outstanding_invoices
-
-            outstanding = outstanding_invoices(user)
-            ctx["outstanding_invoices"] = list(outstanding[:8])
-            ctx["outstanding_invoices_count"] = outstanding.count()
-            ctx["has_widgets"] = True
-        return ctx
+        return {**super().get_context_data(**kwargs), **build_dashboard(self.request.user)}
 
 
 class SettingsView(CapabilityRequiredMixin, TemplateView):
