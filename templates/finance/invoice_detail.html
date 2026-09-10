@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{{ invoice }} · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+{% translate "النظام" as sys_actor %}
+<nav class="mb-4 text-xs text-slate/70">
+  <a href="{% url 'finance:invoice_list' %}" class="hover:text-navy">{% translate "الفواتير" %}</a>
+  <span aria-hidden="true"> ‹ </span>
+  <span class="font-medium text-ink">{{ invoice }}</span>
+</nav>
+
+<div class="mb-6 flex flex-wrap items-start justify-between gap-3">
+  <div class="flex flex-wrap items-center gap-2">
+    <h1 class="text-xl font-semibold text-ink">{{ invoice }}</h1>
+    {% include "finance/_invoice_badge.html" with inv=invoice %}
+  </div>
+  {% if can_manage %}
+  <div class="flex flex-wrap gap-2">
+    {% if invoice.is_draft %}
+      <a href="{% url 'finance:invoice_update' invoice.pk %}" class="btn btn-secondary">{% translate "تعديل" %}</a>
+      <form method="post" action="{% url 'finance:invoice_cancel' invoice.pk %}" onsubmit="return confirm('{% translate "إلغاء هذه المسودة؟" %}');">
+        {% csrf_token %}<button class="btn btn-danger">{% translate "إلغاء المسودة" %}</button>
+      </form>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<div class="grid gap-6 lg:grid-cols-3">
+  <section class="lg:col-span-2 space-y-6">
+    {# Terms #}
+    <div class="rounded-xl border border-line bg-white p-5">
+      <dl class="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+        <div><dt class="text-slate/60">{% translate "الموكل" %}</dt><dd><a class="text-navy hover:underline" href="{% url 'clients:detail' invoice.client_id %}">{{ invoice.client.display_name }}</a></dd></div>
+        <div><dt class="text-slate/60">{% translate "القضية" %}</dt><dd>{% if invoice.case %}<a class="text-navy hover:underline" href="{% url 'cases:detail' invoice.case_id %}">{% num invoice.case.case_number %}</a>{% else %}—{% endif %}</dd></div>
+        <div><dt class="text-slate/60">{% translate "اتفاقية الأتعاب" %}</dt><dd>{% if invoice.fee_agreement %}<a class="text-navy hover:underline" href="{% url 'finance:fee_agreement_detail' invoice.fee_agreement_id %}">{% num invoice.fee_agreement.reference %}</a>{% else %}—{% endif %}</dd></div>
+        <div><dt class="text-slate/60">{% translate "تاريخ الإصدار" %}</dt><dd>{% if invoice.issue_date %}{% datestr invoice.issue_date %}{% else %}—{% endif %}</dd></div>
+        <div><dt class="text-slate/60">{% translate "تاريخ الاستحقاق" %}</dt><dd class="{% if invoice.is_overdue %}text-danger font-medium{% endif %}">{% if invoice.due_date %}{% datestr invoice.due_date %}{% if invoice.is_overdue %} · {% blocktranslate count d=invoice.days_overdue %}يوم متأخر{% plural %}{{ d }} أيام متأخرة{% endblocktranslate %}{% endif %}{% else %}—{% endif %}</dd></div>
+        <div><dt class="text-slate/60">{% translate "العملة" %}</dt><dd><bdi dir="ltr">{{ invoice.currency }}</bdi></dd></div>
+      </dl>
+      {% if invoice.notes %}<div class="mt-4"><dt class="text-slate/60 text-sm">{% translate "ملاحظات" %}</dt><dd class="mt-1 whitespace-pre-line text-sm text-ink">{{ invoice.notes }}</dd></div>{% endif %}
+    </div>
+
+    {# Line items #}
+    <div class="rounded-xl border border-line bg-white p-5">
+      <h3 class="mb-3 text-base font-semibold text-ink">{% translate "البنود" %}</h3>
+      {% if line_items %}
+        <div class="overflow-x-auto rounded-lg border border-line">
+          <table class="w-full text-start text-sm">
+            <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+              <tr>
+                <th class="px-3 py-2 text-start font-medium">{% translate "البند" %}</th>
+                <th class="px-3 py-2 text-start font-medium">{% translate "الكمية" %}</th>
+                <th class="px-3 py-2 text-start font-medium">{% translate "سعر الوحدة" %}</th>
+                <th class="px-3 py-2 text-start font-medium">{% translate "الإجمالي" %}</th>
+                <th class="px-3 py-2"></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-line">
+              {% for li in line_items %}
+                <tr>
+                  <td class="px-3 py-2">{{ li.description }}</td>
+                  <td class="px-3 py-2"><bdi dir="ltr">{{ li.quantity|floatformat:2 }}</bdi></td>
+                  <td class="px-3 py-2">{% include "finance/_money.html" with amount=li.unit_price %}</td>
+                  <td class="px-3 py-2">{% include "finance/_money.html" with amount=li.line_total %}</td>
+                  <td class="px-3 py-2 text-end">
+                    {% if can_manage and invoice.is_draft %}
+                    <form method="post" action="{% url 'finance:invoice_line_remove' invoice.pk li.pk %}">
+                      {% csrf_token %}<button class="text-xs text-danger hover:underline">{% translate "حذف" %}</button>
+                    </form>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-sm text-slate/50">{% translate "لا توجد بنود بعد." %}</p>
+      {% endif %}
+
+      {% if can_manage and invoice.is_draft %}
+      <form method="post" action="{% url 'finance:invoice_line_add' invoice.pk %}" class="mt-4 grid gap-3 rounded-lg bg-mist p-3 sm:grid-cols-4">
+        {% csrf_token %}
+        <div class="sm:col-span-2">{% include "components/_form_field.html" with field=line_form.description %}</div>
+        <div>{% include "components/_form_field.html" with field=line_form.quantity %}</div>
+        <div>{% include "components/_form_field.html" with field=line_form.unit_price %}</div>
+        <div class="sm:col-span-4"><button class="btn btn-secondary">{% translate "إضافة بند" %}</button></div>
+      </form>
+      {% endif %}
+
+      {# Totals #}
+      <dl class="mt-4 ms-auto max-w-xs space-y-1 text-sm">
+        <div class="flex justify-between"><dt class="text-slate/60">{% translate "المجموع الفرعي" %}</dt><dd>{% include "finance/_money.html" with amount=invoice.subtotal %}</dd></div>
+        <div class="flex justify-between"><dt class="text-slate/60">{% translate "الخصم" %}</dt><dd>{% include "finance/_money.html" with amount=invoice.discount %}</dd></div>
+        <div class="flex justify-between"><dt class="text-slate/60">{% translate "الضريبة" %} ({{ invoice.tax_rate|floatformat:2 }}%)</dt><dd>{% include "finance/_money.html" with amount=invoice.tax_amount %}</dd></div>
+        <div class="flex justify-between border-t border-line pt-1 font-semibold text-ink"><dt>{% translate "الإجمالي" %}</dt><dd>{% include "finance/_money.html" with amount=invoice.total currency=invoice.currency %}</dd></div>
+        {% if invoice.is_issued %}
+          <div class="flex justify-between"><dt class="text-slate/60">{% translate "المدفوع" %}</dt><dd>{% include "finance/_money.html" with amount=invoice.amount_paid %}</dd></div>
+          {% if invoice.credited_total != invoice.total %}<div class="flex justify-between"><dt class="text-slate/60">{% translate "بعد الإشعارات الدائنة" %}</dt><dd>{% include "finance/_money.html" with amount=invoice.credited_total %}</dd></div>{% endif %}
+          <div class="flex justify-between font-semibold {% if invoice.outstanding > 0 %}text-danger{% else %}text-success{% endif %}"><dt>{% translate "المتبقي" %}</dt><dd>{% include "finance/_money.html" with amount=invoice.outstanding currency=invoice.currency %}</dd></div>
+        {% endif %}
+      </dl>
+    </div>
+
+    {# Payments #}
+    {% if invoice.is_issued %}
+    <div class="rounded-xl border border-line bg-white p-5">
+      <h3 class="mb-3 text-base font-semibold text-ink">{% translate "المدفوعات" %}</h3>
+      {% if payments %}
+        <ul class="space-y-2 text-sm">
+          {% for p in payments %}
+            <li class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line px-3 py-2">
+              <a class="text-navy hover:underline" href="{% url 'finance:payment_detail' p.pk %}">{% num p.reference %}</a>
+              <span class="flex items-center gap-3 text-slate/70">
+                <span>{% datestr p.paid_on %}</span>
+                <span>{{ p.get_method_display }}</span>
+                {% include "finance/_money.html" with amount=p.net_amount currency=invoice.currency %}
+                {% if p.reversed_amount > 0 %}<span class="text-xs text-danger">({% translate "استُرجع" %} {{ p.reversed_amount|floatformat:2 }})</span>{% endif %}
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-sm text-slate/50">{% translate "لا مدفوعات بعد." %}</p>
+      {% endif %}
+      {% if can_manage and invoice.outstanding > 0 %}
+      <form method="post" action="{% url 'finance:payment_create' invoice.pk %}" class="mt-4 grid gap-3 rounded-lg bg-mist p-3 sm:grid-cols-2">
+        {% csrf_token %}
+        {% include "components/_form_field.html" with field=payment_form.amount %}
+        {% include "components/_form_field.html" with field=payment_form.paid_on %}
+        {% include "components/_form_field.html" with field=payment_form.method %}
+        {% include "components/_form_field.html" with field=payment_form.external_reference %}
+        <div class="sm:col-span-2">{% include "components/_form_field.html" with field=payment_form.note %}</div>
+        <div class="sm:col-span-2"><button class="btn btn-primary">{% translate "تسجيل دفعة" %}</button></div>
+      </form>
+      {% endif %}
+    </div>
+
+    {# Credit notes #}
+    <div class="rounded-xl border border-line bg-white p-5">
+      <h3 class="mb-3 text-base font-semibold text-ink">{% translate "الإشعارات الدائنة" %}</h3>
+      {% if credit_notes %}
+        <ul class="space-y-2 text-sm">
+          {% for cn in credit_notes %}
+            <li class="flex items-center justify-between gap-2 rounded-lg border border-line px-3 py-2">
+              <span>{% num cn.credit_number %}</span>
+              <span class="flex items-center gap-3 text-slate/70">{% datestr cn.issued_on %}{% include "finance/_money.html" with amount=cn.amount currency=invoice.currency %}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-sm text-slate/50">{% translate "لا إشعارات دائنة." %}</p>
+      {% endif %}
+      {% if can_manage %}
+      <form method="post" action="{% url 'finance:credit_note_create' invoice.pk %}" class="mt-4 grid gap-3 rounded-lg bg-mist p-3 sm:grid-cols-2">
+        {% csrf_token %}
+        {% include "components/_form_field.html" with field=credit_note_form.amount %}
+        {% include "components/_form_field.html" with field=credit_note_form.issued_on %}
+        <div class="sm:col-span-2">{% include "components/_form_field.html" with field=credit_note_form.reason %}</div>
+        <div class="sm:col-span-2"><button class="btn btn-secondary">{% translate "إصدار إشعار دائن" %}</button></div>
+      </form>
+      <p class="mt-2 text-xs text-slate/50">{% translate "يصحّح الإشعار الدائن فاتورة صادرة؛ إشعار بكامل القيمة يلغيها." %}</p>
+      {% endif %}
+    </div>
+    {% endif %}
+  </section>
+
+  <aside class="space-y-4">
+    {% if can_manage and invoice.is_draft %}
+    <div class="rounded-xl border border-line bg-white p-5">
+      <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "إصدار الفاتورة" %}</h3>
+      <form method="post" action="{% url 'finance:invoice_issue' invoice.pk %}" class="space-y-2" onsubmit="return confirm('{% translate "بعد الإصدار لا يمكن تعديل محتوى الفاتورة. متابعة؟" %}');">
+        {% csrf_token %}
+        {% include "components/_form_field.html" with field=issue_form.issue_date %}
+        <button class="btn btn-primary w-full">{% translate "إصدار" %}</button>
+      </form>
+      <p class="mt-2 text-xs text-slate/50">{% translate "يُخصَّص رقم الفاتورة عند الإصدار." %}</p>
+    </div>
+    {% endif %}
+    <p class="text-xs text-slate/50">
+      {% translate "أنشأها" %}: {% if invoice.created_by %}{{ invoice.created_by.get_full_name|default:invoice.created_by.email }}{% else %}{{ sys_actor }}{% endif %} ·
+      {% datestr invoice.created_at "SHORT_DATETIME_FORMAT" %}
+    </p>
+    <p class="text-xs text-slate/40">{% translate "الفاتورة الصادرة سجل مالي ثابت — تُصحَّح بإشعار دائن، ولا تُحذف." %}</p>
+  </aside>
+</div>
+{% endblock %}

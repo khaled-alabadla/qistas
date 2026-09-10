@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{% translate "رسوم القضايا" %} · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <h1 class="text-xl font-semibold text-ink">{% translate "رسوم القضايا" %}</h1>
+    <p class="text-sm text-slate/70">
+      {% blocktranslate count n=total_count %}اتفاقية واحدة{% plural %}{{ n }} اتفاقيات{% endblocktranslate %}
+    </p>
+  </div>
+  {% if can_manage %}
+    <a href="{% url 'finance:fee_agreement_create' %}" class="btn btn-primary">{% translate "اتفاقية جديدة" %}</a>
+  {% endif %}
+</div>
+
+<form method="get" class="mb-4 grid gap-3 rounded-xl border border-line bg-white p-4 sm:grid-cols-4">
+  <div class="sm:col-span-2">{% include "components/_form_field.html" with field=filter_form.q %}</div>
+  <div>{% include "components/_form_field.html" with field=filter_form.status %}</div>
+  <div>{% include "components/_form_field.html" with field=filter_form.fee_type %}</div>
+  <div class="sm:col-span-4 flex gap-2">
+    <button type="submit" class="btn btn-primary">{% translate "تطبيق" %}</button>
+    <a href="{% url 'finance:fee_agreement_list' %}" class="btn btn-ghost">{% translate "مسح" %}</a>
+  </div>
+</form>
+
+{% if fee_agreements %}
+<div class="overflow-x-auto rounded-lg border border-line">
+  <table class="w-full text-start text-sm">
+    <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+      <tr>
+        <th class="px-3 py-2 text-start font-medium">{% translate "المرجع" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "القضية" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "النوع" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "القيمة" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "الحالة" %}</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-line">
+      {% for fa in fee_agreements %}
+        <tr class="hover:bg-mist/50">
+          <td class="px-3 py-2"><a class="font-medium text-navy hover:underline" href="{% url 'finance:fee_agreement_detail' fa.pk %}">{% num fa.reference %}</a></td>
+          <td class="px-3 py-2"><a class="text-navy hover:underline" href="{% url 'cases:detail' fa.case_id %}">{% num fa.case.case_number %}</a></td>
+          <td class="px-3 py-2">{{ fa.get_fee_type_display }}</td>
+          <td class="px-3 py-2">{% include "finance/_money.html" with amount=fa.headline_amount currency=fa.currency %}{% if fa.fee_type == 'contingency' %} {{ fa.contingency_percent|floatformat:2 }}%{% endif %}</td>
+          <td class="px-3 py-2">{% include "finance/_fee_badge.html" with fa=fa %}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "components/pagination.html" with page_obj=page_obj querystring=querystring %}
+{% else %}
+  {% translate "لا توجد اتفاقيات مطابقة" as es_title %}
+  {% translate "جرّب تعديل معايير البحث، أو أضف اتفاقية." as es_msg %}
+  {% if can_manage %}
+    {% url 'finance:fee_agreement_create' as create_url %}{% translate "اتفاقية جديدة" as create_label %}
+    {% empty_state es_title es_msg action_url=create_url action_label=create_label %}
+  {% else %}{% empty_state es_title es_msg %}{% endif %}
+{% endif %}
+{% endblock %}

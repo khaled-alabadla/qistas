@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{% if is_create %}{% translate "اتفاقية أتعاب جديدة" %}{% else %}{% translate "تعديل اتفاقية الأتعاب" %}{% endif %} · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl">
+  <nav class="mb-4 text-xs text-slate/70">
+    <a href="{% url 'finance:fee_agreement_list' %}" class="hover:text-navy">{% translate "رسوم القضايا" %}</a>
+    <span aria-hidden="true"> ‹ </span>
+    <span class="font-medium text-ink">{% if is_create %}{% translate "اتفاقية جديدة" %}{% else %}{% num fee_agreement.reference %}{% endif %}</span>
+  </nav>
+
+  <h1 class="mb-4 text-xl font-semibold text-ink">{% if is_create %}{% translate "اتفاقية أتعاب جديدة" %}{% else %}{% translate "تعديل اتفاقية الأتعاب" %}{% endif %}</h1>
+
+  {% if form.non_field_errors %}
+    <div class="mb-4">{% for e in form.non_field_errors %}{% include "components/alert.html" with tone="error" text=e %}{% endfor %}</div>
+  {% endif %}
+
+  <form method="post" novalidate class="space-y-4 rounded-xl border border-line bg-white p-6">
+    {% csrf_token %}
+    {% include "components/_form_field.html" with field=form.case %}
+    {% include "components/_form_field.html" with field=form.fee_type %}
+    <div class="grid gap-4 sm:grid-cols-3">
+      {% include "components/_form_field.html" with field=form.fixed_amount %}
+      {% include "components/_form_field.html" with field=form.hourly_rate %}
+      {% include "components/_form_field.html" with field=form.contingency_percent %}
+    </div>
+    <p class="-mt-2 text-xs text-slate/60">{% translate "املأ الحقل المناسب لنوع الأتعاب المختار." %}</p>
+    {% include "components/_form_field.html" with field=form.currency %}
+    <div class="grid gap-4 sm:grid-cols-3">
+      {% include "components/_form_field.html" with field=form.agreed_on %}
+      {% include "components/_form_field.html" with field=form.start_date %}
+      {% include "components/_form_field.html" with field=form.end_date %}
+    </div>
+    {% include "components/_form_field.html" with field=form.description %}
+    {% include "components/_form_field.html" with field=form.notes %}
+    <div class="flex gap-2">
+      <button type="submit" class="btn btn-primary">{% translate "حفظ" %}</button>
+      <a href="{% if fee_agreement %}{% url 'finance:fee_agreement_detail' fee_agreement.pk %}{% else %}{% url 'finance:fee_agreement_list' %}{% endif %}" class="btn btn-ghost">{% translate "إلغاء" %}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

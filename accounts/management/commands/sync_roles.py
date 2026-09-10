@@ -68,6 +68,33 @@ _DOCUMENT_MANAGE = {*_DOCUMENT_VIEW, "documents.add_document", "documents.change
 _CONTRACT_VIEW = {"contracts.view_contract"}
 _CONTRACT_MANAGE = {*_CONTRACT_VIEW, "contracts.add_contract", "contracts.change_contract"}
 
+# Phase 8 — finance. NO `delete` codename anywhere: invoices/payments/credit
+# notes are append-only (ADR-0012), fee agreements + expenses soft-delete only
+# (ADR-0022). Payment / PaymentReversal / CreditNote are add+view (no `change`).
+_FINANCE_VIEW = {
+    "finance.view_feeagreement",
+    "finance.view_invoice",
+    "finance.view_invoicelineitem",
+    "finance.view_payment",
+    "finance.view_paymentreversal",
+    "finance.view_creditnote",
+    "finance.view_expense",
+}
+_FINANCE_MANAGE = {
+    *_FINANCE_VIEW,
+    "finance.add_feeagreement",
+    "finance.change_feeagreement",
+    "finance.add_invoice",
+    "finance.change_invoice",
+    "finance.add_invoicelineitem",
+    "finance.change_invoicelineitem",
+    "finance.add_payment",
+    "finance.add_paymentreversal",
+    "finance.add_creditnote",
+    "finance.add_expense",
+    "finance.change_expense",
+}
+
 ROLE_PERMISSIONS: dict[str, set[str]] = {
     GroupChoice.OFFICE_MANAGER: {
         "accounts.view_user",
@@ -87,6 +114,7 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
         *_TASK_MANAGE,
         *_DOCUMENT_MANAGE,
         *_CONTRACT_MANAGE,
+        *_FINANCE_MANAGE,
     },
     GroupChoice.LAWYER: (
         _CLIENT_MANAGE
@@ -97,6 +125,7 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
         | _TASK_MANAGE
         | _DOCUMENT_MANAGE
         | _CONTRACT_MANAGE
+        | _FINANCE_VIEW
     ),
     GroupChoice.PARALEGAL: (
         _CLIENT_VIEW
@@ -115,9 +144,16 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
         | _TASK_MANAGE
         | _DOCUMENT_MANAGE
         | _CONTRACT_MANAGE
+        | _FINANCE_VIEW
     ),
     GroupChoice.FINANCE_CLERK: (
-        _CLIENT_VIEW | _CASE_VIEW | _HEARING_VIEW | _TASK_VIEW | _DOCUMENT_VIEW | _CONTRACT_VIEW
+        _CLIENT_VIEW
+        | _CASE_VIEW
+        | _HEARING_VIEW
+        | _TASK_VIEW
+        | _DOCUMENT_VIEW
+        | _CONTRACT_VIEW
+        | _FINANCE_MANAGE
     ),
 }
 

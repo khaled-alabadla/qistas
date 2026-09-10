@@ -378,6 +378,96 @@
     {% endif %}
   </div>
 
+{% elif tab == 'finance' %}
+  {% if can_finance %}
+  <div class="space-y-8">
+    {# Financial summary — per currency, credit-note aware #}
+    <div class="rounded-xl border border-line bg-white p-5">
+      <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "ملخص مالي" %}</h3>
+      {% include "finance/_summary.html" with summary=case_financials expenses=case_financials.expenses_by_currency %}
+    </div>
+
+    <div>
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h3 class="text-base font-semibold text-ink">{% translate "اتفاقيات الأتعاب" %}</h3>
+        {% if can_finance_manage %}<a href="{% url 'finance:fee_agreement_create' %}?case={{ case.pk }}" class="btn btn-secondary">{% translate "اتفاقية جديدة" %}</a>{% endif %}
+      </div>
+      {% if case_fee_agreements %}
+        <ul class="space-y-2 text-sm">
+          {% for fa in case_fee_agreements %}
+            <li class="flex items-center justify-between gap-2 rounded-lg border border-line px-3 py-2">
+              <a class="text-navy hover:underline" href="{% url 'finance:fee_agreement_detail' fa.pk %}">{% num fa.reference %} — {{ fa.get_fee_type_display }}</a>
+              {% include "finance/_fee_badge.html" with fa=fa %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}<p class="text-sm text-slate/50">{% translate "لا اتفاقيات أتعاب لهذه القضية." %}</p>{% endif %}
+    </div>
+
+    <div>
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h3 class="text-base font-semibold text-ink">{% translate "الفواتير" %}</h3>
+        {% if can_finance_manage %}<a href="{% url 'finance:invoice_create' %}?case={{ case.pk }}&client={{ case.client_id }}" class="btn btn-secondary">{% translate "فاتورة جديدة" %}</a>{% endif %}
+      </div>
+      {% if case_invoices %}
+        <div class="overflow-x-auto rounded-lg border border-line">
+          <table class="w-full text-start text-sm">
+            <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70"><tr>
+              <th class="px-3 py-2 text-start font-medium">{% translate "الرقم" %}</th>
+              <th class="px-3 py-2 text-start font-medium">{% translate "الإجمالي" %}</th>
+              <th class="px-3 py-2 text-start font-medium">{% translate "المتبقي" %}</th>
+              <th class="px-3 py-2 text-start font-medium">{% translate "الحالة" %}</th>
+            </tr></thead>
+            <tbody class="divide-y divide-line">
+              {% for inv in case_invoices %}
+                <tr>
+                  <td class="px-3 py-2"><a class="text-navy hover:underline" href="{% url 'finance:invoice_detail' inv.pk %}">{{ inv }}</a></td>
+                  <td class="px-3 py-2">{% include "finance/_money.html" with amount=inv.total currency=inv.currency %}</td>
+                  <td class="px-3 py-2">{% include "finance/_money.html" with amount=inv.outstanding currency=inv.currency %}</td>
+                  <td class="px-3 py-2">{% include "finance/_invoice_badge.html" with inv=inv %}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}<p class="text-sm text-slate/50">{% translate "لا فواتير لهذه القضية." %}</p>{% endif %}
+    </div>
+
+    <div>
+      <h3 class="mb-3 text-base font-semibold text-ink">{% translate "المدفوعات" %}</h3>
+      {% if case_payments %}
+        <ul class="space-y-2 text-sm">
+          {% for p in case_payments %}
+            <li class="flex items-center justify-between gap-2 rounded-lg border border-line px-3 py-2">
+              <a class="text-navy hover:underline" href="{% url 'finance:payment_detail' p.pk %}">{% num p.reference %}</a>
+              <span class="flex items-center gap-3 text-slate/60">{% datestr p.paid_on %}{% include "finance/_money.html" with amount=p.net_amount %}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}<p class="text-sm text-slate/50">{% translate "لا مدفوعات لهذه القضية." %}</p>{% endif %}
+    </div>
+
+    <div>
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h3 class="text-base font-semibold text-ink">{% translate "المصروفات" %}</h3>
+        {% if can_finance_manage %}<a href="{% url 'finance:expense_create' %}?case={{ case.pk }}&client={{ case.client_id }}" class="btn btn-secondary">{% translate "تسجيل مصروف" %}</a>{% endif %}
+      </div>
+      {% if case_expenses %}
+        <ul class="space-y-2 text-sm">
+          {% for e in case_expenses %}
+            <li class="flex items-center justify-between gap-2 rounded-lg border border-line px-3 py-2">
+              <a class="text-navy hover:underline" href="{% url 'finance:expense_detail' e.pk %}">{% num e.reference %} — {{ e.description }}</a>
+              <span class="flex items-center gap-3 text-slate/60">{{ e.get_category_display }}{% include "finance/_money.html" with amount=e.amount currency=e.currency %}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}<p class="text-sm text-slate/50">{% translate "لا مصروفات لهذه القضية." %}</p>{% endif %}
+    </div>
+  </div>
+  {% else %}
+    <p class="text-sm text-slate/50">{% translate "لا تملك صلاحية عرض السجلات المالية." %}</p>
+  {% endif %}
+
 {% elif tab == 'notes' or tab == 'correspondence' %}
   {% if tab == 'notes' %}{% with items=notes kind='general' %}{% include "cases/_notes.html" %}{% endwith %}
   {% else %}{% with items=correspondence kind='correspondence' %}{% include "cases/_notes.html" %}{% endwith %}{% endif %}

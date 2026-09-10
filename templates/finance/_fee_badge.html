@@ -1,0 +1,5 @@
+{% load i18n qistas %}{% comment %}param: fa (a FeeAgreement){% endcomment %}
+{% if fa.status == 'active' %}{% badge fa.get_status_display "success" %}
+{% elif fa.status == 'draft' %}{% badge fa.get_status_display "neutral" %}
+{% elif fa.status == 'completed' %}{% badge fa.get_status_display "bronze" %}
+{% else %}{% badge fa.get_status_display "neutral" %}{% endif %}

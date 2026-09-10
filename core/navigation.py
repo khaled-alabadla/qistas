@@ -123,6 +123,33 @@ NAV: tuple[NavItem, ...] = (
         ),
     ),
     NavItem(
+        label=_("المالية"),
+        capability=Capability.FINANCE_VIEW,
+        icon="folder",
+        children=(
+            NavItem(
+                label=_("الفواتير"),
+                url_name="finance:invoice_list",
+                capability=Capability.FINANCE_VIEW,
+            ),
+            NavItem(
+                label=_("المدفوعات"),
+                url_name="finance:payment_list",
+                capability=Capability.FINANCE_VIEW,
+            ),
+            NavItem(
+                label=_("المصروفات"),
+                url_name="finance:expense_list",
+                capability=Capability.FINANCE_VIEW,
+            ),
+            NavItem(
+                label=_("رسوم القضايا"),
+                url_name="finance:fee_agreement_list",
+                capability=Capability.FINANCE_VIEW,
+            ),
+        ),
+    ),
+    NavItem(
         label=_("الإشعارات"),
         url_name=None,
         capability=Capability.NOTIFICATIONS_VIEW,

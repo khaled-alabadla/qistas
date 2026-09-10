@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{% if is_create %}{% translate "تسجيل مصروف" %}{% else %}{% translate "تعديل المصروف" %}{% endif %} · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl">
+  <nav class="mb-4 text-xs text-slate/70">
+    <a href="{% url 'finance:expense_list' %}" class="hover:text-navy">{% translate "المصروفات" %}</a>
+    <span aria-hidden="true"> ‹ </span>
+    <span class="font-medium text-ink">{% if is_create %}{% translate "مصروف جديد" %}{% else %}{% num expense.reference %}{% endif %}</span>
+  </nav>
+
+  <h1 class="mb-4 text-xl font-semibold text-ink">{% if is_create %}{% translate "تسجيل مصروف" %}{% else %}{% translate "تعديل المصروف" %}{% endif %}</h1>
+
+  {% if form.non_field_errors %}
+    <div class="mb-4">{% for e in form.non_field_errors %}{% include "components/alert.html" with tone="error" text=e %}{% endfor %}</div>
+  {% endif %}
+
+  <form method="post" novalidate class="space-y-4 rounded-xl border border-line bg-white p-6">
+    {% csrf_token %}
+    {% include "components/_form_field.html" with field=form.description %}
+    <div class="grid gap-4 sm:grid-cols-3">
+      {% include "components/_form_field.html" with field=form.amount %}
+      {% include "components/_form_field.html" with field=form.currency %}
+      {% include "components/_form_field.html" with field=form.category %}
+    </div>
+    {% include "components/_form_field.html" with field=form.spent_on %}
+    <div class="grid gap-4 sm:grid-cols-2">
+      {% include "components/_form_field.html" with field=form.case %}
+      {% include "components/_form_field.html" with field=form.client %}
+    </div>
+    <p class="-mt-2 text-xs text-slate/60">{% translate "اترك الحقلين فارغين لمصروف مكتبي عام." %}</p>
+    {% include "components/_form_field.html" with field=form.note %}
+    <div class="flex gap-2">
+      <button type="submit" class="btn btn-primary">{% translate "حفظ" %}</button>
+      <a href="{% if expense %}{% url 'finance:expense_detail' expense.pk %}{% else %}{% url 'finance:expense_list' %}{% endif %}" class="btn btn-ghost">{% translate "إلغاء" %}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

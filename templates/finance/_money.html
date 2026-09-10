@@ -1,0 +1,1 @@
+{% load i18n qistas %}{% comment %}param: amount, currency (optional str){% endcomment %}<bdi dir="ltr">{% if amount is not None %}{{ amount|floatformat:2 }}{% else %}—{% endif %}{% if currency %}&nbsp;{{ currency }}{% endif %}</bdi>

@@ -1,0 +1,7 @@
+{% load i18n qistas %}{% comment %}param: inv (an Invoice){% endcomment %}
+{% if inv.status == 'paid' %}{% badge inv.get_status_display "success" %}
+{% elif inv.status == 'partially_paid' %}{% badge inv.get_status_display "bronze" %}
+{% elif inv.status == 'draft' %}{% badge inv.get_status_display "neutral" %}
+{% elif inv.status == 'cancelled' %}{% badge inv.get_status_display "neutral" %}
+{% else %}{% badge inv.get_status_display "warning" %}{% endif %}
+{% if inv.is_overdue %}{% translate "متأخرة" as lbl_od %}{% badge lbl_od "danger" %}{% endif %}

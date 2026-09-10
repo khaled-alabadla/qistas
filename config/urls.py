@@ -22,6 +22,7 @@ urlpatterns = [
     path("tasks/", include("tasks.urls")),
     path("documents/", include("documents.urls")),
     path("contracts/", include("contracts.urls")),
+    path("finance/", include("finance.urls")),
     path("", include("core.urls")),
 ]
 

@@ -364,6 +364,11 @@ class CaseEventType(models.TextChoices):
     # Contracts (Phase 7) — written by contracts.services via record_case_event.
     CONTRACT_ADDED = "contract_added", _("إضافة عقد")
     CONTRACT_STATUS_CHANGED = "contract_status_changed", _("تغيير حالة عقد")
+    # Finance (Phase 8) — written by finance.services via record_case_event.
+    FEE_AGREEMENT_ADDED = "fee_agreement_added", _("إضافة اتفاقية أتعاب")
+    INVOICE_ISSUED = "invoice_issued", _("إصدار فاتورة")
+    PAYMENT_RECORDED = "payment_recorded", _("تسجيل دفعة")
+    CREDIT_NOTE_ISSUED = "credit_note_issued", _("إصدار إشعار دائن")
 
 
 class _AppendOnlyQuerySet(models.QuerySet):
