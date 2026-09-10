@@ -207,6 +207,7 @@ def test_client_profile_contracts_card(client, office_manager):
 def test_landing_expiring_widget(client, office_manager):
     ContractFactory(status=ContractStatus.ACTIVE, end_date=_today() + dt.timedelta(days=7))
     client.force_login(office_manager)
-    resp = client.get(reverse("core:landing"))
+    resp = client.get(reverse("core:landing"))  # = the Phase 9 dashboard
     assert resp.status_code == 200
-    assert resp.context["expiring_contracts_count"] == 1
+    kpi = next(k for k in resp.context["kpis"] if k["key"] == "expiring_contracts")
+    assert kpi["value"] == 1

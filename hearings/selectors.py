@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import datetime as dt
+
+from django.utils import timezone
+
 from hearings.models import Hearing, HearingStatus, HearingType
 
 _SELECT_RELATED = ("case", "case__client", "court", "lawyer")
@@ -35,8 +39,6 @@ def hearing_list(
         qs = qs.filter(case_id=case_id)
 
     if when == "past":
-        from django.utils import timezone
-
         qs = qs.filter(scheduled_at__lt=timezone.now())
     elif when == "all":
         pass
@@ -51,6 +53,34 @@ def case_hearings(case):
         case.hearings.select_related("court", "lawyer", "created_by")
         .all()
         .order_by("-scheduled_at")
+    )
+
+
+def today_hearings(user):
+    """Still-scheduled hearings whose ``scheduled_at`` falls today, in the office
+    timezone (spec §19 'Today's Hearings')."""
+    start = timezone.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
+    end = start + dt.timedelta(days=1)
+    return (
+        Hearing.objects.for_user(user)
+        .select_related(*_SELECT_RELATED)
+        .filter(status=HearingStatus.SCHEDULED, scheduled_at__gte=start, scheduled_at__lt=end)
+        .order_by("scheduled_at")
+    )
+
+
+def upcoming_hearings(user, *, days: int = 7):
+    """Still-scheduled hearings in the next ``days`` days (dashboard attention)."""
+    now = timezone.now()
+    return (
+        Hearing.objects.for_user(user)
+        .select_related(*_SELECT_RELATED)
+        .filter(
+            status=HearingStatus.SCHEDULED,
+            scheduled_at__gte=now,
+            scheduled_at__lt=now + dt.timedelta(days=days),
+        )
+        .order_by("scheduled_at")
     )
 
 

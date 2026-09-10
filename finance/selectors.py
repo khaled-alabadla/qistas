@@ -252,6 +252,59 @@ def outstanding_invoices(user, *, limit: int | None = None):
     return qs[:limit] if limit else qs
 
 
+def overdue_invoices(user, *, limit: int | None = None):
+    """Issued, still-open invoices whose ``due_date`` has passed (§19 attention)."""
+    from django.db.models import F
+
+    qs = (
+        Invoice.objects.for_user(user)
+        .overdue()
+        .select_related("client", "case")
+        .with_balances()
+        .order_by(F("due_date").asc(nulls_last=True))
+    )
+    return qs[:limit] if limit else qs
+
+
+def firm_financials(user, *, caps: set[str] | None = None) -> dict:
+    """Firm-wide per-currency invoiced / paid / outstanding + expenses over
+    everything ``user`` may see — powers the dashboard Financial Overview (§19).
+
+    **Capability-aware:** returns empty + ``visible=False`` for a user without
+    ``finance.view`` (paralegal), a defence-in-depth backstop on top of the
+    view-level gate (Phase 8 rule — finance is not all-staff). ``caps`` (a
+    pre-computed capability set) lets ``build_dashboard`` avoid a second
+    identical group-membership query."""
+    from core.permissions.capabilities import Capability, can
+
+    has_finance = (
+        Capability.FINANCE_VIEW in caps if caps is not None else can(user, Capability.FINANCE_VIEW)
+    )
+    if not has_finance:
+        return {
+            "visible": False,
+            "by_currency": [],
+            "expenses_by_currency": [],
+            "multi_currency": False,
+        }
+    by_currency = _invoice_totals_by_currency(Invoice.objects.for_user(user))
+    expenses = (
+        Expense.objects.for_user(user)
+        .alive()
+        .values("currency")
+        .annotate(total=Coalesce(Sum("amount"), _ZERO_SUM))
+        .order_by("currency")
+    )
+    return {
+        "visible": True,
+        "by_currency": by_currency,
+        "expenses_by_currency": [
+            {"currency": e["currency"], "total": quantize(e["total"])} for e in expenses
+        ],
+        "multi_currency": len(by_currency) > 1,
+    }
+
+
 # ── Calendar (agenda aggregator — docs/adr/0028) ───────────
 def _combine(d: dt.date) -> dt.datetime:
     return timezone.make_aware(dt.datetime.combine(d, dt.time.min), timezone.get_current_timezone())
