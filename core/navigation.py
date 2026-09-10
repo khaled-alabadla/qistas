@@ -112,9 +112,13 @@ NAV: tuple[NavItem, ...] = (
             ),
             NavItem(
                 label=_("العقود"),
-                url_name=None,
-                capability=Capability.DOCUMENTS_VIEW,
-                disabled=True,
+                url_name="contracts:list",
+                capability=Capability.CONTRACTS_VIEW,
+            ),
+            NavItem(
+                label=_("عقد جديد"),
+                url_name="contracts:create",
+                capability=Capability.CONTRACTS_MANAGE,
             ),
         ),
     ),

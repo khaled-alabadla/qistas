@@ -55,6 +55,9 @@ class Capability(TextChoices):
     # Phase 6 — Documents
     DOCUMENTS_VIEW = "documents.view", _("عرض المستندات وتنزيلها")
     DOCUMENTS_MANAGE = "documents.manage", _("رفع المستندات وتعديلها وسحبها")
+    # Phase 7 — Contracts
+    CONTRACTS_VIEW = "contracts.view", _("عرض العقود")
+    CONTRACTS_MANAGE = "contracts.manage", _("إضافة وتعديل العقود")
 
 
 # group -> capabilities it grants. Fixed in code for v1 (docs/adr/0007);
@@ -70,6 +73,7 @@ _ALL_STAFF = {
     Capability.AGENDA_VIEW,
     Capability.TASKS_VIEW,
     Capability.DOCUMENTS_VIEW,
+    Capability.CONTRACTS_VIEW,
 }
 # Roles that intake / represent clients and legitimately need the national ID.
 _CLIENT_HANDLERS = {Capability.CLIENTS_MANAGE, Capability.CLIENTS_VIEW_SENSITIVE}
@@ -86,6 +90,11 @@ _TASK_HANDLERS = {Capability.TASKS_MANAGE}
 # Same case handlers upload / edit / retire documents (docs/adr/0030).
 # finance_clerk keeps documents.view (invoice/receipt context) but cannot manage.
 _DOCUMENT_HANDLERS = {Capability.DOCUMENTS_MANAGE}
+# Contracts are engagement instruments with a client — the CLIENT-handler set
+# manages them (office_manager / lawyer / admin_clerk), NOT the case-handler set:
+# paralegal is view-only here, finance_clerk keeps contracts.view (billing
+# context) but cannot manage (docs/adr/0031).
+_CONTRACT_HANDLERS = {Capability.CONTRACTS_MANAGE}
 
 GROUP_CAPABILITIES: dict[str, set[str]] = {
     Group.OFFICE_MANAGER: {
@@ -109,6 +118,8 @@ GROUP_CAPABILITIES: dict[str, set[str]] = {
         Capability.TASKS_MANAGE,
         Capability.DOCUMENTS_VIEW,
         Capability.DOCUMENTS_MANAGE,
+        Capability.CONTRACTS_VIEW,
+        Capability.CONTRACTS_MANAGE,
     },
     Group.LAWYER: _ALL_STAFF
     | _CLIENT_HANDLERS
@@ -116,7 +127,8 @@ GROUP_CAPABILITIES: dict[str, set[str]] = {
     | _CASE_CONFIDENTIAL
     | _HEARING_HANDLERS
     | _TASK_HANDLERS
-    | _DOCUMENT_HANDLERS,
+    | _DOCUMENT_HANDLERS
+    | _CONTRACT_HANDLERS,
     Group.PARALEGAL: _ALL_STAFF
     | _CASE_HANDLERS
     | _HEARING_HANDLERS
@@ -127,7 +139,8 @@ GROUP_CAPABILITIES: dict[str, set[str]] = {
     | _CASE_HANDLERS
     | _HEARING_HANDLERS
     | _TASK_HANDLERS
-    | _DOCUMENT_HANDLERS,
+    | _DOCUMENT_HANDLERS
+    | _CONTRACT_HANDLERS,
     Group.FINANCE_CLERK: set(_ALL_STAFF),
 }
 # normalise to plain str

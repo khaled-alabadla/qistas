@@ -20,3 +20,19 @@ def with_current_choice(queryset: QuerySet, current_pk) -> QuerySet:
         return queryset
     extra = queryset.model._default_manager.filter(pk=current_pk)
     return queryset.distinct() | extra.distinct()
+
+
+def scoped_case_queryset(user) -> QuerySet:
+    """Cases the ``user`` may see, newest first — the shared picker queryset for
+    every "link this record to a case" form (documents, contracts, …)."""
+    from cases.models import Case
+
+    return Case.objects.for_user(user).select_related("client").order_by("-created_at")
+
+
+def scoped_client_queryset(user) -> QuerySet:
+    """Non-archived clients the ``user`` may see — the shared picker queryset for
+    every "link this record to a client" form."""
+    from clients.models import Client, ClientStatus
+
+    return Client.objects.for_user(user).exclude(status=ClientStatus.ARCHIVED)

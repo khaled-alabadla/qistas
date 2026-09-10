@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{{ contract.contract_number }} · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+{% translate "النظام" as sys_actor %}
+<nav class="mb-4 text-xs text-slate/70">
+  <a href="{% url 'contracts:list' %}" class="hover:text-navy">{% translate "العقود" %}</a>
+  <span aria-hidden="true"> ‹ </span>
+  <span class="font-medium text-ink">{% num contract.contract_number %}</span>
+</nav>
+
+<div class="mb-6 flex flex-wrap items-start justify-between gap-3">
+  <div>
+    <div class="flex flex-wrap items-center gap-2">
+      <h1 class="text-xl font-semibold text-ink">{{ contract.title }}</h1>
+      {% include "contracts/_badges.html" with c=contract %}
+    </div>
+    <p class="mt-1 text-sm text-slate/70">{% num contract.contract_number %} · {{ contract.get_contract_type_display }}</p>
+  </div>
+  {% if can_manage %}
+  <div class="flex flex-wrap gap-2">
+    <a href="{% url 'contracts:update' contract.pk %}" class="btn btn-secondary">{% translate "تعديل" %}</a>
+  </div>
+  {% endif %}
+</div>
+
+<div class="grid gap-6 lg:grid-cols-3">
+  <section class="lg:col-span-2 space-y-6">
+    <div class="rounded-xl border border-line bg-white p-5">
+      <dl class="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+        <div><dt class="text-slate/60">{% translate "الموكل" %}</dt><dd><a class="text-navy hover:underline" href="{% url 'clients:detail' contract.client_id %}">{{ contract.client.display_name }}</a></dd></div>
+        <div><dt class="text-slate/60">{% translate "القضية" %}</dt><dd>{% if contract.case %}<a class="text-navy hover:underline" href="{% url 'cases:detail' contract.case_id %}">{% num contract.case.case_number %} — {{ contract.case.title }}</a>{% else %}—{% endif %}</dd></div>
+        <div><dt class="text-slate/60">{% translate "تاريخ البدء" %}</dt><dd class="text-ink">{% datestr contract.start_date %}</dd></div>
+        <div><dt class="text-slate/60">{% translate "تاريخ الانتهاء" %}</dt><dd class="text-ink {% if contract.is_past_due %}text-danger font-medium{% endif %}">{% if contract.end_date %}{% datestr contract.end_date %}{% if contract.days_until_expiry is not None and contract.is_open %} · {% blocktranslate count d=contract.days_until_expiry %}يوم واحد متبقٍ{% plural %}{{ d }} يومًا{% endblocktranslate %}{% endif %}{% else %}{% translate "مفتوح" %}{% endif %}</dd></div>
+        <div><dt class="text-slate/60">{% translate "القيمة" %}</dt><dd class="text-ink">{% if contract.value is not None %}{% num contract.value 2 %} {{ contract.get_currency_display }}{% else %}—{% endif %}</dd></div>
+        <div><dt class="text-slate/60">{% translate "الحالة" %}</dt><dd class="text-ink">{{ contract.get_status_display }}</dd></div>
+      </dl>
+      {% if contract.description %}
+        <div class="mt-4"><dt class="text-slate/60 text-sm">{% translate "الوصف" %}</dt><dd class="mt-1 whitespace-pre-line text-sm text-ink">{{ contract.description }}</dd></div>
+      {% endif %}
+      {% if contract.notes %}
+        <div class="mt-4"><dt class="text-slate/60 text-sm">{% translate "ملاحظات" %}</dt><dd class="mt-1 whitespace-pre-line text-sm text-ink">{{ contract.notes }}</dd></div>
+      {% endif %}
+    </div>
+
+    <div class="rounded-xl border border-line bg-white p-5">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h3 class="text-base font-semibold text-ink">{% translate "المستندات" %}</h3>
+        {% if can_documents_manage %}
+          <a href="{% url 'documents:upload' %}?contract={{ contract.pk }}&client={{ contract.client_id }}" class="btn btn-secondary">{% translate "رفع مستند" %}</a>
+        {% endif %}
+      </div>
+      {% if can_documents %}
+        {% if documents %}
+          <ul class="space-y-2 text-sm">
+            {% for d in documents %}
+              <li class="flex items-center justify-between gap-2 rounded-lg border border-line px-3 py-2">
+                <a class="text-navy hover:underline" href="{% url 'documents:detail' d.pk %}">{{ d.name }}</a>
+                <span class="flex items-center gap-3 text-slate/60">
+                  <bdi dir="ltr">{{ d.size|filesizeformat }}</bdi>
+                  <a class="text-xs text-navy hover:underline" href="{% url 'documents:download' d.pk %}">{% translate "تنزيل" %}</a>
+                </span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-sm text-slate/50">{% translate "لا توجد مستندات مرتبطة بهذا العقد." %}</p>
+        {% endif %}
+      {% else %}
+        <p class="text-sm text-slate/50">{% translate "لا تملك صلاحية عرض المستندات." %}</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <aside class="space-y-4">
+    {% if can_manage %}
+    <div class="rounded-xl border border-line bg-white p-5">
+      <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "تغيير الحالة" %}</h3>
+      <form method="post" action="{% url 'contracts:status' contract.pk %}" class="space-y-2">
+        {% csrf_token %}
+        {% include "components/_form_field.html" with field=status_form.status %}
+        <button class="btn btn-primary w-full">{% translate "تحديث" %}</button>
+      </form>
+      <p class="mt-2 text-xs text-slate/50">{% translate "«ملغى» حالة نهائية لا رجعة عنها." %}</p>
+    </div>
+    {% endif %}
+    <p class="text-xs text-slate/50">
+      {% translate "أنشأه" %}: {% if contract.created_by %}{{ contract.created_by.get_full_name|default:contract.created_by.email }}{% else %}{{ sys_actor }}{% endif %} ·
+      {% datestr contract.created_at "SHORT_DATETIME_FORMAT" %}
+    </p>
+    <p class="text-xs text-slate/40">{% translate "العقد سجل قانوني — لا يُحذف؛ يُلغى بتغيير الحالة." %}</p>
+  </aside>
+</div>
+{% endblock %}

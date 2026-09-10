@@ -98,6 +98,30 @@
       {% endif %}
     </div>
     {% endif %}
+
+    {% if can_contracts %}
+    <div class="rounded-xl border border-line bg-white p-5">
+      <div class="mb-3 flex items-center justify-between">
+        <h3 class="text-base font-semibold text-ink">{% translate "العقود" %}</h3>
+        <span class="flex items-center gap-3 text-xs">
+          {% if can_contracts_manage %}<a href="{% url 'contracts:create' %}?client={{ client.pk }}" class="text-navy hover:underline">{% translate "عقد جديد" %}</a>{% endif %}
+          <a href="{% url 'contracts:list' %}?client={{ client.pk }}" class="text-navy hover:underline">{% translate "عرض الكل" %}</a>
+        </span>
+      </div>
+      {% if client_contracts %}
+        <ul class="divide-y divide-line text-sm">
+          {% for c in client_contracts %}
+            <li class="flex items-center justify-between gap-2 py-2">
+              <a class="truncate text-navy hover:underline" href="{% url 'contracts:detail' c.pk %}">{% num c.contract_number %} — {{ c.title }}</a>
+              <span class="shrink-0">{% include "contracts/_badges.html" with c=c %}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-sm text-slate/50">{% translate "لا توجد عقود لهذا الموكل." %}</p>
+      {% endif %}
+    </div>
+    {% endif %}
   </section>
 
   <aside class="space-y-6">

@@ -20,7 +20,7 @@ from cases.services import record_case_event
 from documents.models import Document
 from documents.validators import ValidatedUpload, validate_upload
 
-METADATA_EDITABLE = ("name", "document_type", "description", "case", "client")
+METADATA_EDITABLE = ("name", "document_type", "description", "case", "client", "contract")
 
 
 def _audit_meta(doc: Document) -> dict:
@@ -51,6 +51,7 @@ def create_document(
         description=data.get("description", ""),
         case=data.get("case"),
         client=data.get("client"),
+        contract=data.get("contract"),
         content_type=validated.content_type,
         size=validated.size,
         sha256=validated.sha256,
@@ -83,7 +84,7 @@ def create_document(
 def update_document(*, actor, document: Document, data: dict, request=None) -> Document:
     """Edit metadata only — the file is immutable in Phase 6."""
     data = {k: v for k, v in data.items() if k in METADATA_EDITABLE}
-    stored = Document.objects.select_related("case", "client").get(pk=document.pk)
+    stored = Document.objects.select_related("case", "client", "contract").get(pk=document.pk)
     changed = [f for f, v in data.items() if getattr(stored, f) != v]
     if not changed:
         return document

@@ -10,6 +10,7 @@
 
   {% if has_widgets %}
   <div class="grid gap-6 lg:grid-cols-3">
+    {% if show_tasks_widget %}
     {# مهامي #}
     <section class="rounded-xl border border-line bg-white p-5">
       <div class="mb-3 flex items-center justify-between">
@@ -71,6 +72,29 @@
         <p class="text-sm text-slate/50">{% translate "لا مواعيد نهائية خلال 30 يومًا." %}</p>
       {% endif %}
     </section>
+    {% endif %}
+
+    {% if show_contracts_widget %}
+    {# عقود قريبة من الانتهاء #}
+    <section class="rounded-xl border border-line bg-white p-5">
+      <div class="mb-3 flex items-center justify-between">
+        <h2 class="text-base font-semibold text-ink">{% translate "عقود قريبة من الانتهاء" %} <span class="text-slate/60">({% num expiring_contracts_count %})</span></h2>
+        <a href="{% url 'contracts:list' %}?expiring=on" class="text-xs text-navy hover:underline">{% translate "الكل" %}</a>
+      </div>
+      {% if expiring_contracts %}
+        <ul class="space-y-2 text-sm">
+          {% for c in expiring_contracts %}
+            <li class="flex items-center justify-between gap-2 border-b border-line pb-2 last:border-0">
+              <a class="truncate text-navy hover:underline" href="{% url 'contracts:detail' c.pk %}">{% num c.contract_number %} — {{ c.title }}</a>
+              <span class="shrink-0 text-xs {% if c.is_past_due %}text-danger font-medium{% else %}text-slate/60{% endif %}">{% datestr c.end_date "SHORT_DATE_FORMAT" %}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-sm text-slate/50">{% translate "لا عقود تنتهي خلال 30 يومًا." %}</p>
+      {% endif %}
+    </section>
+    {% endif %}
   </div>
 
   <p class="mt-6 text-xs text-slate/50">

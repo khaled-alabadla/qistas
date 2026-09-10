@@ -34,12 +34,15 @@ def _hearing_event(h) -> dict:
 def calendar_events(user, start, end) -> list[dict]:
     """All calendar events for ``user`` in ``[start, end)`` (aware datetimes).
 
-    Phase 4 source = hearings; Phase 5 adds tasks + deadlines (docs/adr/0028,
-    0029). Later phases extend by appending another source here.
+    Phase 4 source = hearings; Phase 5 adds tasks + deadlines; Phase 7 adds
+    contract expirations (docs/adr/0028, 0029, 0031). Later phases extend by
+    appending another source here.
     """
-    from tasks.selectors import calendar_items
+    from contracts.selectors import calendar_items as contract_calendar_items
+    from tasks.selectors import calendar_items as task_calendar_items
 
     events = [_hearing_event(h) for h in calendar_hearings(user, start, end)]
-    events += calendar_items(user, start, end)
+    events += task_calendar_items(user, start, end)
+    events += contract_calendar_items(user, start, end)
     events.sort(key=lambda e: e["start"])
     return events

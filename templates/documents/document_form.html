@@ -31,6 +31,7 @@
       {% include "components/_form_field.html" with field=form.case %}
       {% include "components/_form_field.html" with field=form.client %}
     </div>
+    {% include "components/_form_field.html" with field=form.contract %}
     <div class="flex gap-2">
       <button type="submit" class="btn btn-primary">{% if is_create %}{% translate "رفع" %}{% else %}{% translate "حفظ" %}{% endif %}</button>
       <a href="{% if document %}{% url 'documents:detail' document.pk %}{% else %}{% url 'documents:list' %}{% endif %}" class="btn btn-ghost">{% translate "إلغاء" %}</a>

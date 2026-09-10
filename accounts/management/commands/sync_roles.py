@@ -64,6 +64,10 @@ _TASK_MANAGE = {
 _DOCUMENT_VIEW = {"documents.view_document"}
 _DOCUMENT_MANAGE = {*_DOCUMENT_VIEW, "documents.add_document", "documents.change_document"}
 
+# Phase 7 — contracts (no delete codename — legally significant, never deleted).
+_CONTRACT_VIEW = {"contracts.view_contract"}
+_CONTRACT_MANAGE = {*_CONTRACT_VIEW, "contracts.add_contract", "contracts.change_contract"}
+
 ROLE_PERMISSIONS: dict[str, set[str]] = {
     GroupChoice.OFFICE_MANAGER: {
         "accounts.view_user",
@@ -82,6 +86,7 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
         *_HEARING_MANAGE,
         *_TASK_MANAGE,
         *_DOCUMENT_MANAGE,
+        *_CONTRACT_MANAGE,
     },
     GroupChoice.LAWYER: (
         _CLIENT_MANAGE
@@ -91,6 +96,7 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
         | _HEARING_MANAGE
         | _TASK_MANAGE
         | _DOCUMENT_MANAGE
+        | _CONTRACT_MANAGE
     ),
     GroupChoice.PARALEGAL: (
         _CLIENT_VIEW
@@ -99,6 +105,7 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
         | _HEARING_MANAGE
         | _TASK_MANAGE
         | _DOCUMENT_MANAGE
+        | _CONTRACT_VIEW
     ),
     GroupChoice.ADMIN_CLERK: (
         _CLIENT_MANAGE
@@ -107,9 +114,10 @@ ROLE_PERMISSIONS: dict[str, set[str]] = {
         | _HEARING_MANAGE
         | _TASK_MANAGE
         | _DOCUMENT_MANAGE
+        | _CONTRACT_MANAGE
     ),
     GroupChoice.FINANCE_CLERK: (
-        _CLIENT_VIEW | _CASE_VIEW | _HEARING_VIEW | _TASK_VIEW | _DOCUMENT_VIEW
+        _CLIENT_VIEW | _CASE_VIEW | _HEARING_VIEW | _TASK_VIEW | _DOCUMENT_VIEW | _CONTRACT_VIEW
     ),
 }
 

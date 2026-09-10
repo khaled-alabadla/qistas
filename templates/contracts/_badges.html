@@ -1,0 +1,7 @@
+{% load i18n qistas %}{% comment %}param: c (a Contract){% endcomment %}
+{% if c.status == 'active' %}{% badge c.get_status_display "success" %}
+{% elif c.status == 'draft' %}{% badge c.get_status_display "neutral" %}
+{% elif c.status == 'expired' %}{% badge c.get_status_display "warning" %}
+{% else %}{% badge c.get_status_display "neutral" %}{% endif %}
+{% if c.is_past_due %}{% translate "تجاوز تاريخ الانتهاء" as lbl_pd %}{% badge lbl_pd "danger" %}
+{% elif c.is_expiring_soon %}{% translate "قريب من الانتهاء" as lbl_es %}{% badge lbl_es "warning" %}{% endif %}

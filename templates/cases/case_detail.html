@@ -339,6 +339,45 @@
     {% endif %}
   </div>
 
+{% elif tab == 'contracts' %}
+  <div class="space-y-4">
+    {% if can_contracts_manage %}
+    <div class="flex flex-wrap gap-2">
+      <a href="{% url 'contracts:create' %}?case={{ case.pk }}&client={{ case.client_id }}" class="btn btn-secondary">{% translate "عقد جديد" %}</a>
+    </div>
+    {% endif %}
+    {% if can_contracts %}
+      {% if case_contracts %}
+        <div class="overflow-x-auto rounded-lg border border-line">
+          <table class="w-full text-start text-sm">
+            <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+              <tr>
+                <th class="px-3 py-2 text-start font-medium">{% translate "رقم العقد" %}</th>
+                <th class="px-3 py-2 text-start font-medium">{% translate "العنوان" %}</th>
+                <th class="px-3 py-2 text-start font-medium">{% translate "الانتهاء" %}</th>
+                <th class="px-3 py-2 text-start font-medium">{% translate "الحالة" %}</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-line">
+              {% for c in case_contracts %}
+                <tr>
+                  <td class="px-3 py-2"><a class="text-navy hover:underline" href="{% url 'contracts:detail' c.pk %}">{% num c.contract_number %}</a></td>
+                  <td class="px-3 py-2">{{ c.title }}</td>
+                  <td class="px-3 py-2 whitespace-nowrap {% if c.is_past_due %}text-danger font-medium{% endif %}">{% if c.end_date %}{% datestr c.end_date %}{% else %}—{% endif %}</td>
+                  <td class="px-3 py-2">{% include "contracts/_badges.html" with c=c %}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-sm text-slate/50">{% translate "لا توجد عقود لهذه القضية." %}</p>
+      {% endif %}
+    {% else %}
+      <p class="text-sm text-slate/50">{% translate "لا تملك صلاحية عرض العقود." %}</p>
+    {% endif %}
+  </div>
+
 {% elif tab == 'notes' or tab == 'correspondence' %}
   {% if tab == 'notes' %}{% with items=notes kind='general' %}{% include "cases/_notes.html" %}{% endwith %}
   {% else %}{% with items=correspondence kind='correspondence' %}{% include "cases/_notes.html" %}{% endwith %}{% endif %}

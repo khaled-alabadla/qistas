@@ -39,6 +39,7 @@
       <div class="sm:col-span-2"><dt class="text-slate/60">{% translate "بصمة SHA-256" %}</dt><dd class="break-all text-xs text-slate/70"><bdi dir="ltr">{{ document.sha256 }}</bdi></dd></div>
       <div><dt class="text-slate/60">{% translate "القضية" %}</dt><dd>{% if document.case %}<a class="text-navy hover:underline" href="{% url 'cases:detail' document.case_id %}">{% num document.case.case_number %} — {{ document.case.title }}</a>{% else %}—{% endif %}</dd></div>
       <div><dt class="text-slate/60">{% translate "الموكل" %}</dt><dd>{% if document.client %}<a class="text-navy hover:underline" href="{% url 'clients:detail' document.client_id %}">{{ document.client.display_name }}</a>{% else %}—{% endif %}</dd></div>
+      <div><dt class="text-slate/60">{% translate "العقد" %}</dt><dd>{% if document.contract %}<a class="text-navy hover:underline" href="{% url 'contracts:detail' document.contract_id %}">{% num document.contract.contract_number %} — {{ document.contract.title }}</a>{% else %}—{% endif %}</dd></div>
     </dl>
     {% if document.description %}
       <div class="mt-4"><dt class="text-slate/60 text-sm">{% translate "الوصف" %}</dt><dd class="mt-1 whitespace-pre-line text-sm text-ink">{{ document.description }}</dd></div>

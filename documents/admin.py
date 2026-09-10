@@ -19,7 +19,7 @@ class DocumentAdmin(admin.ModelAdmin):
     )
     list_filter = ("document_type",)
     search_fields = ("name", "description", "original_filename", "sha256")
-    autocomplete_fields = ("case", "client")
+    autocomplete_fields = ("case", "client", "contract")
     readonly_fields = (
         "file",
         "original_filename",

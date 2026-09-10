@@ -76,6 +76,7 @@ class ClientDetailView(CapabilityRequiredMixin, LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        from contracts.selectors import client_contracts
         from documents.selectors import client_documents
 
         user = self.request.user
@@ -84,6 +85,9 @@ class ClientDetailView(CapabilityRequiredMixin, LoginRequiredMixin, DetailView):
         ctx["can_documents"] = can(user, Capability.DOCUMENTS_VIEW)
         ctx["can_documents_manage"] = can(user, Capability.DOCUMENTS_MANAGE)
         ctx["client_documents"] = client_documents(self.object)[:8]
+        ctx["can_contracts"] = can(user, Capability.CONTRACTS_VIEW)
+        ctx["can_contracts_manage"] = can(user, Capability.CONTRACTS_MANAGE)
+        ctx["client_contracts"] = client_contracts(self.object)[:8]
         ctx["activity"] = AuditLog.objects.filter(
             entity_type="clients.client", entity_id=str(self.object.pk)
         ).select_related("actor")[:20]
@@ -92,7 +96,6 @@ class ClientDetailView(CapabilityRequiredMixin, LoginRequiredMixin, DetailView):
         # Profile tabs whose modules do not exist yet (spec §21).
         ctx["disabled_tabs"] = [
             _("القضايا"),
-            _("العقود"),
             _("الفواتير"),
             _("المدفوعات"),
         ]
