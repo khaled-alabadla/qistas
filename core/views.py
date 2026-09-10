@@ -24,12 +24,21 @@ class LandingView(TemplateView):
         from tasks.selectors import my_open_tasks, overdue_tasks, upcoming_deadlines
 
         user = self.request.user
-        if can(user, Capability.TASKS_VIEW):
+        ctx["show_tasks_widget"] = can(user, Capability.TASKS_VIEW)
+        if ctx["show_tasks_widget"]:
             ctx["my_tasks"] = list(my_open_tasks(user)[:8])
             overdue = overdue_tasks(user)
             ctx["overdue_tasks"] = list(overdue[:8])
             ctx["overdue_count"] = overdue.count()
             ctx["upcoming_deadlines"] = list(upcoming_deadlines(user, days=30)[:8])
+            ctx["has_widgets"] = True
+        ctx["show_contracts_widget"] = can(user, Capability.CONTRACTS_VIEW)
+        if ctx["show_contracts_widget"]:
+            from contracts.selectors import expiring_contracts
+
+            expiring = expiring_contracts(user, days=30)
+            ctx["expiring_contracts"] = list(expiring[:8])
+            ctx["expiring_contracts_count"] = expiring.count()
             ctx["has_widgets"] = True
         return ctx
 

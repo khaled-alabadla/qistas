@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load i18n qistas %}
+{% block title %}{% translate "العقود" %} · {{ APP_NAME }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <h1 class="text-xl font-semibold text-ink">{% translate "العقود" %}</h1>
+    <p class="text-sm text-slate/70">
+      {% blocktranslate count n=total_count %}عقد واحد{% plural %}{{ n }} عقود{% endblocktranslate %}
+    </p>
+  </div>
+  {% if can_manage %}
+    <a href="{% url 'contracts:create' %}" class="btn btn-primary">{% translate "عقد جديد" %}</a>
+  {% endif %}
+</div>
+
+<form method="get" class="mb-4 grid gap-3 rounded-xl border border-line bg-white p-4 sm:grid-cols-4">
+  <div class="sm:col-span-2">{% include "components/_form_field.html" with field=filter_form.q %}</div>
+  <div>{% include "components/_form_field.html" with field=filter_form.status %}</div>
+  <div>{% include "components/_form_field.html" with field=filter_form.contract_type %}</div>
+  <div class="flex items-center gap-2 pt-6">{{ filter_form.expiring }}<label for="{{ filter_form.expiring.id_for_label }}" class="text-sm text-ink">{{ filter_form.expiring.label }}</label></div>
+  <div class="sm:col-span-4 flex gap-2">
+    <button type="submit" class="btn btn-primary">{% translate "تطبيق" %}</button>
+    <a href="{% url 'contracts:list' %}" class="btn btn-ghost">{% translate "مسح" %}</a>
+  </div>
+</form>
+
+{% if contracts %}
+<div class="overflow-x-auto rounded-lg border border-line">
+  <table class="w-full text-start text-sm">
+    <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+      <tr>
+        <th class="px-3 py-2 text-start font-medium">{% translate "رقم العقد" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "العنوان" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "الموكل" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "النوع" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "الانتهاء" %}</th>
+        <th class="px-3 py-2 text-start font-medium">{% translate "الحالة" %}</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-line">
+      {% for c in contracts %}
+        <tr class="hover:bg-mist/50">
+          <td class="px-3 py-2"><a class="font-medium text-navy hover:underline" href="{% url 'contracts:detail' c.pk %}">{% num c.contract_number %}</a></td>
+          <td class="px-3 py-2">{{ c.title }}</td>
+          <td class="px-3 py-2"><a class="text-navy hover:underline" href="{% url 'clients:detail' c.client_id %}">{{ c.client.display_name }}</a></td>
+          <td class="px-3 py-2">{{ c.get_contract_type_display }}</td>
+          <td class="px-3 py-2 whitespace-nowrap {% if c.is_past_due %}text-danger font-medium{% endif %}">{% if c.end_date %}{% datestr c.end_date %}{% else %}—{% endif %}</td>
+          <td class="px-3 py-2">{% include "contracts/_badges.html" with c=c %}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "components/pagination.html" with page_obj=page_obj querystring=querystring %}
+{% else %}
+  {% translate "لا توجد عقود مطابقة" as es_title %}
+  {% translate "جرّب تعديل معايير البحث، أو أضف عقدًا جديدًا." as es_msg %}
+  {% if can_manage %}
+    {% url 'contracts:create' as create_url %}{% translate "عقد جديد" as create_label %}
+    {% empty_state es_title es_msg action_url=create_url action_label=create_label %}
+  {% else %}{% empty_state es_title es_msg %}{% endif %}
+{% endif %}
+{% endblock %}

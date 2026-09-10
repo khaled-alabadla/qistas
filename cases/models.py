@@ -361,6 +361,9 @@ class CaseEventType(models.TextChoices):
     # Documents (Phase 6) — written by documents.services via record_case_event.
     DOCUMENT_ADDED = "document_added", _("إضافة مستند")
     DOCUMENT_REMOVED = "document_removed", _("سحب مستند")
+    # Contracts (Phase 7) — written by contracts.services via record_case_event.
+    CONTRACT_ADDED = "contract_added", _("إضافة عقد")
+    CONTRACT_STATUS_CHANGED = "contract_status_changed", _("تغيير حالة عقد")
 
 
 class _AppendOnlyQuerySet(models.QuerySet):

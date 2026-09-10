@@ -93,6 +93,14 @@ class Document(TimeStampedModel):
         related_name="documents",
         verbose_name=_("الموكل"),
     )
+    contract = models.ForeignKey(
+        "contracts.Contract",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="documents",
+        verbose_name=_("العقد"),
+    )
 
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -132,6 +140,7 @@ class Document(TimeStampedModel):
             models.Index(fields=["document_type"]),
             models.Index(fields=["case"]),
             models.Index(fields=["client"]),
+            models.Index(fields=["contract"]),
             models.Index(fields=["deleted_at"]),
             models.Index(fields=["sha256"]),
         ]

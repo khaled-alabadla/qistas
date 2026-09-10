@@ -23,6 +23,7 @@ from django.views.generic import DetailView, FormView, ListView
 
 from cases.models import Case
 from clients.models import Client
+from contracts.models import Contract
 from core.permissions.capabilities import Capability, can
 from core.permissions.decorators import require_capability
 from core.permissions.mixins import CapabilityRequiredMixin
@@ -60,6 +61,7 @@ class DocumentListView(CapabilityRequiredMixin, LoginRequiredMixin, ListView):
             document_type=data.get("document_type", ""),
             case_id=self.request.GET.get("case", ""),
             client_id=self.request.GET.get("client", ""),
+            contract_id=self.request.GET.get("contract", ""),
         )
         assert_scoped(qs)
         return qs
@@ -102,19 +104,20 @@ class DocumentUploadView(CapabilityRequiredMixin, LoginRequiredMixin, FormView):
     template_name = "documents/document_form.html"
 
     def _prefill(self):
+        user = self.request.user
         case_id = self.request.GET.get("case")
         client_id = self.request.GET.get("client")
+        contract_id = self.request.GET.get("contract")
         initial = {}
-        if (
-            str(case_id).isdigit()
-            and Case.objects.for_user(self.request.user).filter(pk=case_id).exists()
-        ):
+        if str(case_id).isdigit() and Case.objects.for_user(user).filter(pk=case_id).exists():
             initial["case"] = case_id
-        if (
-            str(client_id).isdigit()
-            and Client.objects.for_user(self.request.user).filter(pk=client_id).exists()
-        ):
+        if str(client_id).isdigit() and Client.objects.for_user(user).filter(pk=client_id).exists():
             initial["client"] = client_id
+        if (
+            str(contract_id).isdigit()
+            and Contract.objects.for_user(user).filter(pk=contract_id).exists()
+        ):
+            initial["contract"] = contract_id
         return initial
 
     def get_form_kwargs(self):
@@ -136,6 +139,7 @@ class DocumentUploadView(CapabilityRequiredMixin, LoginRequiredMixin, FormView):
                 "description": cd.get("description", ""),
                 "case": cd.get("case"),
                 "client": cd.get("client"),
+                "contract": cd.get("contract"),
             },
             request=self.request,
         )

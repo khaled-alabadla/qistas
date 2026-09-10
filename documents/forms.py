@@ -6,33 +6,34 @@ from django import forms
 from django.utils.translation import gettext_lazy as _
 
 from cases.models import Case
-from clients.models import Client, ClientStatus
-from core.forms import with_current_choice
+from clients.models import Client
+from contracts.models import Contract
+from core.forms import scoped_case_queryset, scoped_client_queryset, with_current_choice
 from documents.models import Document, DocumentCategory
 from documents.validators import allowed_extensions, validate_upload
 
 
-def _scoped_cases(user):
-    return Case.objects.for_user(user).select_related("client").order_by("-created_at")
-
-
-def _scoped_clients(user):
-    return Client.objects.for_user(user).exclude(status=ClientStatus.ARCHIVED)
+def _scoped_contracts(user):
+    return Contract.objects.for_user(user).select_related("client").order_by("-created_at")
 
 
 class _DocLinksMixin:
-    """Wire the case/client pickers, scoped to the current user."""
+    """Wire the case/client/contract pickers, scoped to the current user."""
 
     def _wire_links(self, user, instance=None):
-        case_qs = _scoped_cases(user)
-        client_qs = _scoped_clients(user)
+        case_qs = scoped_case_queryset(user)
+        client_qs = scoped_client_queryset(user)
+        contract_qs = _scoped_contracts(user)
         if instance is not None:
             case_qs = with_current_choice(case_qs, getattr(instance, "case_id", None))
             client_qs = with_current_choice(client_qs, getattr(instance, "client_id", None))
+            contract_qs = with_current_choice(contract_qs, getattr(instance, "contract_id", None))
         self.fields["case"].queryset = case_qs
         self.fields["client"].queryset = client_qs
+        self.fields["contract"].queryset = contract_qs
         self.fields["case"].required = False
         self.fields["client"].required = False
+        self.fields["contract"].required = False
 
 
 class DocumentUploadForm(_DocLinksMixin, forms.Form):
@@ -56,6 +57,12 @@ class DocumentUploadForm(_DocLinksMixin, forms.Form):
         required=False,
         empty_label=_("— لا شيء —"),
     )
+    contract = forms.ModelChoiceField(
+        label=_("العقد"),
+        queryset=Contract.objects.none(),
+        required=False,
+        empty_label=_("— لا شيء —"),
+    )
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -76,7 +83,7 @@ class DocumentEditForm(_DocLinksMixin, forms.ModelForm):
 
     class Meta:
         model = Document
-        fields = ["name", "document_type", "description", "case", "client"]
+        fields = ["name", "document_type", "description", "case", "client", "contract"]
         widgets = {"description": forms.Textarea(attrs={"rows": 3})}
 
     def __init__(self, *args, user=None, **kwargs):

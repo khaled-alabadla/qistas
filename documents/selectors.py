@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from documents.models import Document, DocumentCategory
 
-_SELECT = ("case", "client", "uploaded_by")
+_SELECT = ("case", "client", "contract", "uploaded_by")
 
 
 def document_list(
@@ -14,6 +14,7 @@ def document_list(
     document_type: str = "",
     case_id: str = "",
     client_id: str = "",
+    contract_id: str = "",
     include_retired: bool = False,
 ):
     qs = Document.objects.for_user(user).select_related(*_SELECT)
@@ -27,6 +28,8 @@ def document_list(
         qs = qs.filter(case_id=case_id)
     if str(client_id).isdigit():
         qs = qs.filter(client_id=client_id)
+    if str(contract_id).isdigit():
+        qs = qs.filter(contract_id=contract_id)
     return qs
 
 
@@ -36,3 +39,7 @@ def case_documents(case):
 
 def client_documents(client):
     return client.documents.filter(deleted_at__isnull=True).select_related("uploaded_by", "case")
+
+
+def contract_documents(contract):
+    return contract.documents.filter(deleted_at__isnull=True).select_related("uploaded_by", "case")

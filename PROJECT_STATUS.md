@@ -4,10 +4,10 @@
 > `COMPLETED ≠ APPROVED` — a phase starts only after the user says
 > **APPROVE PHASE N** / **ابدأ المرحلة N**.
 
-Current Phase: **6 — Documents** (Phases 1–5 approved + merged to master)
+Current Phase: **7 — Contracts** (Phases 1–6 approved + merged to master)
 
 Planning artifacts: `QISTAS_PHASE_0_ANALYSIS.md` · `QISTAS_GRILL_REVIEW.md` ·
-`docs/architecture.md` · `docs/adr/0001`–`0030` · `docs/PHASE_1_PLAN.md`
+`docs/architecture.md` · `docs/adr/0001`–`0031` · `docs/PHASE_1_PLAN.md`
 
 ---
 
@@ -243,8 +243,8 @@ Branch: `phase/5-tasks-deadlines` — one commit `phase(5): complete tasks and d
 pushed, **not merged**.
 
 ## Phase 6 — Documents
-Status: **COMPLETE (technical)** — see `docs/PHASE_6_REPORT.md`
-Approval: **PENDING**
+Status: **APPROVED + merged to `master`** (PR #5, merge commit `46dc56e`) — see `docs/PHASE_6_REPORT.md`
+Approval: **APPROVED** ("APPROVE PHASE 6")
 Design: `docs/adr/0030-documents-storage-and-access.md`
 
 `documents` app: **`Document`** (name / `document_type` `DocumentCategory` /
@@ -300,8 +300,108 @@ Branch: `phase/6-documents` — one commit `phase(6): complete documents`,
 pushed, **not merged**.
 
 ## Phase 7 — Contracts
-Status: NOT STARTED
-Approval: N/A
+Status: **COMPLETE (technical)** — see `docs/PHASE_7_REPORT.md`
+Approval: **PENDING**
+Design: `docs/adr/0031-contracts.md`
+
+`contracts` app: **`Contract`** — `contract_number` `CT-YYYY-NNNN` (transaction-safe,
+ADR-0021, `editable=False`), `title`, `contract_type` (`ContractType` `TextChoices`:
+retainer / engagement / services / consulting / lease / employment / nda /
+settlement / other), FK `client` (**PROTECT, required**), FK `case` (SET_NULL,
+optional — §97), `start_date` (required) / `end_date` (nullable — open-ended
+retainers), `value` `DecimalField(14,2)` (nullable) + `currency` (`Currency`
+`TextChoices` ILS/JOD/USD/EUR — **a single stored amount, no arithmetic**;
+Finance/invoicing is Phase 8), `status` (`ContractStatus` exactly per §37:
+draft `مسودة` / active `ساري` / expired `منتهي` / cancelled `ملغى`),
+`description` / `notes`. `TimeStampedModel` + `AuthoredModel`.
+**No soft-delete** — legally significant (ADR-0022): `default_permissions =
+("add","change","view")`, admin delete off, no `delete` codename; **"cancel" is a
+terminal status**. `CheckConstraint`s: `value` null-or-`>=0`, `end_date`
+null-or-`>= start_date` (mirrored in `clean()`). 6 indexes.
+
+**Expiration** (ADR-0006): `منتهي` is a genuine status flipped by the **idempotent
+`expire_contracts` management command** (`services.expire_due_contracts`) — not
+auto-stored. `is_past_due` / `is_expiring_soon` / `days_until_expiry` properties +
+`ContractQuerySet.expiring_soon(within_days=30)` / `.past_due()` close the gap in
+the UI meanwhile. Manual transitions go through `change_contract_status`
+(draft↔active↔expired reachable; `cancelled` terminal — a further transition
+raises `ValidationError`, surfaced as a form message). `status` is not on the edit
+form and not in the service's `EDITABLE` set.
+
+All writes through `contracts.services` (freshly-fetched diff — bug-027;
+`AuditLog` **metadata only** — `contract_number`/`title`/`contract_type`/`status`
+or changed field names, never `notes`/`description`/`value` bodies, ADR-0009;
+`CaseEvent` `CONTRACT_ADDED` / `CONTRACT_STATUS_CHANGED` when case-linked, not on
+metadata edits). `contracts.selectors` (list / search / type+status filters /
+"expiring soon" toggle / pagination — default branch hides closed rows, bug-055;
+`case_contracts`, `client_contracts`, `expiring_contracts`, `calendar_items`).
+
+**Integration:** `documents.Document` gains a nullable `contract` FK (SET_NULL,
+`documents/0003`) — third scoped picker in upload/edit forms, `contract_documents`
+selector + `contract_id` list filter, contract detail lists its documents.
+`agenda.selectors.calendar_events` merges contract expirations (§33). `core:landing`
+gets a **عقود قريبة من الانتهاء** widget (next 30 days) for `contracts.view`
+holders. Case workspace **العقود** tab is real; client profile gets a contracts
+card. Nav: **المستندات والعقود → العقود** is now a live link (+ **عقد جديد**).
+
+Capabilities `contracts.view` (**all staff** incl. finance_clerk — billing context,
+§21) / `contracts.manage` (**client-handler set** — office_manager, lawyer,
+admin_clerk; **paralegal is view-only**, unlike tasks/documents). `sync_roles`
+extended (`contracts.{view,add,change}_contract`, no `delete`). 3 `CONTRACT_*`
+`AuditAction`; 2 `CONTRACT_*` `CaseEventType` (`cases/0007`). `contracts/0002`
+trigram GIN (`TRGM_COLUMNS == SEARCH_FIELDS`; `notes`/`value` excluded — §4).
+`seed_demo_contracts`. Shared `core.forms.scoped_case_queryset` /
+`scoped_client_queryset` (extracted from `documents.forms`, code-review finding).
+
+**Verification:**
+- Tests: **439 pass / 0 fail / 3 skipped** (`@pytest.mark.postgres`) on SQLite —
+  `contracts` 51 (models / services / selectors / views / permissions / smoke),
+  incl. IDOR / anon / unauthorized / URL-tampering / mass-assignment
+  (`contract_number` server-side, `status` not editable) / CSRF / capability
+  matrix (paralegal view-only) / status-transition guard + `cancelled` terminal /
+  `expire_due_contracts` idempotency + scope / agenda + landing + case-tab +
+  client-card integration / `TRGM_COLUMNS == SEARCH_FIELDS` / archived-client edit
+  picker / command smoke.
+- `ruff` / `ruff format --check` / `pip-audit` (no known vulnerabilities) /
+  `makemigrations --check` / `manage.py check` — all clean.
+- `manage.py check --deploy`: the 5 warnings (HSTS / SSL-redirect / SECRET_KEY /
+  secure cookies) are **test-settings only** — `config/settings/prod.py` sets all
+  of them; a real prod-settings run needs `DJANGO_SECRET_KEY` + PostgreSQL (see
+  deferred).
+- `/code-review` (high): 5 findings — 1 real bug fixed (`seed_demo_contracts` not
+  `@transaction.atomic` → `select_for_update` outside a transaction on PG,
+  buglog **bug-076**), 1 latent exposure fixed (landing task-widget sections now
+  guarded independently of the contracts widget), 3 DRY cleanups applied (shared
+  scoped-queryset helpers; redundant status guard removed). Self **security
+  review — PASS** (no HIGH/MEDIUM). Self **performance / N+1 review — PASS**
+  (all list/detail/calendar paths `select_related`; pagination present; no N+1
+  introduced; the repeated `can()` per-request pattern is pre-existing and in
+  scope for the Phase 12 N+1 sweep, ADR-0010).
+
+**DEFERRED / UNVERIFIED — same Docker/PostgreSQL environment blocker as Phases 1–6:**
+1. Full suite on **PostgreSQL 16** (SQLite only).
+2. `contracts/migrations/0002_contract_search_indexes` (trigram GIN,
+   `TRGM_COLUMNS == SEARCH_FIELDS`) — never executed (PG-only, guarded).
+3. The `@pytest.mark.postgres` tests.
+4. `docker compose` full-stack smoke (equivalent verified via the Django test client).
+5. `compilemessages` (Docker-only; harmless).
+6. `manage.py check --deploy` against **prod settings** (needs `DJANGO_SECRET_KEY`
+   env + PostgreSQL). `prod.py` sets HSTS / SSL-redirect / secure cookies /
+   env-supplied `SECRET_KEY`.
+
+**Known limitations:**
+- Contract metadata (title / dates / value) stays editable in any status — ADR-0031
+  freezes only `status` (guarded transition) and the delete path, not the whole
+  record. A future "freeze on `expired` / `cancelled`" is a small service-layer
+  tightening if the office asks; it is not an ADR-0012-style requirement (that is
+  invoices/finance).
+- Contract reminders / "expiring" notifications are **Phase 11** (a scan over
+  `expiring_soon()`); the landing widget + calendar are the Phase 7 surface.
+- `value` establishes `Decimal` + `currency` with **no** finance logic — no
+  totals, invoicing, or fee roll-ups (Phase 8, additive).
+
+Branch: `phase/7-contracts` — one commit `phase(7): complete contracts`,
+pushed, **not merged**. Parent: `46dc56e` (Phase 6 merge, PR #5).
 
 ## Phase 8 — Finance
 Status: NOT STARTED

@@ -66,6 +66,10 @@ class AuditAction(models.TextChoices):
     DOCUMENT_UPDATED = "document.updated", _("تعديل بيانات مستند")
     DOCUMENT_DOWNLOADED = "document.downloaded", _("تنزيل مستند")
     DOCUMENT_RETIRED = "document.retired", _("سحب مستند")
+    # Contracts (Phase 7)
+    CONTRACT_CREATED = "contract.created", _("إنشاء عقد")
+    CONTRACT_UPDATED = "contract.updated", _("تعديل بيانات عقد")
+    CONTRACT_STATUS_CHANGED = "contract.status_changed", _("تغيير حالة عقد")
     OTHER = "other", _("أخرى")
 
 

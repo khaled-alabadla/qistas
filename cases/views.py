@@ -31,6 +31,7 @@ from cases.forms import (
 )
 from cases.models import Case, CaseConfidential, CaseStatus, NoteKind
 from cases.selectors import case_list, case_parties
+from contracts.selectors import case_contracts
 from core.permissions.capabilities import Capability, can
 from core.permissions.decorators import require_capability
 from core.permissions.mixins import CapabilityRequiredMixin
@@ -49,6 +50,7 @@ TAB_LINKS = (
     ("hearings", _("الجلسات")),
     ("tasks", _("المهام")),
     ("documents", _("المستندات")),
+    ("contracts", _("العقود")),
     ("notes", _("الملاحظات")),
     ("correspondence", _("المراسلات")),
     ("timeline", _("الخط الزمني")),
@@ -143,6 +145,8 @@ class CaseDetailView(CapabilityRequiredMixin, LoginRequiredMixin, DetailView):
                 "can_view_confidential": can_confidential,
                 "can_documents": can(user, Capability.DOCUMENTS_VIEW),
                 "can_documents_manage": can(user, Capability.DOCUMENTS_MANAGE),
+                "can_contracts": can(user, Capability.CONTRACTS_VIEW),
+                "can_contracts_manage": can(user, Capability.CONTRACTS_MANAGE),
                 "parties": case_parties(case, lawyer_links=lawyer_links),
                 "lawyer_links": lawyer_links,
                 "notes": [n for n in notes if n.kind == NoteKind.GENERAL],
@@ -152,6 +156,7 @@ class CaseDetailView(CapabilityRequiredMixin, LoginRequiredMixin, DetailView):
                 "case_tasks": case_tasks(case).order_by("-created_at"),
                 "case_deadlines": case_deadlines(case),
                 "case_documents": case_documents(case),
+                "case_contracts": case_contracts(case),
                 "next_hearing": case.next_hearing,
                 "status_form": CaseStatusForm(initial={"status": case.status}),
                 "lawyer_form": SupportingLawyerForm(),
