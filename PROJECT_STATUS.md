@@ -4,7 +4,7 @@
 > `COMPLETED ≠ APPROVED` — a phase starts only after the user says
 > **APPROVE PHASE N** / **ابدأ المرحلة N**.
 
-Current Phase: **12 — Hardening** (Phases 1–11 approved + merged to master)
+Current Phase: **13 — Release Readiness** (Phases 1–12 approved + merged to master)
 
 Planning artifacts: `QISTAS_PHASE_0_ANALYSIS.md` · `QISTAS_GRILL_REVIEW.md` ·
 `docs/architecture.md` · `docs/adr/0001`–`0036` · `docs/PHASE_1_PLAN.md`
@@ -743,8 +743,8 @@ email/SMS).
 Branch: `phase/11-notifications` — merged to `master` (PR #10, merge commit `6a76894`).
 
 ## Phase 12 — Audit + Advanced Security (hardening)
-Status: **COMPLETE (technical)** — see `docs/PHASE_12_REPORT.md`
-Approval: **PENDING**
+Status: **APPROVED + merged to `master`** (PR #11, merge commit `cee051e`) — see `docs/PHASE_12_REPORT.md`
+Approval: **APPROVED** ("APPROVE PHASE 12")
 Design: `docs/adr/0036-phase-12-hardening.md`
 
 **Not a feature phase** — a project-wide re-audit of Phases 1–11 (authz, IDOR,
@@ -845,13 +845,117 @@ docker compose run --rm -e DJANGO_SETTINGS_MODULE=config.settings.prod \
   severity (requires `cases.manage`; User accounts aren't secret within an
   internal staff app; no client-facing exposure) — reviewed, not changed.
 
-Branch: `phase/12-hardening` — one commit `phase(12): complete hardening`,
-pushed, **not merged**. Parent: `6a76894` (Phase 11 merge, PR #10).
+Branch: `phase/12-hardening` — merged to `master` (PR #11, merge commit `cee051e`).
 
-## Phase 13 — Quality + Performance + UX (hardening)
-Status: NOT STARTED
-Approval: N/A
+## Phase 13 — Final Integration, Production Readiness & Release Candidate
+Status: **COMPLETE (technical)** — see `docs/PHASE_13_REPORT.md`
+Approval: **PENDING**
 
-## Phase 14 — Production Readiness
-Status: NOT STARTED
-Approval: N/A
+**Redefined by the owner as the FINAL planned phase** — absorbing the
+originally-planned Phase 13 (Quality+Perf+UX) and Phase 14 (Production
+Readiness) into one release-readiness pass. **Not a feature phase**: no
+product functionality, model, view, or architecture change. The entire diff
+is two new test files plus documentation.
+
+Treated Phases 1–12 as one product and traced the complete domain lifecycle
+(Client → Case → Court → Hearings → Tasks/Deadlines → Documents → Contracts
+→ Finance → Notifications → Dashboard → Reports → Audit) with real,
+multi-step workflows rather than isolated unit checks — re-deriving
+important claims from the current code, not trusting prior phase reports.
+
+**`tests/test_integration_workflows.py` — 10 end-to-end workflows** (spec
+§4 A–I): client create/edit/archive/restore; full case setup (lawyers,
+party, note, status, timeline) + all-staff visibility across office_manager/
+lawyer/paralegal; hearing schedule → agenda → cancel-with-reason → drops out
+of the agenda + timeline records both events; task overdue → notification →
+done clears overdue; deadline approaching → notification → met; document
+upload → authorized download (audited) → retire → 404 → unauthenticated
+never reaches the file; contract number/status/expiry + paralegal view-only;
+**the full finance chain** (fee agreement → draft invoice → line item →
+issue → immutability → payment → outstanding balance → overpayment
+rejected → an expense never touches the invoice total → dashboard/report
+totals correct → **paralegal has zero access anywhere in the chain**);
+notification generate (idempotent) → open (marks read, redirects to target)
+→ cross-user open/mark is a 404/no-op; report scoping + mixed-currency never
+summed + paralegal 403 on the financial report only.
+
+**`tests/test_edge_cases.py` — 12 tests** (spec §16): malformed/negative/
+oversized pks 404 (never 500) across 7 URL families, including an
+injection-shaped id as a sanity check; double-submit invoice-issue rejected
+without duplicating the invoice number (exercises the `select_for_update`
+guard `issue_invoice` already documents); double-archive-client and
+double-mark-all-read are clean idempotent no-ops; **a notification's target
+still enforces its own authorization after the recipient's role changes**
+(a finance clerk demoted to paralegal can still open their own past
+notification, but the finance target it redirects to now 403s them) — proof
+a notification carries no standing access of its own.
+
+**Bugs found: none.** Every one of the 22 new tests passed against the
+Phase 12-hardened code (2 needed a trivial self-correction in the test code
+itself — a nonexistent queryset method name, a wrong argument type — neither
+was a product defect). This is the expected, honest outcome of an
+integration pass immediately following a genuinely thorough hardening phase
+on an unchanged codebase.
+
+**Verification, all re-run/re-confirmed on the freshly-merged master:**
+`manage.py check --deploy` against real `config.settings.prod` values — 0
+warnings, 1 intentionally-silenced (`axes.W006`), identical to Phase 12.
+`pip-audit` — no known vulnerabilities, no dependency upgrades.
+`makemigrations --check` / `manage.py check` — clean, no model touched.
+`/code-review high` **not available in this environment** (same as every
+phase since 4).
+
+**A precision correction from Phase 12's own report:** `psycopg` (the
+PostgreSQL driver) *is* importable in this project's virtualenv — Phase
+12's "no `psycopg` importable" line was an artifact of one check running
+outside the activated venv, not a genuinely missing driver. The real,
+confirmed blocker is that **no PostgreSQL server is reachable** from this
+machine at all (no `psql` on `PATH`, no Docker daemon, a direct
+`psycopg.connect(...)` to `localhost:5432` hangs/times out — nothing is
+listening).
+
+**Verification:**
+- Tests: **777 pass / 0 fail / 4 skipped** (`@pytest.mark.postgres`) on
+  SQLite — **+22 Phase 13 tests** (10 integration workflows, 12 edge cases).
+- `ruff` / `ruff format --check` / `pip-audit` / `makemigrations --check` /
+  `manage.py check` — all clean.
+- `manage.py check --deploy` against real `config.settings.prod` — clean,
+  0 warnings, 1 silenced.
+
+**DEFERRED / UNVERIFIED — same environment blocker as every prior phase:**
+1. Full suite on **PostgreSQL 16** (SQLite only). Expect ~777 pass, 0
+   skipped.
+2. The 4 `@pytest.mark.postgres` tests — most importantly
+   `test_concurrent_payments_cannot_overpay`, the only test that exercises
+   real `select_for_update` row-level contention.
+3. `docker compose` full-stack smoke test (no Docker daemon).
+4. `compilemessages` (no GNU gettext on this Windows host; harmless — ships
+   `ar` only, all source strings are already Arabic).
+5. Real production filesystem/storage permissions for the private document
+   store — inherently environment-dependent regardless of Docker/PostgreSQL
+   availability.
+
+Run on a PG/Docker-capable machine / CI:
+```
+docker compose build && docker compose run --rm web python manage.py migrate
+docker compose run --rm web pytest       # expect ~777 pass, 0 skipped
+docker compose run --rm -e DJANGO_SETTINGS_MODULE=config.settings.prod \
+  web python manage.py check --deploy
+```
+
+**Final release-readiness assessment: release candidate — production-ready
+subject to the PostgreSQL/Docker environment blockers above.** The
+application-level surface (code, tests, settings, dependencies,
+cross-module integration) is verified clean on every gate this environment
+can run; what remains is exclusively infrastructure verification this
+development machine cannot perform. Nothing was skipped by choice; nothing
+was claimed that was not actually run.
+
+Branch: `phase/13-release-readiness` — one commit
+`phase(13): complete release readiness`, pushed, **not merged**. Parent:
+`cee051e` (Phase 12 merge, PR #11).
+
+## Phase 14 — (absorbed into Phase 13, see above)
+Status: N/A — the originally-planned Phase 13 (Quality+Perf+UX) and Phase 14
+(Production Readiness) were redefined by the owner into the single Phase 13
+above, the final planned phase.
