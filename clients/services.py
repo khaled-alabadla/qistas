@@ -39,6 +39,12 @@ def create_client(*, actor, data: dict, request=None) -> Client:
 
 @transaction.atomic
 def update_client(*, actor, client: Client, data: dict, request=None) -> Client:
+    # `status` never changes here — only through `archive_client` /
+    # `restore_client`, which apply the transition guard and the dedicated
+    # audit action. Defense-in-depth: `ClientForm` already drops the field on
+    # edit, but a caller must not be able to smuggle a status flip through this
+    # generic path (docs/adr/0036 hardening review).
+    data = {k: v for k, v in data.items() if k != "status"}
     # `client` may already carry the new values (a ModelForm mutates its instance
     # during is_valid()), so diff against the persisted row, not the in-memory one.
     stored = Client.objects.get(pk=client.pk)

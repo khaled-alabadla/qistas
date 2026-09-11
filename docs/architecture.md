@@ -52,7 +52,7 @@ qistas/
 
 ### App roadmap (informational — not built until each phase is approved)
 
-`core` `accounts` `audit` (P1 ✓) · `clients` (P2 ✓) · `cases` +parties+notes+timeline + `courts` (minimal) (P3 ✓) · `courts` (full) `hearings` `agenda` (P4 ✓) · `tasks` +deadlines (P5 ✓) · `documents` (P6 ✓) · `contracts` (P7 ✓) · `finance` (P8 ✓) · `dashboard` (P9 ✓) · `reports` (P10 ✓) · `notifications` (P11 ✓) · security/audit hardening (P12) · quality/perf/UX hardening (P13) · production readiness (P14).
+`core` `accounts` `audit` (P1 ✓) · `clients` (P2 ✓) · `cases` +parties+notes+timeline + `courts` (minimal) (P3 ✓) · `courts` (full) `hearings` `agenda` (P4 ✓) · `tasks` +deadlines (P5 ✓) · `documents` (P6 ✓) · `contracts` (P7 ✓) · `finance` (P8 ✓) · `dashboard` (P9 ✓) · `reports` (P10 ✓) · `notifications` (P11 ✓) · security/audit hardening (P12 ✓) · quality/perf/UX hardening (P13) · production readiness (P14).
 
 ### Clients (P2) — implemented notes
 
@@ -246,6 +246,49 @@ Tiered policy:
 - **CI (GitHub Actions):** PostgreSQL 16 service container; `ruff` + `ruff format --check`; `pytest` + coverage artifact; `python manage.py makemigrations --check --dry-run`; `python manage.py check --deploy` (prod settings); `pip-audit`; `gitleaks`.
 - `.pre-commit-config.yaml` mirrors the fast CI checks.
 - **VCS:** rename `master` → `main`. Work on `phase/N-<name>` branches → PR into `main` → CI + `/code-review` gate the merge → tag `phaseN-approved` after explicit user approval.
+
+## 15a. Phase 12 hardening — ADR-0036
+
+- **Not a feature phase.** Phase 12 re-audits Phases 1–11 end to end (authz,
+  IDOR, mass assignment, finance integrity/concurrency, mixed-currency,
+  document security, audit integrity, notification/report/dashboard
+  authorization, N+1, DB integrity, transactions, auth/session, deployment
+  config, dependencies) without trusting each phase's own self-review. No new
+  app, model, or product surface.
+- **Two real defects found and fixed**, each narrowly scoped with regression
+  tests: (1) `finance.InvoiceUpdateView.dispatch()` returned a redirect for an
+  issued invoice *before* `CapabilityRequiredMixin` ran — the sole `dispatch()`
+  override in the project with an early return ahead of `super().dispatch()`
+  — leaking invoice existence/issued-status to a paralegal via a 302 instead
+  of a 403; fixed by moving the state guard into `get()`/`post()` (mirrors the
+  already-safe `hearings._HearingActionMixin._guard_open()` pattern). (2)
+  `clients.ClientForm` carried `status` on the general edit form (every other
+  status-bearing domain keeps it off), letting a `clients.manage` holder
+  silently archive/restore a client with no `CLIENT_ARCHIVED`/`CLIENT_RESTORED`
+  audit event; fixed by dropping the field on edit + stripping `status`
+  defense-in-depth in `clients.services.update_client`.
+- **Everything else audited and confirmed sound, not just re-asserted**:
+  mass assignment (every `ModelForm.Meta.fields` is an explicit allowlist, no
+  server-controlled field anywhere), IDOR (every object resolves through
+  `for_user()` + `get_object_or_404`; the two genuinely siloed boundaries —
+  notifications per-recipient, finance per-capability — hold), XSS (the only
+  two `|safe`/`mark_safe` uses are provably non-tainted), SQL injection (no
+  raw SQL in application code), CSRF (no exemptions, every mutator is POST),
+  document security (private storage re-verified to 404 at guessed `/media/`
+  paths), finance concurrency (every balance-mutating function takes
+  `select_for_update` on the invoice row inside `transaction.atomic`, read
+  fresh from the code), audit-log immutability (model + admin both deny
+  mutation), session security (Django's default login/session-rotation and
+  password-reset flows, unmodified), and **`manage.py check --deploy` run
+  against real `config.settings.prod` values** (not just inspected) — 0
+  warnings, 1 intentionally-silenced (`axes.W006`).
+- New project-wide regression file `tests/test_capability_boundary_sweep.py`:
+  every finance GET/POST URL, every financial report (page + CSV), the
+  dashboard's financial-overview context, the agenda's calendar events, and
+  `invoice_overdue` notification generation, exercised against a paralegal at
+  the HTTP layer in one place.
+- PostgreSQL/Docker verification remains deferred (same environment blocker
+  as every prior phase — documented in `docs/PHASE_12_REPORT.md`).
 
 ## 16. Process — ADR-0010
 
