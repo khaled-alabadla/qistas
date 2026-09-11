@@ -133,6 +133,34 @@ def test_issued_invoice_update_view_redirects(client, finance_clerk):
     assert resp.status_code == 302  # bounced back to detail
 
 
+def test_issued_invoice_update_view_post_also_redirects(client, finance_clerk):
+    inv = issued_invoice(actor=finance_clerk)
+    client.force_login(finance_clerk)
+    resp = client.post(reverse("finance:invoice_update", args=[inv.pk]), {})
+    assert resp.status_code == 302
+    assert resp["Location"] == reverse("finance:invoice_detail", args=[inv.pk])
+
+
+def test_draft_invoice_update_view_still_renders(client, finance_clerk):
+    inv = _draft(finance_clerk)
+    client.force_login(finance_clerk)
+    resp = client.get(reverse("finance:invoice_update", args=[inv.pk]))
+    assert resp.status_code == 200
+
+
+def test_paralegal_cannot_probe_invoice_status_via_the_edit_url(client, paralegal, finance_clerk):
+    """Phase 12 hardening regression: InvoiceUpdateView.dispatch() used to run
+    the draft/issued check (and redirect) BEFORE CapabilityRequiredMixin could
+    403 the request, for any caller — leaking "this invoice exists and is
+    issued" through a 302 rather than a 403 to someone with no finance access
+    at all. Both issued and draft invoices must now 403 identically."""
+    issued = issued_invoice(actor=finance_clerk)
+    draft = _draft(finance_clerk)
+    client.force_login(paralegal)
+    assert client.get(reverse("finance:invoice_update", args=[issued.pk])).status_code == 403
+    assert client.get(reverse("finance:invoice_update", args=[draft.pk])).status_code == 403
+
+
 def test_cannot_directly_cancel_issued_invoice(finance_clerk):
     inv = issued_invoice(actor=finance_clerk)
     with pytest.raises(ValidationError):

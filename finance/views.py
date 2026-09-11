@@ -324,10 +324,26 @@ class InvoiceUpdateView(_InvoiceFormMixin):
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             self.invoice_obj = _scoped_invoice(request.user, kwargs["pk"])
-            if not self.invoice_obj.is_draft:
-                messages.error(request, _("لا يمكن تعديل فاتورة صادرة."))
-                return redirect("finance:invoice_detail", pk=self.invoice_obj.pk)
         return super().dispatch(request, *args, **kwargs)
+
+    def _guard_draft(self):
+        # Checked in get()/post() — NOT here in dispatch() — so it runs only
+        # after CapabilityRequiredMixin's check (via super().dispatch() below
+        # calling into View.dispatch() -> get()/post()) has already 403'd an
+        # unauthorized caller. An early redirect from inside dispatch() would
+        # bypass the capability check entirely for this branch and leak
+        # "this invoice exists and is issued" via the redirect to a user with
+        # no finance.manage (Phase 12 hardening — buglog bug-118).
+        if not self.invoice_obj.is_draft:
+            messages.error(self.request, _("لا يمكن تعديل فاتورة صادرة."))
+            return redirect("finance:invoice_detail", pk=self.invoice_obj.pk)
+        return None
+
+    def get(self, request, *args, **kwargs):
+        return self._guard_draft() or super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self._guard_draft() or super().post(request, *args, **kwargs)
 
     def get_form_kwargs(self):
         return {**super().get_form_kwargs(), "instance": self.invoice_obj}

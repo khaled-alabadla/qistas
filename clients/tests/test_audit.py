@@ -91,6 +91,31 @@ def test_update_records_actual_changed_fields(office_manager):
     assert set(entry.changes["fields"]) == {"city", "email"}
 
 
+def test_update_client_ignores_a_status_key_defense_in_depth(office_manager):
+    """`update_client` must never apply `status` even if a caller passes one —
+    the form already excludes it, but the service is the last line of defense
+    (Phase 12 hardening: status only changes via archive_client/restore_client)."""
+    from clients.models import ClientStatus
+
+    c = ClientFactory(city="نابلس", status=ClientStatus.ACTIVE)
+    update_client(
+        actor=office_manager,
+        client=c,
+        data={
+            "type": c.type,
+            "full_name": c.full_name,
+            "phone": c.phone,
+            "city": "رام الله",
+            "status": ClientStatus.ARCHIVED,
+        },
+    )
+    c.refresh_from_db()
+    assert c.city == "رام الله"
+    assert c.status == ClientStatus.ACTIVE
+    entry = AuditLog.objects.get(entity_id=str(c.pk), action=AuditAction.CLIENT_UPDATED)
+    assert "status" not in entry.changes["fields"]
+
+
 def test_update_with_no_changes_is_a_noop(office_manager):
     c = ClientFactory(city="جنين")
     update_client(

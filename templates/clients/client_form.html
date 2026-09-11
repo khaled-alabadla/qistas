@@ -49,7 +49,14 @@
 
     <fieldset>
       <legend class="mb-2 text-sm font-semibold text-slate/70">{% translate "الحالة والملاحظات" %}</legend>
-      {% include "components/_form_field.html" with field=form.status %}
+      {% if form.status %}
+        {% include "components/_form_field.html" with field=form.status %}
+      {% elif client %}
+        <p class="mb-3 text-sm text-slate/70">
+          {% translate "الحالة:" %} {{ client.get_status_display }} —
+          {% translate "التغيير من صفحة العميل (أرشفة/استعادة)." %}
+        </p>
+      {% endif %}
       {% include "components/_form_field.html" with field=form.notes %}
     </fieldset>
 

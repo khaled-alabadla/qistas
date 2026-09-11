@@ -39,6 +39,15 @@ class ClientForm(forms.ModelForm):
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
+        # `status` is create-only here. On edit it must go through
+        # `archive_client` / `restore_client` (the dedicated, audited
+        # transitions) — never a silent field on the general edit form, or a
+        # save could archive/restore a client as `client.updated` with no
+        # `CLIENT_ARCHIVED`/`CLIENT_RESTORED` audit event and no transition
+        # guard (matches the `CaseForm`/`ContractForm` house pattern — status
+        # is never on the edit ModelForm; docs/adr/0036 hardening review).
+        if self.instance and self.instance.pk:
+            self.fields.pop("status", None)
         # Hide the highly-sensitive fields from users without the capability so
         # they can neither read nor blank them (docs/adr/0009).
         if user is not None and not can(user, Capability.CLIENTS_VIEW_SENSITIVE):

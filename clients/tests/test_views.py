@@ -103,6 +103,36 @@ def test_update_changes_fields(client, office_manager):
     assert c.client_number  # unchanged / preserved
 
 
+def test_update_cannot_smuggle_a_status_change(client, office_manager):
+    """Status only changes through archive/restore — never the general edit
+    form, or a save could silently archive a client with no `CLIENT_ARCHIVED`
+    audit event and no transition guard (Phase 12 hardening)."""
+    c = ClientFactory(status=ClientStatus.ACTIVE, city="نابلس")
+    client.force_login(office_manager)
+    resp = client.post(
+        reverse("clients:update", args=[c.pk]),
+        {
+            "type": c.type,
+            "full_name": c.full_name,
+            "phone": c.phone,
+            "city": "رام الله",
+            "status": ClientStatus.ARCHIVED,  # attempted smuggling
+        },
+    )
+    assert resp.status_code == 302
+    c.refresh_from_db()
+    assert c.city == "رام الله"  # the real edit still applies
+    assert c.status == ClientStatus.ACTIVE  # status is untouched
+
+
+def test_edit_form_never_renders_a_status_field(client, office_manager):
+    c = ClientFactory()
+    client.force_login(office_manager)
+    resp = client.get(reverse("clients:update", args=[c.pk]))
+    assert resp.status_code == 200
+    assert "status" not in resp.context["form"].fields
+
+
 def test_archive_then_restore(client, office_manager):
     c = ClientFactory(status=ClientStatus.ACTIVE)
     client.force_login(office_manager)

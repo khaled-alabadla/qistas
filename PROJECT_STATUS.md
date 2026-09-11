@@ -4,10 +4,10 @@
 > `COMPLETED ≠ APPROVED` — a phase starts only after the user says
 > **APPROVE PHASE N** / **ابدأ المرحلة N**.
 
-Current Phase: **11 — Notifications** (Phases 1–10 approved + merged to master)
+Current Phase: **12 — Hardening** (Phases 1–11 approved + merged to master)
 
 Planning artifacts: `QISTAS_PHASE_0_ANALYSIS.md` · `QISTAS_GRILL_REVIEW.md` ·
-`docs/architecture.md` · `docs/adr/0001`–`0035` · `docs/PHASE_1_PLAN.md`
+`docs/architecture.md` · `docs/adr/0001`–`0036` · `docs/PHASE_1_PLAN.md`
 
 ---
 
@@ -647,8 +647,8 @@ with page 1.
 Branch: `phase/10-reports` — merged to `master` (PR #9, merge commit `ac1b500`).
 
 ## Phase 11 — Notifications
-Status: **COMPLETE (technical)** — see `docs/PHASE_11_REPORT.md`
-Approval: **PENDING**
+Status: **APPROVED + merged to `master`** (PR #10, merge commit `6a76894`) — see `docs/PHASE_11_REPORT.md`
+Approval: **APPROVED** ("APPROVE PHASE 11")
 Design: `docs/adr/0035-notifications.md`
 
 `notifications` app — **one model, `Notification`**: a per-user inbox row that is
@@ -740,12 +740,113 @@ email/SMS).
   a genuine concurrent-scan race (the pre-filter makes the window tiny); the
   rows themselves are still correct (unique constraint).
 
-Branch: `phase/11-notifications` — one commit `phase(11): complete notifications`,
-pushed, **not merged**. Parent: `ac1b500` (Phase 10 merge, PR #9).
+Branch: `phase/11-notifications` — merged to `master` (PR #10, merge commit `6a76894`).
 
 ## Phase 12 — Audit + Advanced Security (hardening)
-Status: NOT STARTED
-Approval: N/A
+Status: **COMPLETE (technical)** — see `docs/PHASE_12_REPORT.md`
+Approval: **PENDING**
+Design: `docs/adr/0036-phase-12-hardening.md`
+
+**Not a feature phase** — a project-wide re-audit of Phases 1–11 (authz, IDOR,
+mass assignment, finance integrity/concurrency, mixed-currency, document
+security, audit integrity, notification/report/dashboard authorization, N+1,
+DB integrity, transactions, auth/session, deployment config, dependencies),
+performed without trusting each phase's own self-review.
+
+**Two real defects found and fixed**, each narrowly scoped with regression
+tests (`git diff --stat` for the whole phase: 10 files, entirely in
+`clients/`, `finance/views.py`, one template, and new tests — no unrelated
+refactoring):
+
+1. **`finance.InvoiceUpdateView` authorization-ordering bug (Medium–High).**
+   `dispatch()` returned a redirect for an issued invoice *before*
+   `super().dispatch()` — the one place in the project a `dispatch()` override
+   short-circuited ahead of `CapabilityRequiredMixin`. A **paralegal** hitting
+   an issued invoice's edit URL got a **302** (not 403), leaking "this invoice
+   exists and is issued" via the redirect. Fixed by moving the draft-state
+   guard into `get()`/`post()` (mirrors `hearings._HearingActionMixin.
+   _guard_open()`, the already-safe pattern). buglog bug-118.
+2. **`clients.ClientForm` mass-assignable `status` (Medium, audit integrity).**
+   Every other status-bearing domain keeps `status` off the general edit
+   form; clients didn't — a `clients.manage` holder could silently archive/
+   restore a client via a normal edit, with no `CLIENT_ARCHIVED`/
+   `CLIENT_RESTORED` audit event. Fixed: `ClientForm` drops `status` on edit
+   (create keeps it — `prospect` intake is legitimate); `update_client` strips
+   any `status` key defense-in-depth.
+
+**Everything else audited and confirmed sound** (see `docs/PHASE_12_REPORT.md`
+§1–17 for the full walk-through): mass assignment, IDOR/object-scoping, XSS,
+SQL injection, CSRF, document security (re-verified `/media/` 404s), finance
+concurrency (`select_for_update` + `transaction.atomic` re-derived from code),
+mixed-currency (never summed, re-confirmed), audit-log immutability
+(model + admin), auth/session (Django defaults unmodified), N+1 (all 10
+existing query-count regressions still pass, no new ones needed), DB
+integrity (`on_delete` policy holds project-wide). **`manage.py check
+--deploy` run against real `config.settings.prod` values (not just
+inspected)** — 0 warnings, 1 intentionally-silenced (`axes.W006`) — the first
+phase to empirically verify this rather than defer it. `pip-audit` clean, no
+dependency upgrades (none needed).
+
+New project-wide regression file: `tests/test_capability_boundary_sweep.py` —
+every finance GET/POST URL, every financial report (page + CSV), the
+dashboard financial-overview context, the agenda's calendar events, and
+`invoice_overdue` notification generation, exercised against a paralegal in
+one place.
+
+**Verification:**
+- Tests: **755 pass / 0 fail / 4 skipped** (`@pytest.mark.postgres`) on
+  SQLite — **+14 Phase 12 tests** (`tests/test_capability_boundary_sweep.py`
+  ×8, `finance/tests/test_invoices.py` ×3, `clients/tests/test_views.py` ×2,
+  `clients/tests/test_audit.py` ×1).
+- `ruff` / `ruff format --check` / `pip-audit` (no vulns) / `makemigrations
+  --check` (no changes — no model touched) / `manage.py check` — all clean.
+- `manage.py check --deploy` against **`config.settings.test`**: the usual 5
+  warnings, confirmed **test-settings only**. Against **`config.settings.
+  prod`** with a real secret key + `ALLOWED_HOSTS` + `CSRF_TRUSTED_ORIGINS`
+  (SQLite `DATABASE_URL` substituted — the check doesn't touch the DB engine):
+  **clean, 0 warnings, 1 silenced**.
+- `/code-review high` command **not available in this environment** (same as
+  Phases 4–11) — a rigorous, adversarial self code/security/performance
+  review was performed instead (this is the substance of the whole phase).
+
+**DEFERRED / UNVERIFIED — same Docker/PostgreSQL environment blocker as every
+prior phase (re-attempted this phase — still no Docker daemon, no `psql`, no
+`psycopg` importable on this machine):**
+1. Full suite on **PostgreSQL 16** (SQLite only). Expect ~755 pass, 0 skipped.
+2. The 4 `@pytest.mark.postgres` tests — incl.
+   `test_concurrent_payments_cannot_overpay` (the one that actually exercises
+   `select_for_update` under real row locking; the logic was re-derived from
+   the code this phase and is correct, but genuine concurrency is
+   untestable on SQLite).
+3. `docker compose` full-stack smoke test.
+4. `compilemessages` (Docker-only; harmless — ships `ar`, source strings are
+   Arabic).
+
+Run on a PG machine / CI:
+```
+docker compose build && docker compose run --rm web python manage.py migrate
+docker compose run --rm web pytest       # expect ~755 pass, 0 skipped
+docker compose run --rm -e DJANGO_SETTINGS_MODULE=config.settings.prod \
+  web python manage.py check --deploy
+```
+
+**Known limitations (reviewed, accepted, documented — not fixed):**
+- `notifications:open` marks a notification read on `GET` (by design, for the
+  "click a notification → land on the record" UX). This is technically a
+  GET-triggered state change, forgeable cross-site (an `<img>` tag could mark
+  a victim's own notification read) — but the only effect is flipping the
+  victim's own `read_at` on their own row; no data exposure, no destructive
+  action, no cross-user effect. Judged not worth the UX cost of a POST-based
+  flow for this severity. First documented in Phase 11 (ADR-0035 §4).
+- `cases.case_lawyer_remove` fetches the target `User` unscoped
+  (`get_object_or_404(User, pk=user_pk)`) before checking they're actually a
+  supporting lawyer on the case — a `cases.manage` holder can distinguish
+  "user id exists" from "user id doesn't exist" by the 404/200 split. Low
+  severity (requires `cases.manage`; User accounts aren't secret within an
+  internal staff app; no client-facing exposure) — reviewed, not changed.
+
+Branch: `phase/12-hardening` — one commit `phase(12): complete hardening`,
+pushed, **not merged**. Parent: `6a76894` (Phase 11 merge, PR #10).
 
 ## Phase 13 — Quality + Performance + UX (hardening)
 Status: NOT STARTED
