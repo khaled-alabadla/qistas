@@ -52,7 +52,7 @@ qistas/
 
 ### App roadmap (informational — not built until each phase is approved)
 
-`core` `accounts` `audit` (P1 ✓) · `clients` (P2 ✓) · `cases` +parties+notes+timeline + `courts` (minimal) (P3 ✓) · `courts` (full) `hearings` `agenda` (P4 ✓) · `tasks` +deadlines (P5 ✓) · `documents` (P6 ✓) · `contracts` (P7 ✓) · `finance` (P8 ✓) · `dashboard` (P9 ✓) · `reports` (P10 ✓) · `notifications` (P11 ✓) · security/audit hardening (P12 ✓) · quality/perf/UX hardening (P13) · production readiness (P14).
+`core` `accounts` `audit` (P1 ✓) · `clients` (P2 ✓) · `cases` +parties+notes+timeline + `courts` (minimal) (P3 ✓) · `courts` (full) `hearings` `agenda` (P4 ✓) · `tasks` +deadlines (P5 ✓) · `documents` (P6 ✓) · `contracts` (P7 ✓) · `finance` (P8 ✓) · `dashboard` (P9 ✓) · `reports` (P10 ✓) · `notifications` (P11 ✓) · security/audit hardening (P12 ✓) · final integration + release readiness (P13 ✓ — the owner redefined P13 as the final planned phase, absorbing the originally-planned P13 quality/perf/UX pass and P14 production-readiness pass).
 
 ### Clients (P2) — implemented notes
 
@@ -289,6 +289,34 @@ Tiered policy:
   the HTTP layer in one place.
 - PostgreSQL/Docker verification remains deferred (same environment blocker
   as every prior phase — documented in `docs/PHASE_12_REPORT.md`).
+
+## 15b. Phase 13 — final integration & release readiness
+
+- **Redefined by the owner as the FINAL planned phase**, absorbing the
+  originally-planned Phase 13 (quality/perf/UX) and Phase 14 (production
+  readiness) into one release-readiness pass. Not a feature phase — no
+  product code changed; the entire diff is two new test files plus docs.
+- `tests/test_integration_workflows.py` — 10 realistic, multi-step workflows
+  spanning every domain boundary (client → case → hearing/task/document/
+  contract/finance → notification → dashboard/report), asserting on real
+  state at each step rather than "no exception raised". `tests/
+  test_edge_cases.py` — 12 tests: malformed/negative/oversized URL ids
+  (always 404, never 500, across 7 URL families), double-submission
+  safety (invoice issue, client archive, mark-all-read), and a notification
+  whose target correctly re-enforces authorization after the recipient's
+  role changes.
+- **Zero new bugs found** — the expected, honest result of an integration
+  pass immediately following Phase 12's from-the-code re-audit on an
+  unchanged codebase.
+- A precision correction to Phase 12's own report: the `psycopg` driver
+  *is* installed and importable in this project's venv; the real blocker is
+  that no PostgreSQL **server** is reachable (no `psql`, no Docker daemon, a
+  direct connection attempt to `localhost:5432` hangs) — not a missing
+  driver. PostgreSQL/Docker verification remains deferred for that reason,
+  documented precisely in `docs/PHASE_13_REPORT.md`.
+- Final assessment: **release candidate — production-ready subject to the
+  PostgreSQL/Docker environment blockers**, which are infrastructure this
+  development machine cannot provide, not gaps in the application itself.
 
 ## 16. Process — ADR-0010
 
