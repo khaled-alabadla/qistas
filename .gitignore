@@ -38,7 +38,8 @@ dist/
 venv/
 env/
 ENV/
-.python-version
+# .python-version is tracked (root) — Vercel's Python builder reads it for
+# runtime version detection (docs/adr/0037), not a pyenv personal-env file.
 
 # ── Environment files (keep the example) ────────────────────
 .env
@@ -108,3 +109,6 @@ $RECYCLE.BIN/
 *.orig
 *.tmp
 .scratch/
+
+# ── Vercel CLI local project link (docs/adr/0037) ────────────
+.vercel/

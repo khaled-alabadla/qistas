@@ -122,6 +122,10 @@ DATABASES = {
 }
 DATABASES["default"].setdefault("ATOMIC_REQUESTS", False)
 DATABASES["default"]["CONN_MAX_AGE"] = env.int("DJANGO_CONN_MAX_AGE", default=60)
+# Cheap SELECT 1 before reusing a pooled connection — matters on serverless
+# platforms (Vercel, docs/adr/0037) where a frozen/thawed function can hold a
+# connection the DB side already dropped. A no-op elsewhere.
+DATABASES["default"]["CONN_HEALTH_CHECKS"] = env.bool("DJANGO_CONN_HEALTH_CHECKS", default=True)
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -193,17 +197,40 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
+
+# ── Optional S3-compatible bucket for the private "documents" storage ───────
+# (AWS S3, Cloudflare R2, Backblaze B2, ... — anything django-storages' S3
+# backend can talk to). Only engaged when AWS_STORAGE_BUCKET_NAME is set;
+# required on platforms with no persistent filesystem, e.g. Vercel serverless
+# functions (docs/adr/0037). Filesystem storage (below) remains the default.
+AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME", default="")
+AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME", default="")
+AWS_S3_ENDPOINT_URL = env("AWS_S3_ENDPOINT_URL", default="") or None
+AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID", default="")
+AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY", default="")
+AWS_DEFAULT_ACL = None  # bucket policy governs access; skip legacy per-object ACL calls
+AWS_QUERYSTRING_AUTH = False  # PrivateS3Storage.url() always raises anyway
+
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
-    # Private legal-document store (docs/adr/0030). `base_url=None` -> `.url`
-    # raises; a document is only reachable through the audited download view.
-    # Never web-served: no MEDIA route, no whitenoise mapping.
+    # Private legal-document store (docs/adr/0030, docs/adr/0037). Both
+    # backends' `.url()` raises — a document is only reachable through the
+    # audited download view. Never web-served: no MEDIA route, no whitenoise
+    # mapping, and (S3 backend) no public bucket access either.
     "documents": {
-        "BACKEND": "documents.storage.PrivateFileSystemStorage",
-        "OPTIONS": {"location": str(BASE_DIR / "media" / "documents")},
+        "BACKEND": (
+            "documents.storage.PrivateS3Storage"
+            if AWS_STORAGE_BUCKET_NAME
+            else "documents.storage.PrivateFileSystemStorage"
+        ),
+        **(
+            {}
+            if AWS_STORAGE_BUCKET_NAME
+            else {"OPTIONS": {"location": str(BASE_DIR / "media" / "documents")}}
+        ),
     },
 }
 MEDIA_URL = "media/"

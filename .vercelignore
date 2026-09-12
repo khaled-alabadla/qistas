@@ -1,0 +1,43 @@
+# Qistas — trim the Vercel deployment source upload (docs/adr/0037).
+# Mirrors .gitignore's intent; add anything here that's dev/local-only and
+# not needed to build or run the WSGI app in production.
+
+.wolf/
+.claude/
+.cursor/
+.opencode/
+.agents/
+
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+*.sqlite3
+media/
+# NOT staticfiles/ — the build command generates it (collectstatic) and
+# whitenoise serves it from inside the function at runtime; excluding it
+# here would ship a build with no CSS/fonts/icons.
+
+docs/
+QISTAS_PHASE_0_ANALYSIS.md
+QISTAS_GRILL_REVIEW.md
+QISTAS_PROJECT_SPEC.md
+PROJECT_STATUS.md
+
+# Tests aren't needed to serve the app; excluding trims the bundle. If a
+# future step wants to run pytest as part of the Vercel build, remove these.
+*/tests/
+tests/
+
+# Docker/CI-only — irrelevant on Vercel.
+Dockerfile
+docker-compose*.yml
+.github/
+scripts/entrypoint.sh
+
+node_modules/
+.git/
