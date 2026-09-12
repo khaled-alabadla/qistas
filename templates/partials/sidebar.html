@@ -1,27 +1,29 @@
 {% load i18n qistas %}
 <aside
-  class="fixed inset-y-0 end-0 z-40 w-64 -translate-x-full transform border-s border-line bg-navy text-sand/90 transition-transform duration-200 rtl:translate-x-full lg:static lg:translate-x-0 rtl:lg:translate-x-0"
+  class="fixed inset-y-0 end-0 z-40 w-64 -translate-x-full transform border-s border-line bg-white text-ink transition-transform duration-200 rtl:translate-x-full lg:static lg:translate-x-0 rtl:lg:translate-x-0"
   :class="sidebarOpen && 'translate-x-0 rtl:translate-x-0'"
   aria-label="{% translate 'التنقل الرئيسي' %}">
 
-  <div class="flex h-16 items-center gap-2 border-b border-white/10 px-4">
-    <span class="grid h-9 w-9 place-items-center rounded-md bg-bronze/20 text-lg text-bronze">قِ</span>
-    <div class="leading-tight">
-      <p class="font-semibold text-white">{{ APP_NAME }}</p>
-      <p class="text-xs text-sand/60">{{ APP_TAGLINE }}</p>
+  <div class="flex h-16 items-center gap-2.5 border-b border-line px-4">
+    <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-navy text-base font-semibold text-white">قِ</span>
+    <div class="min-w-0 leading-tight">
+      <p class="truncate font-semibold text-ink">{{ APP_NAME }}</p>
+      <p class="truncate text-xs text-slate">{{ APP_TAGLINE }}</p>
     </div>
   </div>
 
   <nav class="space-y-1 p-3 text-sm">
     {% for item in nav_items %}
       {% if item.children %}
-        <div x-data="{ open: true }" class="pt-2">
-          <p class="px-3 pb-1 text-xs font-medium uppercase tracking-wide text-sand/50">{{ item.label }}</p>
+        <div class="pt-3 first:pt-0">
+          <p class="flex items-center gap-2 px-3 pb-1 text-xs font-medium text-slate">
+            {% icon item.icon "h-4 w-4" %}
+            {{ item.label }}
+          </p>
           {% for child in item.children %}
             <a href="{{ child.url|default:'#' }}"
-               class="flex items-center gap-2 rounded-md px-3 py-2 hover:bg-white/5 {% active request child.url_name %}"
+               class="flex items-center gap-2 rounded-md px-3 py-2 ms-4 text-slate hover:bg-mist hover:text-ink {% active request child.url_name %}"
                {% if child.disabled %}aria-disabled="true"{% endif %}>
-              <span aria-hidden="true" class="h-1.5 w-1.5 rounded-full bg-bronze/70"></span>
               {{ child.label }}
             </a>
           {% endfor %}
@@ -29,15 +31,15 @@
       {% else %}
         {% active request item.url_name as is_current %}
         <a href="{{ item.url|default:'#' }}"
-           class="flex items-center gap-2 rounded-md px-3 py-2 hover:bg-white/5 {{ is_current }} {% if item.disabled %}pointer-events-none opacity-50{% endif %}"
+           class="flex items-center gap-2.5 rounded-md px-3 py-2 text-slate hover:bg-mist hover:text-ink {{ is_current }} {% if item.disabled %}pointer-events-none opacity-50{% endif %}"
            {% if is_current %}aria-current="page"{% endif %}
            {% if item.disabled %}aria-disabled="true" tabindex="-1"{% endif %}>
-          <span aria-hidden="true" class="h-1.5 w-1.5 rounded-full bg-bronze/70"></span>
-          {{ item.label }}
+          {% icon item.icon "h-5 w-5 shrink-0" %}
+          <span class="min-w-0 truncate">{{ item.label }}</span>
           {% if item.url_name == 'notifications:list' and unread_notification_count %}
-            <span class="ms-auto min-w-5 rounded-full bg-bronze px-1.5 text-center text-[11px] font-semibold leading-5 text-navy"
+            <span class="ms-auto min-w-5 rounded-full bg-navy px-1.5 text-center text-[11px] font-semibold leading-5 text-white"
                   aria-label="{% blocktranslate count n=unread_notification_count %}{{ n }} إشعار غير مقروء{% plural %}{{ n }} إشعارات غير مقروءة{% endblocktranslate %}">{% num unread_notification_count %}</span>
-          {% elif item.disabled %}<span class="ms-auto text-[10px] text-sand/40">{% translate "قريبًا" %}</span>{% endif %}
+          {% elif item.disabled %}<span class="ms-auto text-[10px] text-slate/60">{% translate "قريبًا" %}</span>{% endif %}
         </a>
       {% endif %}
     {% endfor %}

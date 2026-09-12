@@ -28,25 +28,25 @@
 {% if clients %}
 <div class="overflow-x-auto rounded-lg border border-line">
   <table class="w-full text-start text-sm">
-    <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+    <thead class="bg-mist text-xs font-medium text-slate">
       <tr>
-        <th class="px-3 py-2 text-start font-medium">{% translate "رقم العميل" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "الاسم" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "النوع" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "الهاتف" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "المدينة" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "الحالة" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "رقم العميل" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "الاسم" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "النوع" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "الهاتف" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "المدينة" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "الحالة" %}</th>
       </tr>
     </thead>
     <tbody class="divide-y divide-line">
       {% for c in clients %}
         <tr class="hover:bg-mist/50">
-          <td class="px-3 py-2"><a class="font-medium text-navy hover:underline" href="{% url 'clients:detail' c.pk %}">{% num c.client_number %}</a></td>
-          <td class="px-3 py-2">{{ c.display_name }}</td>
-          <td class="px-3 py-2">{{ c.get_type_display }}</td>
-          <td class="px-3 py-2">{% num c.phone %}</td>
-          <td class="px-3 py-2">{{ c.city|default:"—" }}</td>
-          <td class="px-3 py-2">
+          <td class="px-4 py-3"><a class="font-medium text-navy hover:underline" href="{% url 'clients:detail' c.pk %}">{% num c.client_number %}</a></td>
+          <td class="px-4 py-3">{{ c.display_name }}</td>
+          <td class="px-4 py-3">{{ c.get_type_display }}</td>
+          <td class="px-4 py-3">{% num c.phone %}</td>
+          <td class="px-4 py-3">{{ c.city|default:"—" }}</td>
+          <td class="px-4 py-3">
             {% if c.status == 'active' %}{% badge c.get_status_display "success" %}
             {% elif c.status == 'archived' %}{% badge c.get_status_display "neutral" %}
             {% elif c.status == 'prospect' %}{% badge c.get_status_display "bronze" %}

@@ -1,8 +1,9 @@
 {% comment %}params: title, message, action_url, action_label{% endcomment %}
-<div class="rounded-xl border border-dashed border-line bg-white/60 px-6 py-12 text-center">
-  <div class="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-mist text-xl text-slate/60" aria-hidden="true">☰</div>
+{% load qistas %}
+<div class="rounded-lg border border-dashed border-line bg-white px-6 py-12 text-center">
+  <div class="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-mist text-slate" aria-hidden="true">{% icon "inbox" "h-6 w-6" %}</div>
   <h3 class="text-base font-semibold text-ink">{{ title }}</h3>
-  {% if message %}<p class="mx-auto mt-1 max-w-sm text-sm text-slate/70">{{ message }}</p>{% endif %}
+  {% if message %}<p class="mx-auto mt-1 max-w-sm text-sm text-slate">{{ message }}</p>{% endif %}
   {% if action_url and action_label %}
     <a href="{{ action_url }}" class="mt-4 inline-flex rounded-md bg-navy px-4 py-2 text-sm font-medium text-white hover:bg-navy/90">
       {{ action_label }}

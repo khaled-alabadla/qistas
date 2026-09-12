@@ -34,28 +34,28 @@
 {% if tasks %}
 <div class="overflow-x-auto rounded-lg border border-line">
   <table class="w-full text-start text-sm">
-    <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+    <thead class="bg-mist text-xs font-medium text-slate">
       <tr>
-        <th class="px-3 py-2 text-start font-medium">{% translate "العنوان" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "المُسند إليه" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "القضية / الموكل" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "الاستحقاق" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "الحالة" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "العنوان" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "المُسند إليه" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "القضية / الموكل" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "الاستحقاق" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "الحالة" %}</th>
       </tr>
     </thead>
     <tbody class="divide-y divide-line">
       {% for t in tasks %}
         <tr class="hover:bg-mist/50">
-          <td class="px-3 py-2"><a class="font-medium text-navy hover:underline" href="{% url 'tasks:detail' t.pk %}">{{ t.title }}</a></td>
-          <td class="px-3 py-2">{% if t.assigned_to %}{{ t.assigned_to.get_full_name|default:t.assigned_to.email }}{% else %}—{% endif %}</td>
-          <td class="px-3 py-2">
+          <td class="px-4 py-3"><a class="font-medium text-navy hover:underline" href="{% url 'tasks:detail' t.pk %}">{{ t.title }}</a></td>
+          <td class="px-4 py-3">{% if t.assigned_to %}{{ t.assigned_to.get_full_name|default:t.assigned_to.email }}{% else %}—{% endif %}</td>
+          <td class="px-4 py-3">
             {% if t.case %}<a class="text-navy hover:underline" href="{% url 'cases:detail' t.case_id %}">{% num t.case.case_number %}</a>
             {% elif t.client %}{{ t.client.display_name }}{% else %}—{% endif %}
           </td>
-          <td class="px-3 py-2 whitespace-nowrap {% if t.is_overdue %}text-danger font-medium{% endif %}">
+          <td class="px-4 py-3 whitespace-nowrap {% if t.is_overdue %}text-danger font-medium{% endif %}">
             {% if t.due_date %}{% datestr t.due_date %}{% else %}—{% endif %}
           </td>
-          <td class="px-3 py-2">{% include "tasks/_badges.html" with t=t %}</td>
+          <td class="px-4 py-3">{% include "tasks/_badges.html" with t=t %}</td>
         </tr>
       {% endfor %}
     </tbody>

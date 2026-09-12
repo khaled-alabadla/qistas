@@ -48,23 +48,23 @@
       {% if line_items %}
         <div class="overflow-x-auto rounded-lg border border-line">
           <table class="w-full text-start text-sm">
-            <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+            <thead class="bg-mist text-xs font-medium text-slate">
               <tr>
-                <th class="px-3 py-2 text-start font-medium">{% translate "البند" %}</th>
-                <th class="px-3 py-2 text-start font-medium">{% translate "الكمية" %}</th>
-                <th class="px-3 py-2 text-start font-medium">{% translate "سعر الوحدة" %}</th>
-                <th class="px-3 py-2 text-start font-medium">{% translate "الإجمالي" %}</th>
-                <th class="px-3 py-2"></th>
+                <th class="px-4 py-3 text-start font-medium">{% translate "البند" %}</th>
+                <th class="px-4 py-3 text-start font-medium">{% translate "الكمية" %}</th>
+                <th class="px-4 py-3 text-start font-medium">{% translate "سعر الوحدة" %}</th>
+                <th class="px-4 py-3 text-start font-medium">{% translate "الإجمالي" %}</th>
+                <th class="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody class="divide-y divide-line">
               {% for li in line_items %}
                 <tr>
-                  <td class="px-3 py-2">{{ li.description }}</td>
-                  <td class="px-3 py-2"><bdi dir="ltr">{{ li.quantity|floatformat:2 }}</bdi></td>
-                  <td class="px-3 py-2">{% include "finance/_money.html" with amount=li.unit_price %}</td>
-                  <td class="px-3 py-2">{% include "finance/_money.html" with amount=li.line_total %}</td>
-                  <td class="px-3 py-2 text-end">
+                  <td class="px-4 py-3">{{ li.description }}</td>
+                  <td class="px-4 py-3"><bdi dir="ltr">{{ li.quantity|floatformat:2 }}</bdi></td>
+                  <td class="px-4 py-3">{% include "finance/_money.html" with amount=li.unit_price %}</td>
+                  <td class="px-4 py-3">{% include "finance/_money.html" with amount=li.line_total %}</td>
+                  <td class="px-4 py-3 text-end">
                     {% if can_manage and invoice.is_draft %}
                     <form method="post" action="{% url 'finance:invoice_line_remove' invoice.pk li.pk %}">
                       {% csrf_token %}<button class="text-xs text-danger hover:underline">{% translate "حذف" %}</button>
@@ -170,7 +170,7 @@
   <aside class="space-y-4">
     {% if can_manage and invoice.is_draft %}
     <div class="rounded-xl border border-line bg-white p-5">
-      <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "إصدار الفاتورة" %}</h3>
+      <h3 class="mb-3 text-sm font-semibold text-slate">{% translate "إصدار الفاتورة" %}</h3>
       <form method="post" action="{% url 'finance:invoice_issue' invoice.pk %}" class="space-y-2" onsubmit="return confirm('{% translate "بعد الإصدار لا يمكن تعديل محتوى الفاتورة. متابعة؟" %}');">
         {% csrf_token %}
         {% include "components/_form_field.html" with field=issue_form.issue_date %}

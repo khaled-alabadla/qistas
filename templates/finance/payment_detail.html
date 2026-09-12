@@ -49,7 +49,7 @@
   <aside class="space-y-4">
     {% if can_manage and payment.net_amount > 0 %}
     <div class="rounded-xl border border-line bg-white p-5">
-      <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "استرجاع الدفعة" %}</h3>
+      <h3 class="mb-3 text-sm font-semibold text-slate">{% translate "استرجاع الدفعة" %}</h3>
       <form method="post" action="{% url 'finance:payment_reverse' payment.pk %}" class="space-y-2">
         {% csrf_token %}
         {% include "components/_form_field.html" with field=reversal_form.amount %}

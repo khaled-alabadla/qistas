@@ -4,7 +4,7 @@
 > `COMPLETED ≠ APPROVED` — a phase starts only after the user says
 > **APPROVE PHASE N** / **ابدأ المرحلة N**.
 
-Current Phase: **13 — Release Readiness** (Phases 1–12 approved + merged to master)
+Current Phase: **15 — UI/UX Visual Refinement** (Phases 1–13 approved + merged to master)
 
 Planning artifacts: `QISTAS_PHASE_0_ANALYSIS.md` · `QISTAS_GRILL_REVIEW.md` ·
 `docs/architecture.md` · `docs/adr/0001`–`0036` · `docs/PHASE_1_PLAN.md`
@@ -959,3 +959,47 @@ Branch: `phase/13-release-readiness` — one commit
 Status: N/A — the originally-planned Phase 13 (Quality+Perf+UX) and Phase 14
 (Production Readiness) were redefined by the owner into the single Phase 13
 above, the final planned phase.
+
+## Phase 15 — UI/UX Visual Refinement
+Status: **COMPLETE (technical)**
+Approval: **PENDING — "APPROVE PHASE 15"**
+
+Owner-defined phase, not in the original spec sequence: bring the existing UI
+closer to a supplied visual reference (`static/src/Design.png`, a light/flat
+RTL admin screen with a white sidebar and a blue accent) without changing any
+business logic, URL, permission, form, service, or selector. See
+`docs/DESIGN_SYSTEM.md` for the full resulting token/component system and
+`docs/PHASE_15_REPORT.md` for the complete report.
+
+Summary: re-tuned Tailwind color tokens (blue-based `navy`, cooled `sand`/`mist`/
+`line`/`ink`), tightened radius (`xl` 0.9rem→0.75rem) and flattened shadows
+(`card.html`, `auth_base.html`, `modal.html`), rebuilt the sidebar/topbar with a
+white surface + a new dependency-free inline-SVG icon set (wiring up
+`NavItem.icon`, which existed but was never rendered), removed
+`uppercase tracking-wide` from Arabic headings project-wide (harms Arabic
+letter-joining, added zero value since Arabic has no case), widened table
+row padding (`px-3 py-2` → `px-4 py-3`, 16 templates), and added CSS-only
+search/select icon affordances. Zero product code (views/services/selectors/
+models/forms) touched — templates, `core/templatetags/qistas.py` (new `icon`
+tag), `static/src/app.css`, `tailwind.config.js` only.
+
+**Verification:**
+- Tests: **777 pass / 0 fail / 4 skipped** (SQLite) — identical to the Phase 13
+  baseline; no test was changed to make this pass.
+- `ruff` / `ruff format --check` — clean.
+- `makemigrations --check` / `manage.py check` — clean (no model touched).
+- `manage.py check --deploy` against real `config.settings.prod` — clean.
+- Visual: no Chrome/browser-automation extension was connected in this
+  environment (`claude-in-chrome` reported "extension is not connected"), and
+  no headless browser (Playwright etc.) is installed in the venv — **live
+  pixel/screenshot comparison against `Design.png` was not possible.**
+  Verification instead relied on: rebuilding the real Tailwind CSS via the
+  project's own standalone CLI (`bin/tailwindcss`), running the dev server
+  against a throwaway seeded SQLite DB, and fetching every major page's
+  rendered HTML via `curl` under an authenticated session to confirm 200s, the
+  presence/placement of the new icon markup, and the applied utility classes.
+- **DEFERRED**: an actual pixel-level visual regression pass (section 20 of the
+  brief) once a browser is available in this environment.
+
+Branch: `phase/15-design-refinement`, based on `master` @ `08d5f5f` (Phase 13
+merge, PR #12). Not merged.

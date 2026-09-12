@@ -35,25 +35,25 @@
     {% if today_hearings %}
       <div class="overflow-x-auto rounded-lg border border-line">
         <table class="w-full text-start text-sm">
-          <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+          <thead class="bg-mist text-xs font-medium text-slate">
             <tr>
-              <th class="px-3 py-2 text-start font-medium">{% translate "الوقت" %}</th>
-              <th class="px-3 py-2 text-start font-medium">{% translate "القضية" %}</th>
-              <th class="px-3 py-2 text-start font-medium">{% translate "الموكل" %}</th>
-              <th class="px-3 py-2 text-start font-medium">{% translate "المحكمة" %}</th>
-              <th class="px-3 py-2 text-start font-medium">{% translate "المحامي" %}</th>
-              <th class="px-3 py-2 text-start font-medium">{% translate "الحالة" %}</th>
+              <th class="px-4 py-3 text-start font-medium">{% translate "الوقت" %}</th>
+              <th class="px-4 py-3 text-start font-medium">{% translate "القضية" %}</th>
+              <th class="px-4 py-3 text-start font-medium">{% translate "الموكل" %}</th>
+              <th class="px-4 py-3 text-start font-medium">{% translate "المحكمة" %}</th>
+              <th class="px-4 py-3 text-start font-medium">{% translate "المحامي" %}</th>
+              <th class="px-4 py-3 text-start font-medium">{% translate "الحالة" %}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-line">
             {% for h in today_hearings %}
               <tr class="hover:bg-mist/50">
-                <td class="px-3 py-2 whitespace-nowrap">{% datestr h.at "TIME_FORMAT" %}</td>
-                <td class="px-3 py-2"><a class="text-navy hover:underline" href="{{ h.url }}">{% num h.case_number %}</a></td>
-                <td class="px-3 py-2">{{ h.client }}</td>
-                <td class="px-3 py-2">{{ h.court|default:"—" }}</td>
-                <td class="px-3 py-2">{{ h.lawyer|default:"—" }}</td>
-                <td class="px-3 py-2">{% badge h.status "bronze" %}</td>
+                <td class="px-4 py-3 whitespace-nowrap">{% datestr h.at "TIME_FORMAT" %}</td>
+                <td class="px-4 py-3"><a class="text-navy hover:underline" href="{{ h.url }}">{% num h.case_number %}</a></td>
+                <td class="px-4 py-3">{{ h.client }}</td>
+                <td class="px-4 py-3">{{ h.court|default:"—" }}</td>
+                <td class="px-4 py-3">{{ h.lawyer|default:"—" }}</td>
+                <td class="px-4 py-3">{% badge h.status "bronze" %}</td>
               </tr>
             {% endfor %}
           </tbody>

@@ -1,11 +1,15 @@
 {% comment %}params: tone (success|info|warning|error|debug), text{% endcomment %}
-<div role="alert" class="flex items-start gap-2 rounded-md border px-3 py-2 text-sm
+{% load qistas %}
+<div role="alert" class="flex items-start gap-2 rounded-md border px-3 py-2.5 text-sm
   {% if tone == 'success' %}border-emerald-200 bg-emerald-50 text-emerald-800
   {% elif tone == 'warning' %}border-amber-200 bg-amber-50 text-amber-800
   {% elif tone == 'error' %}border-red-200 bg-red-50 text-red-800
-  {% else %}border-slate-200 bg-slate-50 text-slate-800{% endif %}">
-  <span aria-hidden="true" class="font-bold">
-    {% if tone == 'success' %}✓{% elif tone == 'error' %}!{% elif tone == 'warning' %}▲{% else %}i{% endif %}
+  {% else %}border-line bg-mist text-ink{% endif %}">
+  <span aria-hidden="true" class="mt-0.5 shrink-0">
+    {% if tone == 'success' %}{% icon "check-circle" "h-4 w-4" %}
+    {% elif tone == 'error' %}{% icon "x-circle" "h-4 w-4" %}
+    {% elif tone == 'warning' %}{% icon "alert-triangle" "h-4 w-4" %}
+    {% else %}{% icon "info" "h-4 w-4" %}{% endif %}
   </span>
   <span>{{ text }}</span>
 </div>

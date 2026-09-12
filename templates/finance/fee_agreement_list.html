@@ -28,23 +28,23 @@
 {% if fee_agreements %}
 <div class="overflow-x-auto rounded-lg border border-line">
   <table class="w-full text-start text-sm">
-    <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+    <thead class="bg-mist text-xs font-medium text-slate">
       <tr>
-        <th class="px-3 py-2 text-start font-medium">{% translate "المرجع" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "القضية" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "النوع" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "القيمة" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "الحالة" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "المرجع" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "القضية" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "النوع" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "القيمة" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "الحالة" %}</th>
       </tr>
     </thead>
     <tbody class="divide-y divide-line">
       {% for fa in fee_agreements %}
         <tr class="hover:bg-mist/50">
-          <td class="px-3 py-2"><a class="font-medium text-navy hover:underline" href="{% url 'finance:fee_agreement_detail' fa.pk %}">{% num fa.reference %}</a></td>
-          <td class="px-3 py-2"><a class="text-navy hover:underline" href="{% url 'cases:detail' fa.case_id %}">{% num fa.case.case_number %}</a></td>
-          <td class="px-3 py-2">{{ fa.get_fee_type_display }}</td>
-          <td class="px-3 py-2">{% include "finance/_money.html" with amount=fa.headline_amount currency=fa.currency %}{% if fa.fee_type == 'contingency' %} {{ fa.contingency_percent|floatformat:2 }}%{% endif %}</td>
-          <td class="px-3 py-2">{% include "finance/_fee_badge.html" with fa=fa %}</td>
+          <td class="px-4 py-3"><a class="font-medium text-navy hover:underline" href="{% url 'finance:fee_agreement_detail' fa.pk %}">{% num fa.reference %}</a></td>
+          <td class="px-4 py-3"><a class="text-navy hover:underline" href="{% url 'cases:detail' fa.case_id %}">{% num fa.case.case_number %}</a></td>
+          <td class="px-4 py-3">{{ fa.get_fee_type_display }}</td>
+          <td class="px-4 py-3">{% include "finance/_money.html" with amount=fa.headline_amount currency=fa.currency %}{% if fa.fee_type == 'contingency' %} {{ fa.contingency_percent|floatformat:2 }}%{% endif %}</td>
+          <td class="px-4 py-3">{% include "finance/_fee_badge.html" with fa=fa %}</td>
         </tr>
       {% endfor %}
     </tbody>

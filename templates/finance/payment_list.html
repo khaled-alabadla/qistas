@@ -25,23 +25,23 @@
 {% if payments %}
 <div class="overflow-x-auto rounded-lg border border-line">
   <table class="w-full text-start text-sm">
-    <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+    <thead class="bg-mist text-xs font-medium text-slate">
       <tr>
-        <th class="px-3 py-2 text-start font-medium">{% translate "المرجع" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "الفاتورة" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "المبلغ" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "الطريقة" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "التاريخ" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "المرجع" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "الفاتورة" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "المبلغ" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "الطريقة" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "التاريخ" %}</th>
       </tr>
     </thead>
     <tbody class="divide-y divide-line">
       {% for p in payments %}
         <tr class="hover:bg-mist/50">
-          <td class="px-3 py-2"><a class="font-medium text-navy hover:underline" href="{% url 'finance:payment_detail' p.pk %}">{% num p.reference %}</a></td>
-          <td class="px-3 py-2"><a class="text-navy hover:underline" href="{% url 'finance:invoice_detail' p.invoice_id %}">{{ p.invoice }}</a></td>
-          <td class="px-3 py-2">{% include "finance/_money.html" with amount=p.net_amount %}{% if p.reversed_amount > 0 %} <span class="text-xs text-danger">⟲</span>{% endif %}</td>
-          <td class="px-3 py-2">{{ p.get_method_display }}</td>
-          <td class="px-3 py-2 whitespace-nowrap">{% datestr p.paid_on %}</td>
+          <td class="px-4 py-3"><a class="font-medium text-navy hover:underline" href="{% url 'finance:payment_detail' p.pk %}">{% num p.reference %}</a></td>
+          <td class="px-4 py-3"><a class="text-navy hover:underline" href="{% url 'finance:invoice_detail' p.invoice_id %}">{{ p.invoice }}</a></td>
+          <td class="px-4 py-3">{% include "finance/_money.html" with amount=p.net_amount %}{% if p.reversed_amount > 0 %} <span class="text-xs text-danger">⟲</span>{% endif %}</td>
+          <td class="px-4 py-3">{{ p.get_method_display }}</td>
+          <td class="px-4 py-3 whitespace-nowrap">{% datestr p.paid_on %}</td>
         </tr>
       {% endfor %}
     </tbody>

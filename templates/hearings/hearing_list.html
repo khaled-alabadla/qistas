@@ -33,30 +33,30 @@
 {% if hearings %}
 <div class="overflow-x-auto rounded-lg border border-line">
   <table class="w-full text-start text-sm">
-    <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+    <thead class="bg-mist text-xs font-medium text-slate">
       <tr>
-        <th class="px-3 py-2 text-start font-medium">{% translate "الموعد" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "القضية" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "النوع" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "المحكمة" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "المحامي" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "الحالة" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "الموعد" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "القضية" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "النوع" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "المحكمة" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "المحامي" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "الحالة" %}</th>
       </tr>
     </thead>
     <tbody class="divide-y divide-line">
       {% for h in hearings %}
         <tr class="hover:bg-mist/50">
-          <td class="px-3 py-2 whitespace-nowrap">
+          <td class="px-4 py-3 whitespace-nowrap">
             <a class="font-medium text-navy hover:underline" href="{% url 'hearings:detail' h.pk %}">{% datestr h.scheduled_at "SHORT_DATETIME_FORMAT" %}</a>
           </td>
-          <td class="px-3 py-2">
+          <td class="px-4 py-3">
             <a class="text-navy hover:underline" href="{% url 'cases:detail' h.case_id %}">{% num h.case.case_number %}</a>
             <span class="text-slate/60"> · {{ h.case.title }}</span>
           </td>
-          <td class="px-3 py-2">{{ h.get_hearing_type_display }}</td>
-          <td class="px-3 py-2">{% if h.court %}{{ h.court.name }}{% else %}—{% endif %}</td>
-          <td class="px-3 py-2">{% if h.lawyer %}{{ h.lawyer.get_full_name|default:h.lawyer.email }}{% else %}—{% endif %}</td>
-          <td class="px-3 py-2">{% include "hearings/_status_badge.html" with h=h %}</td>
+          <td class="px-4 py-3">{{ h.get_hearing_type_display }}</td>
+          <td class="px-4 py-3">{% if h.court %}{{ h.court.name }}{% else %}—{% endif %}</td>
+          <td class="px-4 py-3">{% if h.lawyer %}{{ h.lawyer.get_full_name|default:h.lawyer.email }}{% else %}—{% endif %}</td>
+          <td class="px-4 py-3">{% include "hearings/_status_badge.html" with h=h %}</td>
         </tr>
       {% endfor %}
     </tbody>

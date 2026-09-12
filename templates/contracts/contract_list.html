@@ -29,25 +29,25 @@
 {% if contracts %}
 <div class="overflow-x-auto rounded-lg border border-line">
   <table class="w-full text-start text-sm">
-    <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+    <thead class="bg-mist text-xs font-medium text-slate">
       <tr>
-        <th class="px-3 py-2 text-start font-medium">{% translate "رقم العقد" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "العنوان" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "الموكل" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "النوع" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "الانتهاء" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "الحالة" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "رقم العقد" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "العنوان" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "الموكل" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "النوع" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "الانتهاء" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "الحالة" %}</th>
       </tr>
     </thead>
     <tbody class="divide-y divide-line">
       {% for c in contracts %}
         <tr class="hover:bg-mist/50">
-          <td class="px-3 py-2"><a class="font-medium text-navy hover:underline" href="{% url 'contracts:detail' c.pk %}">{% num c.contract_number %}</a></td>
-          <td class="px-3 py-2">{{ c.title }}</td>
-          <td class="px-3 py-2"><a class="text-navy hover:underline" href="{% url 'clients:detail' c.client_id %}">{{ c.client.display_name }}</a></td>
-          <td class="px-3 py-2">{{ c.get_contract_type_display }}</td>
-          <td class="px-3 py-2 whitespace-nowrap {% if c.is_past_due %}text-danger font-medium{% endif %}">{% if c.end_date %}{% datestr c.end_date %}{% else %}—{% endif %}</td>
-          <td class="px-3 py-2">{% include "contracts/_badges.html" with c=c %}</td>
+          <td class="px-4 py-3"><a class="font-medium text-navy hover:underline" href="{% url 'contracts:detail' c.pk %}">{% num c.contract_number %}</a></td>
+          <td class="px-4 py-3">{{ c.title }}</td>
+          <td class="px-4 py-3"><a class="text-navy hover:underline" href="{% url 'clients:detail' c.client_id %}">{{ c.client.display_name }}</a></td>
+          <td class="px-4 py-3">{{ c.get_contract_type_display }}</td>
+          <td class="px-4 py-3 whitespace-nowrap {% if c.is_past_due %}text-danger font-medium{% endif %}">{% if c.end_date %}{% datestr c.end_date %}{% else %}—{% endif %}</td>
+          <td class="px-4 py-3">{% include "contracts/_badges.html" with c=c %}</td>
         </tr>
       {% endfor %}
     </tbody>

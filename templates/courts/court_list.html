@@ -31,25 +31,25 @@
 {% if courts %}
 <div class="overflow-x-auto rounded-lg border border-line">
   <table class="w-full text-start text-sm">
-    <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+    <thead class="bg-mist text-xs font-medium text-slate">
       <tr>
-        <th class="px-3 py-2 text-start font-medium">{% translate "الاسم" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "النوع" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "المدينة" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "الدائرة" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "الهاتف" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "الحالة" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "الاسم" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "النوع" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "المدينة" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "الدائرة" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "الهاتف" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "الحالة" %}</th>
       </tr>
     </thead>
     <tbody class="divide-y divide-line">
       {% for court in courts %}
         <tr class="hover:bg-mist/50">
-          <td class="px-3 py-2"><a class="font-medium text-navy hover:underline" href="{% url 'courts:detail' court.pk %}">{{ court.name }}</a></td>
-          <td class="px-3 py-2">{{ court.get_type_display }}</td>
-          <td class="px-3 py-2">{{ court.city|default:"—" }}</td>
-          <td class="px-3 py-2">{{ court.department|default:"—" }}</td>
-          <td class="px-3 py-2">{% if court.phone %}{% num court.phone %}{% else %}—{% endif %}</td>
-          <td class="px-3 py-2">
+          <td class="px-4 py-3"><a class="font-medium text-navy hover:underline" href="{% url 'courts:detail' court.pk %}">{{ court.name }}</a></td>
+          <td class="px-4 py-3">{{ court.get_type_display }}</td>
+          <td class="px-4 py-3">{{ court.city|default:"—" }}</td>
+          <td class="px-4 py-3">{{ court.department|default:"—" }}</td>
+          <td class="px-4 py-3">{% if court.phone %}{% num court.phone %}{% else %}—{% endif %}</td>
+          <td class="px-4 py-3">
             {% translate "نشطة" as lbl_active %}{% translate "غير نشطة" as lbl_inactive %}
             {% if court.is_active %}{% badge lbl_active "success" %}{% else %}{% badge lbl_inactive "neutral" %}{% endif %}
           </td>

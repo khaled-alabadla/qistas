@@ -45,7 +45,7 @@
   <aside class="space-y-4">
     {% if can_manage %}
     <div class="rounded-xl border border-line bg-white p-5">
-      <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "تغيير الحالة" %}</h3>
+      <h3 class="mb-3 text-sm font-semibold text-slate">{% translate "تغيير الحالة" %}</h3>
       <form method="post" action="{% url 'tasks:status' task.pk %}" class="space-y-2">
         {% csrf_token %}
         {% include "components/_form_field.html" with field=status_form.status %}
