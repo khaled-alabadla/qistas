@@ -1,8 +1,4 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pip install -r requirements.txt && bash scripts/fetch-tailwind.sh && ./bin/tailwindcss -i static/src/app.css -o static/css/app.css --minify && test -f static/css/app.css && python manage.py collectstatic --noinput && python -c \"import json,sys; m=json.load(open('staticfiles/staticfiles.json')); sys.exit(0 if 'css/app.css' in m.get('paths', {}) else 1)\"",
-  "functions": {
-    "config/asgi.py": { "includeFiles": "staticfiles/**" },
-    "config/wsgi.py": { "includeFiles": "staticfiles/**" }
-  }
+  "buildCommand": "pip install -r requirements.txt && bash scripts/fetch-tailwind.sh && ./bin/tailwindcss -i static/src/app.css -o static/css/app.css --minify && python manage.py collectstatic --noinput"
 }
