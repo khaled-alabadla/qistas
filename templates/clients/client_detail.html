@@ -168,14 +168,14 @@
   <aside class="space-y-6">
     {% if can_finance %}
     <div class="rounded-xl border border-line bg-white p-5">
-      <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "ملخص مالي" %}</h3>
+      <h3 class="mb-3 text-sm font-semibold text-slate">{% translate "ملخص مالي" %}</h3>
       {% include "finance/_summary.html" with summary=finance_summary %}
       <p class="mt-2 text-xs text-slate/40">{% translate "تُحتسب من الفواتير الصادرة فقط، بعد خصم الإشعارات الدائنة." %}</p>
     </div>
     {% endif %}
 
     <div class="rounded-xl border border-line bg-white p-5">
-      <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "النشاط" %}</h3>
+      <h3 class="mb-3 text-sm font-semibold text-slate">{% translate "النشاط" %}</h3>
       {% translate "النظام" as sys_actor %}
       {% if activity %}
         <ul class="space-y-3 text-sm">

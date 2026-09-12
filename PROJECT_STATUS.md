@@ -4,7 +4,7 @@
 > `COMPLETED ≠ APPROVED` — a phase starts only after the user says
 > **APPROVE PHASE N** / **ابدأ المرحلة N**.
 
-Current Phase: **13 — Release Readiness** (Phases 1–12 approved + merged to master)
+Current Phase: **15 — UI/UX Visual Refinement** (Phases 1–13 approved + merged to master)
 
 Planning artifacts: `QISTAS_PHASE_0_ANALYSIS.md` · `QISTAS_GRILL_REVIEW.md` ·
 `docs/architecture.md` · `docs/adr/0001`–`0036` · `docs/PHASE_1_PLAN.md`
@@ -959,3 +959,55 @@ Branch: `phase/13-release-readiness` — one commit
 Status: N/A — the originally-planned Phase 13 (Quality+Perf+UX) and Phase 14
 (Production Readiness) were redefined by the owner into the single Phase 13
 above, the final planned phase.
+
+## Phase 15 — UI/UX Visual Refinement
+Status: **COMPLETE (technical)**
+Approval: **PENDING — "APPROVE PHASE 15"**
+
+Owner-defined phase, not in the original spec sequence: bring the existing UI
+closer to a supplied visual reference (`static/src/Design.png`, a light/flat
+RTL admin screen with a white sidebar and a blue accent) without changing any
+business logic, URL, permission, form, service, or selector. See
+`docs/DESIGN_SYSTEM.md` for the full resulting token/component system and
+`docs/PHASE_15_REPORT.md` for the complete report.
+
+Summary: re-tuned Tailwind color tokens (blue-based `navy`, cooled `sand`/`mist`/
+`line`/`ink`), tightened radius (`xl` 0.9rem→0.75rem) and flattened shadows
+(`card.html`, `auth_base.html`, `modal.html`), switched to a self-hosted **Cairo**
+font (replacing IBM Plex Sans Arabic — whose font files had never actually
+existed in the repo, so the app had silently been rendering in the OS fallback
+the whole time), rebuilt the sidebar/topbar with a white surface + a new
+dependency-free inline-SVG icon set (wiring up `NavItem.icon`, which existed but
+was never rendered), made sidebar groups **collapsible** (expanded only for the
+active section — `core/context_processors.py`'s new display-only
+`is_active_group`), added an SVG **donut chart** + re-colored ranked bars to the
+dashboard's case-analytics section, removed `uppercase tracking-wide` from
+Arabic headings project-wide, widened table row padding (16 templates), and
+added CSS-only search/select icon affordances. Zero product code (views/
+services/selectors/models/forms) touched.
+
+**Real browser screenshots (headless Chrome via DevTools Protocol, driven
+directly — no extension/Playwright needed) caught three pre-existing bugs no
+amount of HTML/class inspection had found**: (1) a notification-bell
+`aria-label` interpolating unescaped `<bdi>` markup broke HTML parsing and
+leaked garbled text onto every page (bug-134); (2) the mobile off-canvas
+sidebar was anchored with `end-0`, which resolves to physical **left** in
+`dir="rtl"` (confirmed via `getComputedStyle`), not right; (3) independently,
+the drawer's open/close toggle was a no-op due to a Tailwind `:where()`
+specificity tie between static and Alpine-applied classes. All three predate
+this phase and are fixed. Full account in `docs/PHASE_15_REPORT.md` §8/§10.
+
+**Verification:**
+- Tests: **777 pass / 0 fail / 4 skipped** (SQLite) — identical to the Phase 13
+  baseline across all three rounds of changes; no test was changed to make this pass.
+- `ruff` / `ruff format --check` — clean.
+- `makemigrations --check` / `manage.py check` — clean (no model touched).
+- `manage.py check --deploy` against real `config.settings.prod` — clean.
+- Visual: real rendered screenshots at desktop (1440px) and mobile (390px)
+  viewports across dashboard, clients, cases, invoices, case detail, and login,
+  plus live DOM queries (`getComputedStyle`/`getBoundingClientRect`) verifying
+  the sidebar's transform/position in all three states (mobile closed, mobile
+  open via a real click, desktop) — not just class-name inspection.
+
+Branch: `phase/15-design-refinement`, based on `master` @ `08d5f5f` (Phase 13
+merge, PR #12). Not merged.

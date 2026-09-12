@@ -9,25 +9,19 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        navy: { DEFAULT: "#0f1f3d", 900: "#0b1730" },
-        slate: { DEFAULT: "#3f4b5b" },
-        ink: "#1c2430",
-        sand: "#f6f3ec",
-        mist: "#eef1f5",
-        line: "#e2e6ec",
+        navy: { DEFAULT: "#1d4ed8", 50: "#eef4ff", 100: "#dbe7ff", 900: "#132a63" },
+        slate: { DEFAULT: "#5b6472" },
+        ink: "#101828",
+        sand: "#f7f8fa",
+        mist: "#f1f4f8",
+        line: "#e5e8ee",
         bronze: { DEFAULT: "#b8863b", 700: "#8a6428" },
         danger: "#b3261e",
       },
       fontFamily: {
-        sans: [
-          "IBM Plex Sans Arabic",
-          "Segoe UI",
-          "Tahoma",
-          "Arial",
-          "sans-serif",
-        ],
+        sans: ["Cairo", "Segoe UI", "Tahoma", "Arial", "sans-serif"],
       },
-      borderRadius: { xl: "0.9rem" },
+      borderRadius: { xl: "0.75rem" },
     },
   },
   plugins: [],

@@ -103,7 +103,7 @@ NAV: tuple[NavItem, ...] = (
     NavItem(
         label=_("المستندات والعقود"),
         capability=Capability.DOCUMENTS_VIEW,
-        icon="folder",
+        icon="file-text",
         children=(
             NavItem(
                 label=_("المستندات"),
@@ -125,7 +125,7 @@ NAV: tuple[NavItem, ...] = (
     NavItem(
         label=_("المالية"),
         capability=Capability.FINANCE_VIEW,
-        icon="folder",
+        icon="wallet",
         children=(
             NavItem(
                 label=_("الفواتير"),

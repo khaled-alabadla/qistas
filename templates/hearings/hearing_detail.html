@@ -80,7 +80,7 @@
     {% endif %}
     {% if follow_ups %}
       <div class="rounded-xl border border-line bg-white p-5">
-        <h3 class="mb-2 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "الجلسات اللاحقة" %}</h3>
+        <h3 class="mb-2 text-sm font-semibold text-slate">{% translate "الجلسات اللاحقة" %}</h3>
         <ul class="space-y-1 text-sm">
           {% for f in follow_ups %}
             <li><a class="text-navy hover:underline" href="{% url 'hearings:detail' f.pk %}">{% datestr f.scheduled_at "SHORT_DATETIME_FORMAT" %}</a> — {{ f.get_status_display }}</li>

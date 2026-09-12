@@ -101,7 +101,7 @@
     <aside class="space-y-6">
       {% if can_manage %}
       <div class="rounded-xl border border-line bg-white p-5">
-        <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "تغيير الحالة" %}</h3>
+        <h3 class="mb-3 text-sm font-semibold text-slate">{% translate "تغيير الحالة" %}</h3>
         <form method="post" action="{% url 'cases:status' case.pk %}" class="space-y-2">
           {% csrf_token %}
           {% include "components/_form_field.html" with field=status_form.status %}
@@ -111,7 +111,7 @@
       {% endif %}
 
       <div class="rounded-xl border border-line bg-white p-5">
-        <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "النشاط" %}</h3>
+        <h3 class="mb-3 text-sm font-semibold text-slate">{% translate "النشاط" %}</h3>
         {% if activity %}
           <ul class="space-y-3 text-sm">
             {% for a in activity %}
@@ -141,25 +141,25 @@
 
     <div class="overflow-x-auto rounded-lg border border-line">
       <table class="w-full text-start text-sm">
-        <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+        <thead class="bg-mist text-xs font-medium text-slate">
           <tr>
-            <th class="px-3 py-2 text-start font-medium">{% translate "الصفة" %}</th>
-            <th class="px-3 py-2 text-start font-medium">{% translate "الاسم" %}</th>
-            <th class="px-3 py-2 text-start font-medium">{% translate "الهاتف" %}</th>
-            <th class="px-3 py-2 text-start font-medium">{% translate "ملاحظات" %}</th>
-            <th class="px-3 py-2"></th>
+            <th class="px-4 py-3 text-start font-medium">{% translate "الصفة" %}</th>
+            <th class="px-4 py-3 text-start font-medium">{% translate "الاسم" %}</th>
+            <th class="px-4 py-3 text-start font-medium">{% translate "الهاتف" %}</th>
+            <th class="px-4 py-3 text-start font-medium">{% translate "ملاحظات" %}</th>
+            <th class="px-4 py-3"></th>
           </tr>
         </thead>
         <tbody class="divide-y divide-line">
           {% for p in parties %}
             <tr>
-              <td class="px-3 py-2">{{ p.role }}</td>
-              <td class="px-3 py-2">
+              <td class="px-4 py-3">{{ p.role }}</td>
+              <td class="px-4 py-3">
                 {% if p.url %}<a class="text-navy hover:underline" href="{% url p.url.0 p.url.1 %}">{{ p.name }}</a>{% else %}{{ p.name }}{% endif %}
               </td>
-              <td class="px-3 py-2">{% if p.phone %}{% num p.phone %}{% else %}—{% endif %}</td>
-              <td class="px-3 py-2">{{ p.notes|default:"—" }}</td>
-              <td class="px-3 py-2 text-end">
+              <td class="px-4 py-3">{% if p.phone %}{% num p.phone %}{% else %}—{% endif %}</td>
+              <td class="px-4 py-3">{{ p.notes|default:"—" }}</td>
+              <td class="px-4 py-3 text-end">
                 {% if can_manage and p.kind == 'party' %}
                   <form method="post" action="{% url 'cases:party_remove' case.pk p.party_id %}">
                     {% csrf_token %}
@@ -175,7 +175,7 @@
 
     {% if can_manage %}
     <div class="rounded-xl border border-line bg-white p-5">
-      <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "إضافة محامٍ مساند" %}</h3>
+      <h3 class="mb-3 text-sm font-semibold text-slate">{% translate "إضافة محامٍ مساند" %}</h3>
       <form method="post" action="{% url 'cases:lawyer_add' case.pk %}" class="flex flex-wrap items-end gap-2">
         {% csrf_token %}
         <div class="min-w-[16rem] flex-1">{% include "components/_form_field.html" with field=lawyer_form.lawyer %}</div>
@@ -209,23 +209,23 @@
     {% if hearings %}
     <div class="overflow-x-auto rounded-lg border border-line">
       <table class="w-full text-start text-sm">
-        <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+        <thead class="bg-mist text-xs font-medium text-slate">
           <tr>
-            <th class="px-3 py-2 text-start font-medium">{% translate "الموعد" %}</th>
-            <th class="px-3 py-2 text-start font-medium">{% translate "النوع" %}</th>
-            <th class="px-3 py-2 text-start font-medium">{% translate "المحكمة" %}</th>
-            <th class="px-3 py-2 text-start font-medium">{% translate "الحالة" %}</th>
-            <th class="px-3 py-2 text-start font-medium">{% translate "الإجراء التالي" %}</th>
+            <th class="px-4 py-3 text-start font-medium">{% translate "الموعد" %}</th>
+            <th class="px-4 py-3 text-start font-medium">{% translate "النوع" %}</th>
+            <th class="px-4 py-3 text-start font-medium">{% translate "المحكمة" %}</th>
+            <th class="px-4 py-3 text-start font-medium">{% translate "الحالة" %}</th>
+            <th class="px-4 py-3 text-start font-medium">{% translate "الإجراء التالي" %}</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-line">
           {% for h in hearings %}
             <tr class="hover:bg-mist/50">
-              <td class="px-3 py-2 whitespace-nowrap"><a class="font-medium text-navy hover:underline" href="{% url 'hearings:detail' h.pk %}">{% datestr h.scheduled_at "SHORT_DATETIME_FORMAT" %}</a></td>
-              <td class="px-3 py-2">{{ h.get_hearing_type_display }}</td>
-              <td class="px-3 py-2">{% if h.court %}{{ h.court.name }}{% else %}—{% endif %}</td>
-              <td class="px-3 py-2">{% include "hearings/_status_badge.html" with h=h %}</td>
-              <td class="px-3 py-2">{{ h.next_action|default:"—" }}</td>
+              <td class="px-4 py-3 whitespace-nowrap"><a class="font-medium text-navy hover:underline" href="{% url 'hearings:detail' h.pk %}">{% datestr h.scheduled_at "SHORT_DATETIME_FORMAT" %}</a></td>
+              <td class="px-4 py-3">{{ h.get_hearing_type_display }}</td>
+              <td class="px-4 py-3">{% if h.court %}{{ h.court.name }}{% else %}—{% endif %}</td>
+              <td class="px-4 py-3">{% include "hearings/_status_badge.html" with h=h %}</td>
+              <td class="px-4 py-3">{{ h.next_action|default:"—" }}</td>
             </tr>
           {% endfor %}
         </tbody>
@@ -248,21 +248,21 @@
       {% if case_tasks %}
         <div class="overflow-x-auto rounded-lg border border-line">
           <table class="w-full text-start text-sm">
-            <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+            <thead class="bg-mist text-xs font-medium text-slate">
               <tr>
-                <th class="px-3 py-2 text-start font-medium">{% translate "العنوان" %}</th>
-                <th class="px-3 py-2 text-start font-medium">{% translate "المُسند إليه" %}</th>
-                <th class="px-3 py-2 text-start font-medium">{% translate "الاستحقاق" %}</th>
-                <th class="px-3 py-2 text-start font-medium">{% translate "الحالة" %}</th>
+                <th class="px-4 py-3 text-start font-medium">{% translate "العنوان" %}</th>
+                <th class="px-4 py-3 text-start font-medium">{% translate "المُسند إليه" %}</th>
+                <th class="px-4 py-3 text-start font-medium">{% translate "الاستحقاق" %}</th>
+                <th class="px-4 py-3 text-start font-medium">{% translate "الحالة" %}</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-line">
               {% for t in case_tasks %}
                 <tr>
-                  <td class="px-3 py-2"><a class="text-navy hover:underline" href="{% url 'tasks:detail' t.pk %}">{{ t.title }}</a></td>
-                  <td class="px-3 py-2">{% if t.assigned_to %}{{ t.assigned_to.get_full_name|default:t.assigned_to.email }}{% else %}—{% endif %}</td>
-                  <td class="px-3 py-2 whitespace-nowrap {% if t.is_overdue %}text-danger font-medium{% endif %}">{% if t.due_date %}{% datestr t.due_date %}{% else %}—{% endif %}</td>
-                  <td class="px-3 py-2">{% include "tasks/_badges.html" with t=t %}</td>
+                  <td class="px-4 py-3"><a class="text-navy hover:underline" href="{% url 'tasks:detail' t.pk %}">{{ t.title }}</a></td>
+                  <td class="px-4 py-3">{% if t.assigned_to %}{{ t.assigned_to.get_full_name|default:t.assigned_to.email }}{% else %}—{% endif %}</td>
+                  <td class="px-4 py-3 whitespace-nowrap {% if t.is_overdue %}text-danger font-medium{% endif %}">{% if t.due_date %}{% datestr t.due_date %}{% else %}—{% endif %}</td>
+                  <td class="px-4 py-3">{% include "tasks/_badges.html" with t=t %}</td>
                 </tr>
               {% endfor %}
             </tbody>
@@ -309,23 +309,23 @@
       {% if case_documents %}
         <div class="overflow-x-auto rounded-lg border border-line">
           <table class="w-full text-start text-sm">
-            <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+            <thead class="bg-mist text-xs font-medium text-slate">
               <tr>
-                <th class="px-3 py-2 text-start font-medium">{% translate "الاسم" %}</th>
-                <th class="px-3 py-2 text-start font-medium">{% translate "النوع" %}</th>
-                <th class="px-3 py-2 text-start font-medium">{% translate "الحجم" %}</th>
-                <th class="px-3 py-2 text-start font-medium">{% translate "رُفع في" %}</th>
-                <th class="px-3 py-2"></th>
+                <th class="px-4 py-3 text-start font-medium">{% translate "الاسم" %}</th>
+                <th class="px-4 py-3 text-start font-medium">{% translate "النوع" %}</th>
+                <th class="px-4 py-3 text-start font-medium">{% translate "الحجم" %}</th>
+                <th class="px-4 py-3 text-start font-medium">{% translate "رُفع في" %}</th>
+                <th class="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody class="divide-y divide-line">
               {% for d in case_documents %}
                 <tr>
-                  <td class="px-3 py-2"><a class="text-navy hover:underline" href="{% url 'documents:detail' d.pk %}">{{ d.name }}</a></td>
-                  <td class="px-3 py-2">{{ d.get_document_type_display }}</td>
-                  <td class="px-3 py-2"><bdi dir="ltr">{{ d.size|filesizeformat }}</bdi></td>
-                  <td class="px-3 py-2 whitespace-nowrap">{% datestr d.created_at "SHORT_DATE_FORMAT" %}</td>
-                  <td class="px-3 py-2 text-end"><a class="text-xs text-navy hover:underline" href="{% url 'documents:download' d.pk %}">{% translate "تنزيل" %}</a></td>
+                  <td class="px-4 py-3"><a class="text-navy hover:underline" href="{% url 'documents:detail' d.pk %}">{{ d.name }}</a></td>
+                  <td class="px-4 py-3">{{ d.get_document_type_display }}</td>
+                  <td class="px-4 py-3"><bdi dir="ltr">{{ d.size|filesizeformat }}</bdi></td>
+                  <td class="px-4 py-3 whitespace-nowrap">{% datestr d.created_at "SHORT_DATE_FORMAT" %}</td>
+                  <td class="px-4 py-3 text-end"><a class="text-xs text-navy hover:underline" href="{% url 'documents:download' d.pk %}">{% translate "تنزيل" %}</a></td>
                 </tr>
               {% endfor %}
             </tbody>
@@ -350,21 +350,21 @@
       {% if case_contracts %}
         <div class="overflow-x-auto rounded-lg border border-line">
           <table class="w-full text-start text-sm">
-            <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+            <thead class="bg-mist text-xs font-medium text-slate">
               <tr>
-                <th class="px-3 py-2 text-start font-medium">{% translate "رقم العقد" %}</th>
-                <th class="px-3 py-2 text-start font-medium">{% translate "العنوان" %}</th>
-                <th class="px-3 py-2 text-start font-medium">{% translate "الانتهاء" %}</th>
-                <th class="px-3 py-2 text-start font-medium">{% translate "الحالة" %}</th>
+                <th class="px-4 py-3 text-start font-medium">{% translate "رقم العقد" %}</th>
+                <th class="px-4 py-3 text-start font-medium">{% translate "العنوان" %}</th>
+                <th class="px-4 py-3 text-start font-medium">{% translate "الانتهاء" %}</th>
+                <th class="px-4 py-3 text-start font-medium">{% translate "الحالة" %}</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-line">
               {% for c in case_contracts %}
                 <tr>
-                  <td class="px-3 py-2"><a class="text-navy hover:underline" href="{% url 'contracts:detail' c.pk %}">{% num c.contract_number %}</a></td>
-                  <td class="px-3 py-2">{{ c.title }}</td>
-                  <td class="px-3 py-2 whitespace-nowrap {% if c.is_past_due %}text-danger font-medium{% endif %}">{% if c.end_date %}{% datestr c.end_date %}{% else %}—{% endif %}</td>
-                  <td class="px-3 py-2">{% include "contracts/_badges.html" with c=c %}</td>
+                  <td class="px-4 py-3"><a class="text-navy hover:underline" href="{% url 'contracts:detail' c.pk %}">{% num c.contract_number %}</a></td>
+                  <td class="px-4 py-3">{{ c.title }}</td>
+                  <td class="px-4 py-3 whitespace-nowrap {% if c.is_past_due %}text-danger font-medium{% endif %}">{% if c.end_date %}{% datestr c.end_date %}{% else %}—{% endif %}</td>
+                  <td class="px-4 py-3">{% include "contracts/_badges.html" with c=c %}</td>
                 </tr>
               {% endfor %}
             </tbody>
@@ -383,7 +383,7 @@
   <div class="space-y-8">
     {# Financial summary — per currency, credit-note aware #}
     <div class="rounded-xl border border-line bg-white p-5">
-      <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate/60">{% translate "ملخص مالي" %}</h3>
+      <h3 class="mb-3 text-sm font-semibold text-slate">{% translate "ملخص مالي" %}</h3>
       {% include "finance/_summary.html" with summary=case_financials expenses=case_financials.expenses_by_currency %}
     </div>
 
@@ -412,19 +412,19 @@
       {% if case_invoices %}
         <div class="overflow-x-auto rounded-lg border border-line">
           <table class="w-full text-start text-sm">
-            <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70"><tr>
-              <th class="px-3 py-2 text-start font-medium">{% translate "الرقم" %}</th>
-              <th class="px-3 py-2 text-start font-medium">{% translate "الإجمالي" %}</th>
-              <th class="px-3 py-2 text-start font-medium">{% translate "المتبقي" %}</th>
-              <th class="px-3 py-2 text-start font-medium">{% translate "الحالة" %}</th>
+            <thead class="bg-mist text-xs font-medium text-slate"><tr>
+              <th class="px-4 py-3 text-start font-medium">{% translate "الرقم" %}</th>
+              <th class="px-4 py-3 text-start font-medium">{% translate "الإجمالي" %}</th>
+              <th class="px-4 py-3 text-start font-medium">{% translate "المتبقي" %}</th>
+              <th class="px-4 py-3 text-start font-medium">{% translate "الحالة" %}</th>
             </tr></thead>
             <tbody class="divide-y divide-line">
               {% for inv in case_invoices %}
                 <tr>
-                  <td class="px-3 py-2"><a class="text-navy hover:underline" href="{% url 'finance:invoice_detail' inv.pk %}">{{ inv }}</a></td>
-                  <td class="px-3 py-2">{% include "finance/_money.html" with amount=inv.total currency=inv.currency %}</td>
-                  <td class="px-3 py-2">{% include "finance/_money.html" with amount=inv.outstanding currency=inv.currency %}</td>
-                  <td class="px-3 py-2">{% include "finance/_invoice_badge.html" with inv=inv %}</td>
+                  <td class="px-4 py-3"><a class="text-navy hover:underline" href="{% url 'finance:invoice_detail' inv.pk %}">{{ inv }}</a></td>
+                  <td class="px-4 py-3">{% include "finance/_money.html" with amount=inv.total currency=inv.currency %}</td>
+                  <td class="px-4 py-3">{% include "finance/_money.html" with amount=inv.outstanding currency=inv.currency %}</td>
+                  <td class="px-4 py-3">{% include "finance/_invoice_badge.html" with inv=inv %}</td>
                 </tr>
               {% endfor %}
             </tbody>

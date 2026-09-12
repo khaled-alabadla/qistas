@@ -27,28 +27,28 @@
 {% if documents %}
 <div class="overflow-x-auto rounded-lg border border-line">
   <table class="w-full text-start text-sm">
-    <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+    <thead class="bg-mist text-xs font-medium text-slate">
       <tr>
-        <th class="px-3 py-2 text-start font-medium">{% translate "الاسم" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "النوع" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "القضية / الموكل" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "الحجم" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "رُفع في" %}</th>
-        <th class="px-3 py-2"></th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "الاسم" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "النوع" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "القضية / الموكل" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "الحجم" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "رُفع في" %}</th>
+        <th class="px-4 py-3"></th>
       </tr>
     </thead>
     <tbody class="divide-y divide-line">
       {% for d in documents %}
         <tr class="hover:bg-mist/50">
-          <td class="px-3 py-2"><a class="font-medium text-navy hover:underline" href="{% url 'documents:detail' d.pk %}">{{ d.name }}</a></td>
-          <td class="px-3 py-2">{{ d.get_document_type_display }}</td>
-          <td class="px-3 py-2">
+          <td class="px-4 py-3"><a class="font-medium text-navy hover:underline" href="{% url 'documents:detail' d.pk %}">{{ d.name }}</a></td>
+          <td class="px-4 py-3">{{ d.get_document_type_display }}</td>
+          <td class="px-4 py-3">
             {% if d.case %}<a class="text-navy hover:underline" href="{% url 'cases:detail' d.case_id %}">{% num d.case.case_number %}</a>
             {% elif d.client %}{{ d.client.display_name }}{% else %}—{% endif %}
           </td>
-          <td class="px-3 py-2"><bdi dir="ltr">{{ d.size|filesizeformat }}</bdi></td>
-          <td class="px-3 py-2 whitespace-nowrap">{% datestr d.created_at "SHORT_DATE_FORMAT" %}</td>
-          <td class="px-3 py-2 text-end">
+          <td class="px-4 py-3"><bdi dir="ltr">{{ d.size|filesizeformat }}</bdi></td>
+          <td class="px-4 py-3 whitespace-nowrap">{% datestr d.created_at "SHORT_DATE_FORMAT" %}</td>
+          <td class="px-4 py-3 text-end">
             <a class="text-xs text-navy hover:underline" href="{% url 'documents:download' d.pk %}">{% translate "تنزيل" %}</a>
           </td>
         </tr>

@@ -31,25 +31,25 @@
 {% if invoices %}
 <div class="overflow-x-auto rounded-lg border border-line">
   <table class="w-full text-start text-sm">
-    <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+    <thead class="bg-mist text-xs font-medium text-slate">
       <tr>
-        <th class="px-3 py-2 text-start font-medium">{% translate "الرقم" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "الموكل" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "الإجمالي" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "المتبقي" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "الاستحقاق" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "الحالة" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "الرقم" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "الموكل" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "الإجمالي" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "المتبقي" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "الاستحقاق" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "الحالة" %}</th>
       </tr>
     </thead>
     <tbody class="divide-y divide-line">
       {% for inv in invoices %}
         <tr class="hover:bg-mist/50">
-          <td class="px-3 py-2"><a class="font-medium text-navy hover:underline" href="{% url 'finance:invoice_detail' inv.pk %}">{{ inv }}</a></td>
-          <td class="px-3 py-2"><a class="text-navy hover:underline" href="{% url 'clients:detail' inv.client_id %}">{{ inv.client.display_name }}</a></td>
-          <td class="px-3 py-2">{% include "finance/_money.html" with amount=inv.total currency=inv.currency %}</td>
-          <td class="px-3 py-2">{% include "finance/_money.html" with amount=inv.outstanding currency=inv.currency %}</td>
-          <td class="px-3 py-2 whitespace-nowrap {% if inv.is_overdue %}text-danger font-medium{% endif %}">{% if inv.due_date %}{% datestr inv.due_date %}{% else %}—{% endif %}</td>
-          <td class="px-3 py-2">{% include "finance/_invoice_badge.html" with inv=inv %}</td>
+          <td class="px-4 py-3"><a class="font-medium text-navy hover:underline" href="{% url 'finance:invoice_detail' inv.pk %}">{{ inv }}</a></td>
+          <td class="px-4 py-3"><a class="text-navy hover:underline" href="{% url 'clients:detail' inv.client_id %}">{{ inv.client.display_name }}</a></td>
+          <td class="px-4 py-3">{% include "finance/_money.html" with amount=inv.total currency=inv.currency %}</td>
+          <td class="px-4 py-3">{% include "finance/_money.html" with amount=inv.outstanding currency=inv.currency %}</td>
+          <td class="px-4 py-3 whitespace-nowrap {% if inv.is_overdue %}text-danger font-medium{% endif %}">{% if inv.due_date %}{% datestr inv.due_date %}{% else %}—{% endif %}</td>
+          <td class="px-4 py-3">{% include "finance/_invoice_badge.html" with inv=inv %}</td>
         </tr>
       {% endfor %}
     </tbody>

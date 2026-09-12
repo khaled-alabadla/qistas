@@ -27,28 +27,28 @@
 {% if expenses %}
 <div class="overflow-x-auto rounded-lg border border-line">
   <table class="w-full text-start text-sm">
-    <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+    <thead class="bg-mist text-xs font-medium text-slate">
       <tr>
-        <th class="px-3 py-2 text-start font-medium">{% translate "المرجع" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "الوصف" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "التصنيف" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "المبلغ" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "القضية / الموكل" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "التاريخ" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "المرجع" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "الوصف" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "التصنيف" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "المبلغ" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "القضية / الموكل" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "التاريخ" %}</th>
       </tr>
     </thead>
     <tbody class="divide-y divide-line">
       {% for e in expenses %}
         <tr class="hover:bg-mist/50">
-          <td class="px-3 py-2"><a class="font-medium text-navy hover:underline" href="{% url 'finance:expense_detail' e.pk %}">{% num e.reference %}</a></td>
-          <td class="px-3 py-2">{{ e.description }}</td>
-          <td class="px-3 py-2">{{ e.get_category_display }}</td>
-          <td class="px-3 py-2">{% include "finance/_money.html" with amount=e.amount currency=e.currency %}</td>
-          <td class="px-3 py-2">
+          <td class="px-4 py-3"><a class="font-medium text-navy hover:underline" href="{% url 'finance:expense_detail' e.pk %}">{% num e.reference %}</a></td>
+          <td class="px-4 py-3">{{ e.description }}</td>
+          <td class="px-4 py-3">{{ e.get_category_display }}</td>
+          <td class="px-4 py-3">{% include "finance/_money.html" with amount=e.amount currency=e.currency %}</td>
+          <td class="px-4 py-3">
             {% if e.case %}<a class="text-navy hover:underline" href="{% url 'cases:detail' e.case_id %}">{% num e.case.case_number %}</a>
             {% elif e.client %}{{ e.client.display_name }}{% else %}{% translate "المكتب" %}{% endif %}
           </td>
-          <td class="px-3 py-2 whitespace-nowrap">{% datestr e.spent_on %}</td>
+          <td class="px-4 py-3 whitespace-nowrap">{% datestr e.spent_on %}</td>
         </tr>
       {% endfor %}
     </tbody>

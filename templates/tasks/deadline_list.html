@@ -31,24 +31,24 @@
 {% if deadlines %}
 <div class="overflow-x-auto rounded-lg border border-line">
   <table class="w-full text-start text-sm">
-    <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+    <thead class="bg-mist text-xs font-medium text-slate">
       <tr>
-        <th class="px-3 py-2 text-start font-medium">{% translate "العنوان" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "التاريخ النهائي" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "القضية / الموكل" %}</th>
-        <th class="px-3 py-2 text-start font-medium">{% translate "الحالة" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "العنوان" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "التاريخ النهائي" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "القضية / الموكل" %}</th>
+        <th class="px-4 py-3 text-start font-medium">{% translate "الحالة" %}</th>
       </tr>
     </thead>
     <tbody class="divide-y divide-line">
       {% for d in deadlines %}
         <tr class="hover:bg-mist/50">
-          <td class="px-3 py-2"><a class="font-medium text-navy hover:underline" href="{% url 'tasks:deadline_detail' d.pk %}">{{ d.title }}</a></td>
-          <td class="px-3 py-2 whitespace-nowrap {% if d.is_overdue %}text-danger font-medium{% endif %}">{% datestr d.due_date %}</td>
-          <td class="px-3 py-2">
+          <td class="px-4 py-3"><a class="font-medium text-navy hover:underline" href="{% url 'tasks:deadline_detail' d.pk %}">{{ d.title }}</a></td>
+          <td class="px-4 py-3 whitespace-nowrap {% if d.is_overdue %}text-danger font-medium{% endif %}">{% datestr d.due_date %}</td>
+          <td class="px-4 py-3">
             {% if d.case %}<a class="text-navy hover:underline" href="{% url 'cases:detail' d.case_id %}">{% num d.case.case_number %}</a>
             {% elif d.client %}{{ d.client.display_name }}{% else %}—{% endif %}
           </td>
-          <td class="px-3 py-2">{% include "tasks/_deadline_badge.html" with d=d %}</td>
+          <td class="px-4 py-3">{% include "tasks/_deadline_badge.html" with d=d %}</td>
         </tr>
       {% endfor %}
     </tbody>

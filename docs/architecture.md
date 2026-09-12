@@ -137,8 +137,8 @@ Four enforced layers; the UI is **never** a security boundary (spec §15).
 
 - `<html lang="ar" dir="rtl">`. **Tailwind 3.4+ native logical utilities** (`ps-*`, `pe-*`, `ms-*`, `me-*`, `text-start/end`, `start-*`/`end-*`). **No RTL plugin.**
 - **Bidi isolation:** all numbers, identifiers, money, dates, emails, phone numbers are wrapped in `<bdi>` via a `{% num %}` / component helper — mixed Arabic/Latin content must not scramble (spec §204).
-- Self-hosted **IBM Plex Sans Arabic** (`font-display: swap`, subset, `unicode-range`).
-- Design tokens: deep navy / dark slate / warm off-white / neutral gray / subtle bronze — restrained, per spec §5.
+- Self-hosted **Cairo** (`font-display: swap`, Arabic-subset `woff2`, `unicode-range`) — switched from IBM Plex Sans Arabic in Phase 15 to match `static/src/Design.png`'s reference typography (see `docs/DESIGN_SYSTEM.md`).
+- Design tokens: blue accent (`navy`) / neutral cool gray / subtle bronze secondary accent — restrained, per spec §5 (retuned in Phase 15 against `static/src/Design.png`; see `docs/DESIGN_SYSTEM.md`).
 - Reusable component kit in `core` (spec §49 list). Dev-only `/styleguide` page.
 - Permission-aware navigation from a data-driven config, filtered by the capability layer, mobile-collapsible (Alpine).
 - Themed error pages: 400 / 403 / 404 / 500, Arabic, RTL.

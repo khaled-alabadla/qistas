@@ -35,25 +35,25 @@
     {% if today_hearings %}
       <div class="overflow-x-auto rounded-lg border border-line">
         <table class="w-full text-start text-sm">
-          <thead class="bg-mist text-xs uppercase tracking-wide text-slate/70">
+          <thead class="bg-mist text-xs font-medium text-slate">
             <tr>
-              <th class="px-3 py-2 text-start font-medium">{% translate "الوقت" %}</th>
-              <th class="px-3 py-2 text-start font-medium">{% translate "القضية" %}</th>
-              <th class="px-3 py-2 text-start font-medium">{% translate "الموكل" %}</th>
-              <th class="px-3 py-2 text-start font-medium">{% translate "المحكمة" %}</th>
-              <th class="px-3 py-2 text-start font-medium">{% translate "المحامي" %}</th>
-              <th class="px-3 py-2 text-start font-medium">{% translate "الحالة" %}</th>
+              <th class="px-4 py-3 text-start font-medium">{% translate "الوقت" %}</th>
+              <th class="px-4 py-3 text-start font-medium">{% translate "القضية" %}</th>
+              <th class="px-4 py-3 text-start font-medium">{% translate "الموكل" %}</th>
+              <th class="px-4 py-3 text-start font-medium">{% translate "المحكمة" %}</th>
+              <th class="px-4 py-3 text-start font-medium">{% translate "المحامي" %}</th>
+              <th class="px-4 py-3 text-start font-medium">{% translate "الحالة" %}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-line">
             {% for h in today_hearings %}
               <tr class="hover:bg-mist/50">
-                <td class="px-3 py-2 whitespace-nowrap">{% datestr h.at "TIME_FORMAT" %}</td>
-                <td class="px-3 py-2"><a class="text-navy hover:underline" href="{{ h.url }}">{% num h.case_number %}</a></td>
-                <td class="px-3 py-2">{{ h.client }}</td>
-                <td class="px-3 py-2">{{ h.court|default:"—" }}</td>
-                <td class="px-3 py-2">{{ h.lawyer|default:"—" }}</td>
-                <td class="px-3 py-2">{% badge h.status "bronze" %}</td>
+                <td class="px-4 py-3 whitespace-nowrap">{% datestr h.at "TIME_FORMAT" %}</td>
+                <td class="px-4 py-3"><a class="text-navy hover:underline" href="{{ h.url }}">{% num h.case_number %}</a></td>
+                <td class="px-4 py-3">{{ h.client }}</td>
+                <td class="px-4 py-3">{{ h.court|default:"—" }}</td>
+                <td class="px-4 py-3">{{ h.lawyer|default:"—" }}</td>
+                <td class="px-4 py-3">{% badge h.status "bronze" %}</td>
               </tr>
             {% endfor %}
           </tbody>
@@ -92,7 +92,10 @@
     </p>
   </div>
   <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-    {% translate "حسب الحالة" as t_status %}{% include "dashboard/_bars.html" with title=t_status rows=case_analytics.by_status %}
+    <div class="rounded-xl border border-line bg-white p-4">
+      <h3 class="mb-3 text-sm font-semibold text-ink">{% translate "حسب الحالة" %}</h3>
+      {% donut_chart case_analytics.by_status size=104 %}
+    </div>
     {% translate "حسب الأولوية (النشطة)" as t_prio %}{% include "dashboard/_bars.html" with title=t_prio rows=case_analytics.by_priority %}
     {% translate "حسب النوع (النشطة)" as t_type %}{% include "dashboard/_bars.html" with title=t_type rows=case_analytics.by_type %}
     {% translate "حسب المحامي (النشطة)" as t_law %}{% include "dashboard/_bars.html" with title=t_law rows=case_analytics.by_lawyer %}
