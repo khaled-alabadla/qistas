@@ -1,7 +1,16 @@
 {% load i18n qistas %}
 <aside
-  class="fixed inset-y-0 end-0 z-40 w-64 -translate-x-full transform border-s border-line bg-white text-ink transition-transform duration-200 rtl:translate-x-full lg:static lg:translate-x-0 rtl:lg:translate-x-0"
-  :class="sidebarOpen && 'translate-x-0 rtl:translate-x-0'"
+  class="fixed inset-y-0 start-0 z-40 w-64 transform border-e border-line bg-white text-ink transition-transform duration-200 lg:static lg:translate-x-0"
+  {% comment %}
+    RTL-only project (docs/adr/0024, no LTR mode) — a plain translate-x-*
+    is unambiguous here. Deliberately NOT split across a static base class
+    + an rtl: variant: Tailwind's rtl: variant compiles to an attribute
+    selector wrapped in :where(), which carries zero specificity, so a
+    same-specificity plain utility present at the same time wins by source
+    order instead of by the state that's actually active — that combination
+    previously made the mobile drawer's open/close toggle a no-op.
+  {% endcomment %}
+  :class="sidebarOpen ? 'translate-x-0' : 'translate-x-full'"
   aria-label="{% translate 'التنقل الرئيسي' %}">
 
   <div class="flex h-16 items-center gap-2.5 border-b border-line px-4">
@@ -12,21 +21,27 @@
     </div>
   </div>
 
-  <nav class="space-y-1 p-3 text-sm">
+  <nav class="space-y-0.5 p-3 text-sm">
     {% for item in nav_items %}
       {% if item.children %}
-        <div class="pt-3 first:pt-0">
-          <p class="flex items-center gap-2 px-3 pb-1 text-xs font-medium text-slate">
-            {% icon item.icon "h-4 w-4" %}
-            {{ item.label }}
-          </p>
-          {% for child in item.children %}
-            <a href="{{ child.url|default:'#' }}"
-               class="flex items-center gap-2 rounded-md px-3 py-2 ms-4 text-slate hover:bg-mist hover:text-ink {% active request child.url_name %}"
-               {% if child.disabled %}aria-disabled="true"{% endif %}>
-              {{ child.label }}
-            </a>
-          {% endfor %}
+        <div x-data="{ open: {{ item.is_active_group|yesno:'true,false' }} }" class="pt-2 first:pt-0">
+          <button type="button" @click="open = !open" :aria-expanded="open.toString()"
+                  class="flex w-full items-center gap-2 rounded-md px-3 py-2 hover:bg-mist hover:text-ink {% if item.is_active_group %}text-ink{% else %}text-slate{% endif %}">
+            {% icon item.icon "h-5 w-5 shrink-0" %}
+            <span class="min-w-0 flex-1 truncate text-start font-medium">{{ item.label }}</span>
+            <span :class="open && 'rotate-180'" class="shrink-0 text-slate/60 transition-transform">
+              {% icon "chevron-down" "h-3.5 w-3.5" %}
+            </span>
+          </button>
+          <div x-show="open" x-transition.duration.150ms class="ms-[1.15rem] mt-0.5 space-y-0.5 border-s border-line ps-3" style="display:none">
+            {% for child in item.children %}
+              <a href="{{ child.url|default:'#' }}"
+                 class="block rounded-md px-3 py-1.5 text-slate hover:bg-mist hover:text-ink {% active request child.url_name %}"
+                 {% if child.disabled %}aria-disabled="true"{% endif %}>
+                {{ child.label }}
+              </a>
+            {% endfor %}
+          </div>
         </div>
       {% else %}
         {% active request item.url_name as is_current %}

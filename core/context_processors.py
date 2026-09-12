@@ -9,11 +9,11 @@ from core.navigation import NAV, NavItem
 from core.permissions.capabilities import Capability, can, capabilities_for
 
 
-def _resolve(item: NavItem, user) -> dict | None:
+def _resolve(item: NavItem, user, current_view: str | None) -> dict | None:
     if item.capability and not can(user, item.capability):
         return None
 
-    children = [c for c in (_resolve(ch, user) for ch in item.children) if c]
+    children = [c for c in (_resolve(ch, user, current_view) for ch in item.children) if c]
     if item.children and not children:
         return None
 
@@ -31,13 +31,18 @@ def _resolve(item: NavItem, user) -> dict | None:
         "icon": item.icon,
         "disabled": item.disabled or (url is None and not children),
         "children": children,
+        # Display aid for the sidebar's collapsible groups: expand a group by
+        # default only when the current page lives inside it.
+        "is_active_group": bool(children) and any(c["url_name"] == current_view for c in children),
     }
 
 
 def navigation(request) -> dict:
     user = getattr(request, "user", None)
     caps = capabilities_for(user)
-    items = [i for i in (_resolve(n, user) for n in NAV) if i]
+    match = getattr(request, "resolver_match", None)
+    current_view = match.view_name if match else None
+    items = [i for i in (_resolve(n, user, current_view) for n in NAV) if i]
     return {
         "nav_items": items,
         "user_capabilities": caps,

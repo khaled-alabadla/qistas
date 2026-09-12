@@ -12,7 +12,7 @@
 
   {% if user.is_authenticated and user|has_capability:'notifications.view' %}
   <a href="{% url 'notifications:list' %}" class="relative rounded-md p-2 text-slate hover:bg-mist"
-     aria-label="{% translate 'الإشعارات' %}{% if unread_notification_count %} ({% num unread_notification_count %}){% endif %}">
+     aria-label="{% translate 'الإشعارات' %}{% if unread_notification_count %} ({{ unread_notification_count }}){% endif %}">
     {% icon "bell" %}
     {% if unread_notification_count %}
       <span class="absolute -end-0.5 -top-0.5 grid min-w-4 place-items-center rounded-full bg-danger px-1 text-[10px] font-semibold leading-4 text-white">{% num unread_notification_count %}</span>

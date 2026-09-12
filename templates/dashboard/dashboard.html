@@ -92,7 +92,10 @@
     </p>
   </div>
   <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-    {% translate "حسب الحالة" as t_status %}{% include "dashboard/_bars.html" with title=t_status rows=case_analytics.by_status %}
+    <div class="rounded-xl border border-line bg-white p-4">
+      <h3 class="mb-3 text-sm font-semibold text-ink">{% translate "حسب الحالة" %}</h3>
+      {% donut_chart case_analytics.by_status size=104 %}
+    </div>
     {% translate "حسب الأولوية (النشطة)" as t_prio %}{% include "dashboard/_bars.html" with title=t_prio rows=case_analytics.by_priority %}
     {% translate "حسب النوع (النشطة)" as t_type %}{% include "dashboard/_bars.html" with title=t_type rows=case_analytics.by_type %}
     {% translate "حسب المحامي (النشطة)" as t_law %}{% include "dashboard/_bars.html" with title=t_law rows=case_analytics.by_lawyer %}

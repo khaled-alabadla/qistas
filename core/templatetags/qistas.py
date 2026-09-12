@@ -65,6 +65,54 @@ def empty_state(title, message: str = "", *, action_url: str | None = None, acti
     }
 
 
+# Restrained categorical palette shared by the donut chart and the ranked bar
+# chart (dashboard/_bars.html) so the two read as one visual system.
+CHART_COLORS: list[str] = [
+    "#1d4ed8",  # navy
+    "#b8863b",  # bronze
+    "#10b981",  # emerald-500
+    "#f59e0b",  # amber-500
+    "#94a3b8",  # slate-400
+    "#f43f5e",  # rose-500
+    "#0ea5e9",  # sky-500
+    "#a855f7",  # purple-500
+]
+
+
+@register.filter
+def chart_color(index: int) -> str:
+    """Look up a color from the shared CHART_COLORS palette by position."""
+    return CHART_COLORS[int(index) % len(CHART_COLORS)]
+
+
+@register.inclusion_tag("components/donut_chart.html")
+def donut_chart(rows, size: int = 120):
+    """A dependency-free SVG donut chart (spec §14 — no charting library).
+
+    ``rows``: iterable of objects/dicts with ``label``/``value`` — same shape
+    dashboard/_bars.html already consumes. Geometry uses the classic
+    r=15.9155 trick (2*pi*r ≈ 100), so each segment's percentage of the
+    total *is* its stroke-dasharray length, no further scaling needed.
+    """
+    rows = list(rows)[:8]
+    total = sum(r["value"] for r in rows)
+    segments = []
+    cumulative = 0.0
+    for i, r in enumerate(rows):
+        pct = (r["value"] / total * 100) if total else 0
+        segments.append(
+            {
+                "label": r["label"],
+                "value": r["value"],
+                "dasharray": f"{pct:.4f} 100",
+                "dashoffset": -cumulative,
+                "color": CHART_COLORS[i % len(CHART_COLORS)],
+            }
+        )
+        cumulative += pct
+    return {"segments": segments, "total": total, "size": size}
+
+
 @register.simple_tag
 def active(request, *url_names: str, css: str = "is-active") -> str:
     """Return ``css`` when the current resolved URL name matches any given name."""
@@ -103,6 +151,15 @@ _ICON_PATHS: dict[str, str] = {
         '<circle cx="12" cy="12" r="3.2"/>'
         '<path d="M12 3v2.5M12 18.5V21M21 12h-2.5M5.5 12H3'
         'M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8M18.4 18.4l-1.8-1.8M7.4 7.4 5.6 5.6"/>'
+    ),
+    "file-text": (
+        '<path d="M7 3.5h7l4 4V20a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1Z"/>'
+        '<path d="M14 3.5V8h4M9 12.5h6M9 16h6"/>'
+    ),
+    "wallet": (
+        '<path d="M3.5 7.5A2 2 0 0 1 5.5 5.5H18a1 1 0 0 1 1 1V8"/>'
+        '<path d="M3.5 7.5v10a2 2 0 0 0 2 2H19a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1H6a2.5 2.5 0 0 1 '
+        '0-5h11"/><circle cx="16.2" cy="14" r="1.3"/>'
     ),
     "menu": '<path d="M4 6h16M4 12h16M4 18h16"/>',
     "search": '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',

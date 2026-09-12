@@ -19,13 +19,7 @@ module.exports = {
         danger: "#b3261e",
       },
       fontFamily: {
-        sans: [
-          "IBM Plex Sans Arabic",
-          "Segoe UI",
-          "Tahoma",
-          "Arial",
-          "sans-serif",
-        ],
+        sans: ["Cairo", "Segoe UI", "Tahoma", "Arial", "sans-serif"],
       },
       borderRadius: { xl: "0.75rem" },
     },

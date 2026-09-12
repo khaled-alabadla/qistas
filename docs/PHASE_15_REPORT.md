@@ -5,17 +5,18 @@ QISTAS — PHASE COMPLETION REPORT
 Phase:        15 — UI/UX Visual Refinement (owner-defined; not in the
               original spec sequence — added after Phase 13 was declared
               the final planned phase)
-Status:       COMPLETE (technical) — live pixel/screenshot comparison
-              DEFERRED (no browser automation available in this
-              environment; see §8)
+Status:       COMPLETE (technical)
 Branch:       phase/15-design-refinement — based on master @ 08d5f5f
               (Phase 13 merge, PR #12)
-Commit:       phase(15): refine UI to design reference
+Commit:       phase(15): refine UI to design reference (+ follow-up fixes:
+              Cairo font, sidebar/dashboard refinement — see §10)
 
 **This is a pure UI/visual phase.** No model, view, service, selector, form,
-URL, or permission was changed. The diff is templates, one new template tag
-(`icon`, in `core/templatetags/qistas.py`), `static/src/app.css`, and
-`tailwind.config.js`, plus documentation.
+URL, or permission was changed. The diff is templates, `core/navigation.py`
+(one-word icon-name changes only), `core/context_processors.py` (a display-only
+field added to the nav dict), two new template tags (`icon`, `donut_chart`,
+`chart_color` in `core/templatetags/qistas.py`), `static/src/app.css`,
+`tailwind.config.js`, vendored font files, and documentation.
 
 ════════════════════════════════════════
 1. PHASE OBJECTIVE
@@ -27,267 +28,311 @@ admin screen with a blue accent, restrained borders instead of shadows, pill
 status badges, and comfortable table density — while preserving 100% of
 Qistas's existing functionality, architecture, permissions, and domain
 information architecture. The screenshot is a visual reference, not a
-product spec: it is a generic Arabic attendance/automation tool, and nothing
-about its specific content (students, sessions, Google Sheets) was carried
-into Qistas.
+product spec.
+
+The owner reviewed the first pass and asked for two corrections/additions,
+which make up the second half of this report: use the **Cairo** font instead
+of the originally-swapped IBM Plex Sans Arabic, and continue refining until
+it actually converged with the reference (the first pass had shipped with no
+real rendered screenshot ever taken — see §8/§10 for what that cost).
 
 ════════════════════════════════════════
 2. DESIGN AUDIT — REFERENCE vs. CURRENT
 ════════════════════════════════════════
 
-**Reference (`Design.png`):** white page canvas; white sidebar (not filled)
-with a small blue logo badge, plain icon + label nav items, a light-blue pill
-for the active item; white topbar with a page title, date, and avatar; a
-flat white table with a light-gray header row, generous row padding, pill
-status badges (soft green for "active"), a cream/yellow info banner, and a
-bordered pill "refresh" button; virtually no shadows anywhere — structure
-comes entirely from thin gray borders; moderate (not maximal) corner
-radius; plain, non-decorative sans-serif type with a clear but restrained
-size/weight hierarchy.
+**Reference (`Design.png`):** white page canvas; white sidebar with a small
+blue logo badge, plain icon + label nav items, a light-blue pill for the
+active item; white topbar with a page title, date, and avatar; a flat white
+table with a light-gray header row, generous row padding, pill status badges,
+a cream/yellow info banner, and a bordered pill "refresh" button; virtually
+no shadows — structure comes from thin gray borders; moderate corner radius;
+plain, restrained sans-serif type.
 
 **Qistas before this phase:** already had a real component kit (`templates/
 components/*`), a data-driven capability-filtered sidebar, and a consistent
-`navy`/`bronze`/`sand`/`mist`/`line`/`ink` token system (`docs/adr/0024`) —
-the underlying architecture was sound and reusable. The visual gaps against
-the reference were: (1) a filled dark-navy sidebar instead of a white one
-with a blue accent; (2) `bronze`/gold as the primary interactive color
-(buttons, focus rings, active nav) instead of blue; (3) emoji/glyph
-placeholders (`☰`, `🔔`, `✓`, `▲`, `☰` again for empty-states) instead of a
-real icon system, despite `NavItem.icon` already carrying semantic icon
-names (`home`, `users`, `folder`, …) that the sidebar template never
-rendered; (4) heavier corner radius (`0.9rem`) and a few static `shadow-sm`/
-`shadow-xl`/`shadow-2xl` uses where the reference has none; (5)
-`uppercase tracking-wide` on Arabic table headers and section labels — inert
-for Arabic (no letter case) and actively harmful to Arabic readability
-(added letter-spacing breaks cursive joining); (6) tighter table row padding
-than the reference's more comfortable density.
+token system (`docs/adr/0024`) — sound, reusable architecture. Gaps against
+the reference: a filled dark-navy sidebar instead of white-with-blue-accent;
+gold as the primary interactive color instead of blue; emoji/glyph
+placeholders instead of a real icon system (despite `NavItem.icon` already
+carrying semantic names that were never rendered); heavier radius and a few
+stray shadows; `uppercase tracking-wide` on Arabic headers (inert for Arabic,
+harms letter-joining readability); tighter table density than the reference.
 
 ════════════════════════════════════════
 3. DESIGN SYSTEM EXTRACTED / APPLIED
 ════════════════════════════════════════
 
-Full token-by-token rationale is in `docs/DESIGN_SYSTEM.md` (created this
-phase). Summary:
+Full rationale in `docs/DESIGN_SYSTEM.md`. Summary:
 
-- **Colors** (`tailwind.config.js`): `navy` redefined to a blue (`#1d4ed8`,
-  extracted from the reference's accent) with `navy-50`/`navy-100` tints and
-  a new `navy-900` (`#132a63`) reserved for full-bleed dark surfaces (login,
-  error pages) so those don't read as a flat bright-blue billboard. `sand`/
-  `mist`/`line`/`ink`/`slate` cooled to neutral light-gray/near-black values
-  matching the reference's canvas. `bronze` kept, deliberately narrowed to
-  its pre-existing secondary "pending/new/prospect" semantic — see
-  `docs/DESIGN_SYSTEM.md` §"Why bronze survives" for the reasoning (avoids
-  turning Qistas into an all-blue generic-SaaS look, per the brief's own
-  anti-generic guidance).
-- **Radius**: `xl` token 0.9rem → 0.75rem; `card.html`/`modal.html` moved
-  `rounded-xl` → `rounded-lg`.
-- **Shadows**: removed from `card.html` (was `shadow-sm`); `auth_base.html`
-  and `modal.html` reduced from `shadow-xl`/`shadow-2xl` to `shadow-lg`.
-  Everywhere else already relied on borders only, matching the reference.
-- **Icons**: new dependency-free inline-SVG icon set (`{% icon "name" %}`,
-  `core/templatetags/qistas.py`) — 18 hand-authored stroke icons. Replaces
-  every emoji/glyph in the sidebar, topbar, alert, and empty-state
-  components. Wires up `NavItem.icon`, a field that already existed in
-  `core/navigation.py` but was never rendered — a UI fix, not a new field.
-- **Typography**: removed `uppercase tracking-wide` project-wide (11 section
-  headings + 16 table headers) — see audit point 5 above.
-- **Spacing**: table `<th>`/`<td>` padding `px-3 py-2` → `px-4 py-3` across
-  16 templates (every list/detail page with a table) for reference-matched
-  row density, without turning tables into cards.
-- **Forms**: focus ring/outline moved from `bronze` to the new `navy` (blue);
-  `input[type="search"]` and `select` gained CSS-only inline-SVG icon
-  affordances (no JS, no per-template changes — 12 filter forms inherit it
-  automatically because they already use `type="search"`).
-- **Sidebar/topbar rewritten**: white sidebar surface, blue logo mark, real
-  icons per nav section, light-blue active-pill state (`is-active` class
-  redefined); topbar menu/bell/chevron now real icons instead of emoji.
+- **Colors**: `navy` redefined to blue (`#1d4ed8`, from the reference) with
+  light tints and a separate `navy-900` for full-bleed dark surfaces (login,
+  error pages) so those read as premium rather than a flat blue billboard.
+  `sand`/`mist`/`line`/`ink`/`slate` cooled to neutral light-gray/near-black.
+  `bronze` kept, deliberately narrowed to its existing "pending/in-between
+  state" semantic — see `docs/DESIGN_SYSTEM.md` §"Why bronze survives".
+- **Radius**: `xl` token 0.9rem → 0.75rem; `card.html`/`modal.html` →
+  `rounded-lg`.
+- **Shadows**: removed from `card.html`; `auth_base.html`/`modal.html`
+  reduced to `shadow-lg`. Everywhere else already border-only.
+- **Typography**: switched to **Cairo** (self-hosted, `static/fonts/cairo-
+  {400,500,600,700}.woff2`), per explicit request — and because the prior
+  IBM Plex Sans Arabic `@font-face` rules pointed at files that had never
+  existed in the repo (`static/fonts/` was empty; nothing in `Dockerfile`/
+  `Makefile` ever fetched them), so the app had silently been rendering in
+  the OS Arabic fallback the entire time this phase started from. Also
+  removed `uppercase tracking-wide` project-wide (27 headings/table headers).
+- **Spacing**: table `<th>`/`<td>` padding `px-3 py-2` → `px-4 py-3` (16
+  templates).
+- **Icons**: new dependency-free inline-SVG icon set (`{% icon "name" %}`),
+  20 hand-authored stroke icons, wired up against `NavItem.icon` (existed,
+  was never rendered). Two icons added mid-phase (`file-text`, `wallet`) once
+  screenshots revealed three unrelated sidebar sections shared one icon.
+- **Forms**: focus ring moved to `navy`; `input[type=search]`/`select` gained
+  CSS-only inline-SVG affordances.
+- **Sidebar/topbar rewritten**: white surface, blue logo mark, real icons,
+  light-blue active-pill state; topbar icons instead of emoji.
+- **Sidebar made collapsible** (added after visual review — see §10.3): each
+  section with children is now an Alpine disclosure, expanded by default only
+  when the current page lives inside it (`core/context_processors.py`'s
+  `is_active_group`, a display hint alongside the pre-existing `disabled`
+  field — never an authorization signal).
+- **Two dependency-free dashboard charts added** (added after the owner's
+  request — see §10.4): an SVG donut for the case-status breakdown, and the
+  pre-existing ranked-bar lists re-colored from a shared categorical palette.
 
 ════════════════════════════════════════
 4. WHAT WAS DELIBERATELY NOT CHANGED
 ════════════════════════════════════════
 
-- Any Python code path: views, services, selectors, forms, models, URLs,
-  permissions/capabilities, object scoping, audit logging.
-- Finance capability gating / paralegal isolation — untouched and
-  unverified-changed (see §7).
-- Domain information architecture of any page — no page was restructured to
-  resemble the reference's specific content (students/sessions table). The
-  reference was used strictly for visual language per the brief's §21.
-- `templates/components/dropdown.html`, `modal.html`'s call sites, `tabs.html`,
-  `file_upload.html`, `confirm_dialog.html`, `loading_state.html` — confirmed
-  via `grep` that only `modal.html`'s own radius/shadow needed a token-level
-  touch; these components are not referenced anywhere outside
-  `core/styleguide.html` (a dev-only demo page), so no functional risk either
-  way.
+- Any Python code path with product logic: views, services, selectors, forms,
+  models, URLs, permissions/capabilities, object scoping, audit logging.
+  (`core/navigation.py` and `core/context_processors.py` were touched, but
+  only their display-only `icon` string values and a new display-only
+  `is_active_group` boolean — see their own module docstrings, which already
+  state the nav structure is "a display aid only — never the authorization
+  boundary.")
+- Finance capability gating / paralegal isolation.
+- The information architecture of any domain page.
+- `templates/components/dropdown.html`, `tabs.html`, `file_upload.html`,
+  `confirm_dialog.html`, `loading_state.html` — confirmed unused outside the
+  dev-only `/styleguide/` page.
 
 ════════════════════════════════════════
 5. FILES CHANGED
 ════════════════════════════════════════
 
-Config/CSS:
-- `tailwind.config.js` — color tokens, radius.
-- `static/src/app.css` — component classes (`.btn-*`, `.is-active`),
-  focus styles, search/select icon affordances.
+Config/CSS: `tailwind.config.js`, `static/src/app.css`, `static/fonts/cairo-
+{400,500,600,700}.woff2` (new, vendored — same pattern as `static/vendor/
+htmx.min.js`).
 
-Templates (structural):
-- `templates/base.html` (favicon color only)
-- `templates/auth_base.html`, `templates/errors/_base.html` (full-bleed bg →
-  `navy-900`, logo mark consistency)
-- `templates/partials/sidebar.html`, `templates/partials/topbar.html`
-  (rewritten: white surface, real icons)
-- `templates/components/card.html`, `empty_state.html`, `alert.html`,
-  `modal.html` (radius/shadow/icons)
+Python: `core/templatetags/qistas.py` (`icon`, `donut_chart`, `chart_color`,
+`CHART_COLORS`), `core/navigation.py` (2 icon-name strings), `core/
+context_processors.py` (`is_active_group` field).
 
-Templates (mechanical, table density + typography):
-- `templates/cases/case_detail.html`, `case_list.html`
-- `templates/clients/client_list.html`
-- `templates/contracts/contract_list.html`
-- `templates/courts/court_list.html`
-- `templates/documents/document_list.html`
-- `templates/finance/expense_list.html`, `fee_agreement_list.html`,
-  `invoice_list.html`, `invoice_detail.html`, `payment_list.html`
-- `templates/hearings/hearing_list.html`
-- `templates/tasks/deadline_list.html`, `task_list.html`
-- `templates/dashboard/dashboard.html`
-- `templates/components/table.html`
-- 11 additional templates with the "section eyebrow" heading pattern
-  (`client_detail.html`, `styleguide.html`, etc. — full list in the diff)
+Templates (structural): `base.html` (favicon color), `auth_base.html`,
+`errors/_base.html`, `partials/sidebar.html` (rewritten twice — palette pass,
+then collapsible-groups + the two RTL bugs in §10.3), `partials/topbar.html`
+(icons + the aria-label bug fix), `components/card.html`, `empty_state.html`,
+`alert.html`, `modal.html`, `donut_chart.html` (new), `dashboard/_bars.html`,
+`dashboard/dashboard.html`.
 
-Python:
-- `core/templatetags/qistas.py` — new `icon` simple_tag + `_ICON_PATHS`.
+Templates (mechanical — table density/typography, 27 files): every list/
+detail page with a table or a "section eyebrow" heading — full list in the
+diff (`git diff --stat` against `master`).
 
-Docs:
-- `docs/DESIGN_SYSTEM.md` (new)
-- `docs/PHASE_15_REPORT.md` (this file)
-- `PROJECT_STATUS.md` (Phase 15 section + current-phase header)
+Docs: `docs/DESIGN_SYSTEM.md`, `docs/PHASE_15_REPORT.md` (this file),
+`docs/architecture.md` (§11 updated to match), `PROJECT_STATUS.md`.
 
 ════════════════════════════════════════
 6. SHARED COMPONENTS IMPROVED
 ════════════════════════════════════════
 
-`card.html`, `badge.html` (verified already reference-aligned, untouched),
-`alert.html`, `empty_state.html`, `modal.html`, `_form_field.html`'s
-underlying `input`/`select` CSS, `button.html`'s underlying `.btn-*` CSS,
-`pagination.html` (verified already correct, untouched), the sidebar and
-topbar partials, and the new shared `icon` tag consumed by all of the above.
-No new component abstraction was introduced beyond the icon tag — every
-other change is a token/CSS-level or existing-component edit, per the
-brief's "don't create abstractions merely for the sake of abstraction."
+`card.html`, `alert.html`, `empty_state.html`, `modal.html`, the shared
+`input`/`select` CSS, `.btn-*` CSS, the sidebar and topbar partials, and the
+new `icon`/`donut_chart`/`chart_color` tags. `badge.html` and
+`pagination.html` were verified already reference-aligned and left untouched.
 
 ════════════════════════════════════════
 7. RTL / ACCESSIBILITY REVIEW
 ════════════════════════════════════════
 
-- No physical `left`/`right` utility was introduced in any template; all
-  layout continues to use logical properties (`ms/me`, `ps/pe`, `start/end`,
-  `border-s/border-e`), consistent with `docs/adr/0024`.
-- The two new CSS `background-position: left/right ...` declarations (search
-  icon, select chevron) are static decorative image placements on a
-  **RTL-only** project (`dir="rtl"` is hardcoded, no LTR mode exists per
-  ADR-0024) — documented explicitly in `docs/DESIGN_SYSTEM.md` as the one
-  deliberate exception, not an oversight.
-- Removed `tracking-wide` from Arabic text is itself an accessibility/
-  readability fix (extra letter-spacing degrades Arabic cursive joining).
-- Icons added via the new `icon` tag are marked `aria-hidden="true"` —
-  they are always paired with visible text (nav labels) or an existing
-  `aria-label` on the parent control (menu button, notification bell,
-  user-menu chevron), so no accessible name was lost.
-- Focus-visible outline changed color only (`bronze` → `navy`); still a
-  2px, offset, high-contrast outline — no regression to keyboard visibility.
-- No `<label>`/`for` association, semantic heading, or ARIA attribute was
-  removed anywhere in this phase.
+- No physical `left`/`right` utility was introduced, except the two
+  decorative CSS `background-image` positions (search/select icons) — static
+  assets on an RTL-only project with no LTR mode, documented as the one
+  deliberate exception.
+- **Two real RTL bugs found and fixed** in the sidebar — see §10.3 for the
+  full technical account: (1) the mobile drawer was anchored with `end-0`,
+  which resolves to physical `left` in `dir="rtl"` (confirmed by direct DOM
+  measurement), not `right` — it opened flush against the wrong edge of the
+  screen, inconsistent with the desktop sidebar and the rest of the app;
+  (2) independent of that, the open/close *toggle itself* was a no-op due to
+  a Tailwind `:where()`-specificity tie between static and Alpine-applied
+  classes — clicking the hamburger updated `aria-expanded` but never visibly
+  moved the drawer. Both predate this phase and were only surfaced because
+  this is the first time real rendered screenshots were taken (§8/§10.1).
+- Removing `tracking-wide` from Arabic text is itself a readability fix.
+- All new icons are `aria-hidden="true"`, always paired with visible text or
+  an existing `aria-label`.
+- Focus-visible outline changed color only, same 2px offset contrast ring.
+- No `<label>`/`for`, semantic heading, or ARIA attribute was removed.
 
 ════════════════════════════════════════
 8. VISUAL VALIDATION
 ════════════════════════════════════════
 
-**No live browser was available to render and screenshot pages in this
-environment**, and this is stated explicitly per the brief's §16/§20/§25
-instructions rather than glossed over:
+**This phase went through two distinct verification passes, and the
+difference between them is the main lesson worth recording.**
 
-- `claude-in-chrome` (the available browser-automation tool) reported "the
-  browser extension is not connected" — no Chrome instance with the
-  extension was reachable from this session.
-- No headless-browser library (Playwright, etc.) is installed in the
-  project's virtualenv.
+**First pass**: no browser was reachable (`claude-in-chrome` reported "the
+extension is not connected"; no headless-browser library in the venv), so
+verification relied on rebuilding CSS, curling pages for HTTP 200, and
+reading rendered HTML text for the presence of expected classes/markup. That
+pass shipped a commit that *looked* correct by every check available, but
+had two live defects a human immediately caught by eye: it was still
+rendering in a system-fallback font (because the previous phase's font files
+had never actually existed — nothing about that phase's own diff could have
+caught it, since HTML/class inspection can't detect a missing static asset
+that 404s silently into a font fallback), and it had a garbled string of text
+next to the notification bell on every page.
 
-What **was** done instead, as the closest available substitute:
+**Second pass** (this section describes what actually closed the gap):
+found that Chrome itself is installed on this machine and can be driven
+headless via the DevTools Protocol directly (`chrome.exe --headless=new
+--remote-debugging-port --remote-allow-origins=*`), without needing the
+`claude-in-chrome` extension or Playwright. Built a small script
+(`scratchpad/shot.py`) that opens a CDP websocket, injects the authenticated
+session cookie, navigates, and captures a real PNG screenshot — then actually
+looked at the pixels. This is what found:
 
-1. Rebuilt the actual production CSS via the project's own vendored
-   standalone Tailwind CLI (`./bin/tailwindcss -i static/src/app.css -o
-   static/css/app.css --minify`) — confirms every new utility class/token
-   compiles with no errors.
-2. Stood up the real Django dev server against a throwaway, gitignored
-   SQLite database (`design-preview.sqlite3`, deleted before commit — never
-   staged), seeded via the project's own `seed_demo_*` management commands
-   (clients, courts, cases, hearings, tasks, documents, contracts, finance,
-   notifications) plus a one-off superuser given every capability group, so
-   every page had realistic Arabic data rather than empty states.
-3. Fetched every one of the 13 representative pages listed in the brief
-   (Login via POST, Dashboard, Client list, Case list, Hearings, Tasks,
-   Documents, Contracts, Finance ×4 sub-pages, Notifications, Reports,
-   Agenda, Settings, plus the dev-only `/styleguide/`) with an authenticated
-   `curl` session and confirmed HTTP 200 with no server-side template
-   errors.
-4. Inspected the rendered HTML of the dashboard/sidebar/topbar/clients pages
-   directly to confirm the new `<svg>` icon markup is present and correctly
-   placed, the active-nav class resolves correctly, and the new utility
-   classes (radius, padding, color tokens) appear exactly where intended.
+1. The font fallback (visually obvious once actually rendered).
+2. The garbled `aria-label` text next to the bell (§10.2) — invisible to
+   `curl`/HTML inspection because the malformed attribute only breaks when a
+   real HTML parser (a browser) recovers from it.
+3. Three sidebar sections sharing one icon (a `grep` could have found this
+   too, in hindsight, but it took looking at the rendered sidebar to notice
+   it read as a design flaw).
+4. Both RTL sidebar bugs in §10.3 — found by noticing, at a mobile viewport
+   screenshot, that a chunk of white sidebar was visibly overlapping the
+   content on the wrong side. Diagnosed to a certainty (not a guess) by
+   querying `getComputedStyle`/`getBoundingClientRect` on the live `<aside>`
+   element via `Runtime.evaluate`, before and after a programmatic click on
+   the real hamburger button.
 
-This confirms **structural correctness and zero rendering regressions**, but
-is not a substitute for an actual pixel comparison against `Design.png`.
-**Pixel-level visual regression (brief §20) is explicitly deferred** to a
-session where browser automation is available — this should be the first
-thing re-run before Phase 15 is considered fully closed out, not just
-technically complete.
+Every fix from this pass was re-verified the same way (a fresh screenshot or
+DOM query), not just re-read.
+
+**One process note, disclosed rather than glossed over**: killing the first
+headless Chrome instance used `taskkill /IM chrome.exe`, which targets every
+process with that image name on the machine, not just the one this session
+started — if the user had another Chrome window open, it would have been
+force-closed. This was caught immediately, flagged to the user in the same
+turn it happened, and every subsequent Chrome/Django process was stopped by
+exact PID (cross-checked against `netstat`) instead.
 
 ════════════════════════════════════════
 9. VERIFICATION
 ════════════════════════════════════════
 
-- **Tests: 777 pass / 0 fail / 4 skipped** (SQLite) — byte-for-byte the same
-  pass/skip count as the Phase 13 baseline. No test was added, removed, or
-  modified; a pure-template/CSS phase should not need to.
-- `ruff check .` — clean (0 errors; the new `icon` tag's SVG-path dict
-  needed line-wrapping to satisfy `E501`, done without changing content).
-- `ruff format --check .` — clean, 310 files already formatted.
-- `manage.py makemigrations --check --dry-run` (test settings, SQLite) —
-  "No changes detected" (expected: zero model changes this phase).
-- `manage.py check` (test settings) — "System check identified no issues
-  (1 silenced)".
+- **Tests: 777 pass / 0 fail / 4 skipped** (SQLite) — identical to the Phase
+  13 baseline, re-run after every round of changes in this phase (three full
+  runs total). No test was added, removed, or modified.
+- `ruff check .` — clean. `ruff format --check .` — clean, 310 files.
+- `manage.py makemigrations --check --dry-run` — "No changes detected."
+- `manage.py check` — "System check identified no issues (1 silenced)."
 - `manage.py check --deploy` against real `config.settings.prod` (SQLite
-  `DATABASE_URL` override, per the established Phase-12/13 technique — the
-  deploy check never touches the DB engine) — clean, 0 warnings, 1 silenced.
+  `DATABASE_URL` override, the established Phase-12/13 technique) — clean.
+- All throwaway artifacts (a seeded SQLite preview DB, a headless-Chrome
+  profile directory, scratch Python scripts) live outside the repo or are
+  gitignored (`*.sqlite3`) and were deleted before commit — confirmed via
+  `git status --porcelain` showing only the intended files.
 
 ════════════════════════════════════════
-10. DEFERRED / UNVERIFIED
+10. NOTABLE FINDINGS (beyond the visual refresh itself)
 ════════════════════════════════════════
 
-1. **Live pixel/screenshot visual regression against `Design.png`** — no
-   browser automation available this session (§8). This is the main gap
-   before Phase 15 can be called fully validated, not just technically
-   complete.
-2. Everything already deferred from Phase 13 for the same standing
-   environment reason (no PostgreSQL server, no Docker daemon reachable from
-   this machine): full suite on PostgreSQL 16, the 4
-   `@pytest.mark.postgres` tests, `docker compose` full-stack smoke,
-   `compilemessages`. None of these are UI-related and none regressed —
-   listed here only for continuity with `PROJECT_STATUS.md`.
+**10.1 — IBM Plex Sans Arabic was never actually loading.** `static/fonts/`
+was empty and no build step ever populated it; every page had been silently
+falling back to the OS Arabic stack since whichever earlier phase introduced
+the `@font-face` rules. Switching to Cairo fixed this by construction (the
+`.woff2` files are now genuinely vendored in the repo), but the underlying
+lesson — a missing static asset degrades silently and no amount of
+HTML/class inspection catches it — is why §8 above matters.
+
+**10.2 — bug-134** (`.wolf/buglog.json`): `templates/partials/topbar.html`'s
+notification-bell `aria-label` interpolated `{% num unread_notification_count
+%}`, which renders `<bdi dir="ltr">6</bdi>` (safe HTML) directly inside an
+HTML attribute string. The unescaped `"` in `dir="ltr"` prematurely closed
+the `aria-label="..."` attribute; the browser's error-recovery parsing then
+spilled the tag's tail into the page as visible garbled text next to the bell
+icon, for every user with an unread count, on every page. Predates this
+phase — fixed with plain `{{ unread_notification_count }}` (a `<bdi>` bidi
+wrapper is meaningless in a non-visual attribute anyway).
+
+**10.3 — two independent, pre-existing sidebar RTL bugs**, both only visible
+at mobile/tablet viewport widths (desktop never showed either symptom because
+`lg:static` takes the sidebar out of fixed positioning and RTL flex ordering
+places it correctly regardless):
+
+- The off-canvas drawer was anchored with `end-0`. In `dir="rtl"`,
+  `inset-inline-end` resolves to physical **left**, not right — confirmed by
+  direct `getComputedStyle` measurement, not assumption. It opened flush
+  against the left edge of the screen, inconsistent with every other
+  right-anchored element in the app (desktop sidebar, toast region). Fixed:
+  `end-0` → `start-0`, `border-s` → `border-e` (the divider had the same
+  problem, on the outer instead of the content-facing edge).
+- Independently, the open/close **toggle was a no-op**: the drawer was hidden
+  by an always-present static class, and Alpine additively appended the
+  "show" classes on top without ever removing the "hide" ones. Tailwind
+  compiles the `rtl:` variant with a `:where()`-wrapped selector, which
+  carries zero specificity, so the four competing classes tied and the
+  browser's tie-break (source order in the compiled stylesheet) always
+  favored the hidden state — clicking the hamburger updated Alpine's
+  internal state and `aria-expanded` correctly, but the drawer never visibly
+  moved. Fixed by making Alpine's `:class` binding the single source of
+  truth for the transform (no competing static classes), keeping only the
+  real-`@media`-based `lg:translate-x-0` for the desktop override. Verified
+  in all three states (mobile closed / mobile open via a real click /
+  desktop) via `getComputedStyle`+`getBoundingClientRect`, not just visually.
+
+**10.4 — sidebar and dashboard follow-up requests.** After reviewing the
+first pass, the owner asked to "improve the sidebar" and "add simple charts
+to the dashboard." The sidebar work is §3/§10.3 above (collapsible groups +
+the two bug fixes, discovered *while* implementing the collapsible behavior
+and testing it at mobile width). The dashboard gained an SVG donut chart for
+the case-status breakdown and re-colored the existing ranked bars from a
+shared palette — see `docs/DESIGN_SYSTEM.md` §"Charts" for the implementation
+(no JS charting library; server-computed SVG geometry).
 
 ════════════════════════════════════════
-11. FINAL ASSESSMENT
+11. DEFERRED / UNVERIFIED
+════════════════════════════════════════
+
+Everything already deferred from Phase 13 for the same standing environment
+reason (no PostgreSQL server, no Docker daemon reachable from this machine):
+full suite on PostgreSQL 16, the 4 `@pytest.mark.postgres` tests, `docker
+compose` full-stack smoke, `compilemessages`. None are UI-related and none
+regressed — listed only for continuity with `PROJECT_STATUS.md`.
+
+No further visual gaps are known at this time — unlike the first pass, this
+report is not asserting completeness from HTML inspection alone; it is based
+on real rendered screenshots and live DOM queries across desktop and mobile
+viewports for every major page family.
+
+════════════════════════════════════════
+12. FINAL ASSESSMENT
 ════════════════════════════════════════
 
 Qistas's UI has been **implemented to closely follow the visual language and
 structure of `Design.png`** — not made identical to it, and not restructured
-around its specific (unrelated) domain content. The existing component
-architecture proved sound enough that most of the convergence came from
-retuning shared design tokens (color, radius, shadow, spacing) rather than
-rewriting individual pages, which kept the change surface small, mechanical,
-and low-risk: zero product-code files touched, identical test pass count,
-clean lint/format/check/deploy-check. The one real gap is the lack of an
-actual rendered-pixel comparison in this environment, which is called out
-explicitly rather than claimed.
+around its specific (unrelated) domain content. Beyond the visual refresh
+itself, this phase surfaced and fixed three genuine pre-existing defects
+(missing font files, a broken `aria-label` producing visible garbled text,
+and two independent RTL positioning/interaction bugs in the mobile sidebar)
+that no amount of test-suite or lint checking would have caught, precisely
+because they are the class of bug that only a rendered browser reveals. The
+gap between the first pass (verified only by HTML/class inspection) and the
+second (verified by actual pixels and live DOM state) is the most important
+finding of this phase, independent of the visual outcome itself.
 
 **Phase 15 is technically complete and pushed, but NOT merged. Awaiting
 APPROVE PHASE 15.**
