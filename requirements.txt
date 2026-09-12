@@ -1,0 +1,14 @@
+# Generated from pyproject.toml by scripts/gen_requirements.py — do not
+# hand-edit. Re-run the script after changing [project.dependencies].
+# Consumed by Vercel's Python builder (docs/adr/0037); Docker/local
+# installs still use `pip install -e ".[dev]"` from pyproject.toml.
+Django==5.2.17
+psycopg[binary]==3.2.13
+django-environ==0.14.0
+whitenoise==6.12.0
+django-axes==8.3.1
+django-otp==1.7.3
+qrcode==8.2
+django-auditlog==3.4.1
+django-htmx==1.29.0
+django-storages[s3]==1.14.4
