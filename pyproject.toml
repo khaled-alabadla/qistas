@@ -21,10 +21,8 @@ dependencies = [
     "qrcode==8.2",
     "django-auditlog==3.4.1",
     "django-htmx==1.29.0",
-    # S3-compatible storage for the private "documents" backend — only engaged
-    # when AWS_STORAGE_BUCKET_NAME is set (docs/adr/0037, Vercel deployment).
-    # Filesystem storage remains the default for Docker/local.
     "django-storages[s3]==1.14.4",
+    "typing-extensions>=4.12",
 ]
 
 [project.optional-dependencies]
