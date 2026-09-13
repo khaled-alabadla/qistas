@@ -7,13 +7,13 @@ name = "qistas"
 version = "0.1.0"
 description = "قِسطاس — Arabic-first Law Practice Management System (Foundation)"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = "==3.13.*"
 license = { text = "Proprietary" }
 
 # Exact pins. A compiled lock file is a Phase 14 concern (see docs/adr/0026).
 dependencies = [
     "Django==5.2.17",
-    "psycopg2-binary==2.9.10",
+    "psycopg[binary]==3.2.13",
     "django-environ==0.14.0",
     "whitenoise==6.12.0",
     "django-axes==8.3.1",
