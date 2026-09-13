@@ -1,4 +1,4 @@
-{% load i18n static %}<!doctype html>
+{% load i18n static qistas %}<!doctype html>
 <html lang="{{ LANGUAGE_CODE|default:'ar' }}" dir="rtl">
 <head>
   <meta charset="utf-8">
@@ -11,7 +11,7 @@
   <div class="flex min-h-screen items-center justify-center px-4 py-10">
     <div class="w-full max-w-md">
       <div class="mb-6 text-center">
-        <span class="mx-auto grid h-12 w-12 place-items-center rounded-lg bg-navy text-2xl font-semibold text-white">قِ</span>
+        <span class="mx-auto grid h-12 w-12 place-items-center rounded-lg bg-navy text-white">{% icon "scale" "h-7 w-7" %}</span>
         <h1 class="mt-3 text-xl font-semibold text-ink">{{ APP_NAME }}</h1>
         <p class="text-sm text-ink/60">{{ APP_TAGLINE }}</p>
       </div>

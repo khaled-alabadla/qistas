@@ -181,6 +181,12 @@ _ICON_PATHS: dict[str, str] = {
         '<path d="M15 4H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h9"/>'
         '<path d="M10 12h11m0 0-3.5-3.5M21 12l-3.5 3.5"/>'
     ),
+    # Balance scale — the Qistas logomark (اسم التطبيق مشتق من "القسطاس": الميزان العادل).
+    "scale": (
+        '<path d="M12 4v16"/><path d="M8 20h8"/><path d="M4 7h16"/>'
+        '<path d="M3 13 6 7l3 6a3 3 0 0 1-6 0Z"/>'
+        '<path d="M15 13 18 7l3 6a3 3 0 0 1-6 0Z"/>'
+    ),
 }
 
 
