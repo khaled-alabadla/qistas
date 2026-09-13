@@ -3,7 +3,7 @@
   "buildCommand": "bash scripts/build-static.sh",
   "functions": {
     "**/*.py": {
-      "includeFiles": ["staticfiles/**"]
+      "includeFiles": "staticfiles/**"
     }
   }
 }
