@@ -12,3 +12,4 @@ qrcode==8.2
 django-auditlog==3.4.1
 django-htmx==1.29.0
 django-storages[s3]==1.14.4
+typing-extensions>=4.12
